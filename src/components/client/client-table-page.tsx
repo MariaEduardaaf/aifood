@@ -2,9 +2,17 @@
 
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
-import { Bell, Receipt, Loader2, Check, Utensils } from "lucide-react";
+import {
+  Bell,
+  Receipt,
+  Loader2,
+  Check,
+  Utensils,
+  BookOpen,
+} from "lucide-react";
 import { LanguageSelector } from "./language-selector";
 import { RatingModal } from "./rating-modal";
+import { MenuView } from "./menu-view";
 
 interface OpenCall {
   id: string;
@@ -37,6 +45,7 @@ export function ClientTablePage({ tableId, tableLabel }: ClientTablePageProps) {
     null,
   );
   const [showRatingModal, setShowRatingModal] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
 
   // Check for existing open calls and pending ratings
   useEffect(() => {
@@ -118,6 +127,11 @@ export function ClientTablePage({ tableId, tableLabel }: ClientTablePageProps) {
     loading === "waiter" || cooldown.waiter > 0 || hasOpenCall("CALL_WAITER");
   const billDisabled =
     loading === "bill" || cooldown.bill > 0 || hasOpenCall("REQUEST_BILL");
+
+  // Show menu view
+  if (showMenu) {
+    return <MenuView onBack={() => setShowMenu(false)} />;
+  }
 
   return (
     <div className="min-h-screen bg-animated flex flex-col">
@@ -222,6 +236,16 @@ export function ClientTablePage({ tableId, tableLabel }: ClientTablePageProps) {
                       ? `${t("requestBill")} (${cooldown.bill}s)`
                       : t("requestBill")}
                 </span>
+              </button>
+
+              {/* View Menu Button */}
+              <button
+                onClick={() => setShowMenu(true)}
+                className="w-full flex items-center justify-center gap-3 py-4 px-6 rounded-xl text-base font-medium
+                  transition-all duration-300 bg-secondary/50 border border-border/50 text-foreground hover:bg-secondary"
+              >
+                <BookOpen className="h-5 w-5" />
+                <span>{t("viewMenu")}</span>
               </button>
             </div>
 

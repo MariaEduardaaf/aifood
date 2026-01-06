@@ -15,6 +15,7 @@ import {
   Utensils,
   ChevronRight,
   Settings,
+  ChefHat,
 } from "lucide-react";
 import type { Role } from "@prisma/client";
 
@@ -61,6 +62,12 @@ export function DashboardNav({ user }: DashboardNavProps) {
       href: "/admin/metricas",
       label: t("metrics"),
       icon: BarChart3,
+      show: isAdmin,
+    },
+    {
+      href: "/admin/cardapio",
+      label: t("menu"),
+      icon: ChefHat,
       show: isAdmin,
     },
     {

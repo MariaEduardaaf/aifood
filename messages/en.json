@@ -33,7 +33,13 @@
     "submitRating": "Submit Rating",
     "thankYouRating": "Thank you for your feedback!",
     "skipRating": "Skip",
-    "redirectingGoogle": "Redirecting to Google Reviews..."
+    "redirectingGoogle": "Redirecting to Google Reviews...",
+    "viewMenu": "View Menu"
+  },
+  "menu": {
+    "title": "Menu",
+    "empty": "Menu not available at the moment",
+    "noItems": "No items in this category"
   },
   "waiter": {
     "calls": "Calls",
@@ -59,6 +65,9 @@
     "googleReviewsEnabled": "Enable redirect",
     "minStarsRedirect": "Minimum stars to redirect",
     "settingsSaved": "Settings saved successfully",
+    "menu": "Menu",
+    "newCategory": "New Category",
+    "newItem": "New Item",
     "newTable": "New Table",
     "newUser": "New User",
     "tableLabel": "Table Name",

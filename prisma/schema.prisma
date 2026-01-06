@@ -84,3 +84,42 @@ model Settings {
   google_reviews_enabled Boolean @default(true)
   min_stars_redirect  Int     @default(4) // nota mínima para redirecionar
 }
+
+// ============ FASE 2: CARDÁPIO DIGITAL ============
+
+model Category {
+  id         String   @id @default(cuid())
+  name_pt    String
+  name_es    String
+  name_en    String
+  order      Int      @default(0)
+  active     Boolean  @default(true)
+  created_at DateTime @default(now())
+
+  items MenuItem[]
+
+  @@index([order])
+  @@index([active])
+}
+
+model MenuItem {
+  id             String   @id @default(cuid())
+  category_id    String
+  name_pt        String
+  name_es        String
+  name_en        String
+  description_pt String?
+  description_es String?
+  description_en String?
+  price          Decimal  @db.Decimal(10, 2)
+  image_url      String?
+  active         Boolean  @default(true)
+  order          Int      @default(0)
+  created_at     DateTime @default(now())
+
+  category Category @relation(fields: [category_id], references: [id], onDelete: Cascade)
+
+  @@index([category_id])
+  @@index([active])
+  @@index([order])
+}

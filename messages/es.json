@@ -33,7 +33,13 @@
     "submitRating": "Enviar Evaluación",
     "thankYouRating": "¡Gracias por su evaluación!",
     "skipRating": "Saltar",
-    "redirectingGoogle": "Redirigiendo a Google Reviews..."
+    "redirectingGoogle": "Redirigiendo a Google Reviews...",
+    "viewMenu": "Ver Menú"
+  },
+  "menu": {
+    "title": "Menú",
+    "empty": "Menú no disponible en este momento",
+    "noItems": "No hay artículos en esta categoría"
   },
   "waiter": {
     "calls": "Llamadas",
@@ -59,6 +65,9 @@
     "googleReviewsEnabled": "Activar redirección",
     "minStarsRedirect": "Puntuación mínima para redirigir",
     "settingsSaved": "Configuración guardada con éxito",
+    "menu": "Menú",
+    "newCategory": "Nueva Categoría",
+    "newItem": "Nuevo Artículo",
     "newTable": "Nueva Mesa",
     "newUser": "Nuevo Usuario",
     "tableLabel": "Nombre de la Mesa",

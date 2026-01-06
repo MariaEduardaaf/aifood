@@ -33,7 +33,13 @@
     "submitRating": "Enviar Avaliação",
     "thankYouRating": "Obrigado pela avaliação!",
     "skipRating": "Pular",
-    "redirectingGoogle": "Redirecionando para Google Reviews..."
+    "redirectingGoogle": "Redirecionando para Google Reviews...",
+    "viewMenu": "Ver Cardápio"
+  },
+  "menu": {
+    "title": "Cardápio",
+    "empty": "Cardápio não disponível no momento",
+    "noItems": "Nenhum item nesta categoria"
   },
   "waiter": {
     "calls": "Chamados",
@@ -59,6 +65,9 @@
     "googleReviewsEnabled": "Ativar redirecionamento",
     "minStarsRedirect": "Nota mínima para redirecionar",
     "settingsSaved": "Configurações salvas com sucesso",
+    "menu": "Cardápio",
+    "newCategory": "Nova Categoria",
+    "newItem": "Novo Item",
     "newTable": "Nova Mesa",
     "newUser": "Novo Usuário",
     "tableLabel": "Nome da Mesa",
