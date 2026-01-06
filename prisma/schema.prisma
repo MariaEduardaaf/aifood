@@ -1,0 +1,64 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  WAITER
+  ADMIN
+  MANAGER
+}
+
+enum CallType {
+  CALL_WAITER
+  REQUEST_BILL
+}
+
+enum CallStatus {
+  OPEN
+  RESOLVED
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  password_hash String
+  name          String
+  role          Role
+  active        Boolean  @default(true)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  resolved_calls Call[] @relation("ResolvedBy")
+}
+
+model Table {
+  id         String   @id @default(cuid())
+  label      String
+  qr_token   String   @unique @default(cuid())
+  active     Boolean  @default(true)
+  created_at DateTime @default(now())
+
+  calls Call[]
+}
+
+model Call {
+  id          String     @id @default(cuid())
+  table_id    String
+  type        CallType
+  status      CallStatus @default(OPEN)
+  created_at  DateTime   @default(now())
+  resolved_at DateTime?
+  resolved_by String?
+
+  table    Table @relation(fields: [table_id], references: [id], onDelete: Cascade)
+  resolver User? @relation("ResolvedBy", fields: [resolved_by], references: [id])
+
+  @@index([status])
+  @@index([table_id])
+  @@index([created_at])
+}
