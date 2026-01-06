@@ -3,77 +3,294 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --success: 142.1 76.2% 36.3%;
-    --success-foreground: 355.7 100% 97.3%;
-    --warning: 45.4 93.4% 47.5%;
-    --warning-foreground: 26 83.3% 14.1%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
-    --radius: 0.5rem;
-  }
-
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --success: 142.1 70.6% 45.3%;
-    --success-foreground: 144.9 80.4% 10%;
-    --warning: 48 96.5% 53.1%;
-    --warning-foreground: 26 83.3% 14.1%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
-  }
+    :root {
+        /* Tema Elegante/Premium - Tons escuros com dourado */
+        --background: 20 14% 4%;
+        --foreground: 38 36% 93%;
+        --card: 20 14% 8%;
+        --card-foreground: 38 36% 93%;
+        --popover: 20 14% 8%;
+        --popover-foreground: 38 36% 93%;
+        --primary: 38 92% 50%;
+        --primary-foreground: 20 14% 4%;
+        --secondary: 20 14% 14%;
+        --secondary-foreground: 38 36% 93%;
+        --muted: 20 14% 14%;
+        --muted-foreground: 38 20% 60%;
+        --accent: 38 92% 50%;
+        --accent-foreground: 20 14% 4%;
+        --destructive: 0 84% 60%;
+        --destructive-foreground: 0 0% 100%;
+        --success: 142 76% 36%;
+        --success-foreground: 0 0% 100%;
+        --warning: 38 92% 50%;
+        --warning-foreground: 20 14% 4%;
+        --border: 38 20% 20%;
+        --input: 20 14% 14%;
+        --ring: 38 92% 50%;
+        --radius: 0.75rem;
+    }
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
+    * {
+        @apply border-border;
+    }
+
+    body {
+        @apply bg-background text-foreground antialiased;
+        font-family: "Inter", system-ui, sans-serif;
+    }
+}
+
+@layer components {
+    /* Card Premium com borda dourada */
+    .card-premium {
+        @apply bg-card rounded-xl border border-border/50 shadow-xl;
+        background: linear-gradient(145deg, hsl(20 14% 10%), hsl(20 14% 6%));
+        box-shadow:
+            0 4px 6px -1px rgba(0, 0, 0, 0.3),
+            0 2px 4px -2px rgba(0, 0, 0, 0.2),
+            inset 0 1px 0 0 rgba(255, 200, 100, 0.05);
+    }
+
+    .card-premium:hover {
+        box-shadow:
+            0 10px 15px -3px rgba(0, 0, 0, 0.4),
+            0 4px 6px -4px rgba(0, 0, 0, 0.3),
+            inset 0 1px 0 0 rgba(255, 200, 100, 0.1);
+    }
+
+    /* Botão Premium Dourado */
+    .btn-gold {
+        @apply relative overflow-hidden font-semibold py-4 px-8 rounded-xl text-lg;
+        background: linear-gradient(
+            135deg,
+            hsl(38 92% 50%),
+            hsl(32 90% 45%),
+            hsl(38 92% 50%)
+        );
+        color: hsl(20 14% 4%);
+        box-shadow:
+            0 4px 15px rgba(212, 175, 55, 0.4),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        transition: all 0.3s ease;
+    }
+
+    .btn-gold:hover {
+        transform: translateY(-2px);
+        box-shadow:
+            0 6px 20px rgba(212, 175, 55, 0.5),
+            inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    }
+
+    .btn-gold:active {
+        transform: translateY(0);
+    }
+
+    .btn-gold::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+            90deg,
+            transparent,
+            rgba(255, 255, 255, 0.2),
+            transparent
+        );
+        transition: left 0.5s ease;
+    }
+
+    .btn-gold:hover::before {
+        left: 100%;
+    }
+
+    /* Botão Secundário Premium */
+    .btn-secondary-premium {
+        @apply relative font-semibold py-4 px-8 rounded-xl text-lg;
+        background: linear-gradient(145deg, hsl(20 14% 16%), hsl(20 14% 12%));
+        color: hsl(38 36% 93%);
+        border: 1px solid hsl(38 20% 25%);
+        box-shadow:
+            0 4px 10px rgba(0, 0, 0, 0.3),
+            inset 0 1px 0 rgba(255, 200, 100, 0.05);
+        transition: all 0.3s ease;
+    }
+
+    .btn-secondary-premium:hover {
+        transform: translateY(-2px);
+        border-color: hsl(38 92% 50%);
+        box-shadow:
+            0 6px 15px rgba(0, 0, 0, 0.4),
+            0 0 20px rgba(212, 175, 55, 0.1),
+            inset 0 1px 0 rgba(255, 200, 100, 0.1);
+    }
+
+    /* Texto Dourado Gradiente */
+    .text-gold {
+        background: linear-gradient(
+            135deg,
+            hsl(45 93% 60%),
+            hsl(38 92% 50%),
+            hsl(32 90% 45%)
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    /* Badge Premium */
+    .badge-premium {
+        @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold;
+        background: linear-gradient(135deg, hsl(38 92% 50%), hsl(32 90% 45%));
+        color: hsl(20 14% 4%);
+        box-shadow: 0 2px 8px rgba(212, 175, 55, 0.3);
+    }
+
+    /* Input Premium */
+    .input-premium {
+        @apply w-full px-4 py-3 rounded-xl border bg-secondary/50 text-foreground placeholder:text-muted-foreground;
+        border-color: hsl(38 20% 20%);
+        transition: all 0.3s ease;
+    }
+
+    .input-premium:focus {
+        @apply outline-none;
+        border-color: hsl(38 92% 50%);
+        box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
+    }
+
+    /* Divisor com gradiente */
+    .divider-gold {
+        height: 1px;
+        background: linear-gradient(
+            90deg,
+            transparent,
+            hsl(38 92% 50% / 0.5),
+            transparent
+        );
+    }
+
+    /* Glow effect */
+    .glow-gold {
+        box-shadow: 0 0 30px rgba(212, 175, 55, 0.2);
+    }
+
+    /* Status cards */
+    .status-waiting {
+        @apply border-2;
+        background: linear-gradient(
+            145deg,
+            hsl(142 76% 20% / 0.3),
+            hsl(142 76% 15% / 0.2)
+        );
+        border-color: hsl(142 76% 36%);
+    }
+
+    .status-urgent {
+        @apply border-2;
+        background: linear-gradient(
+            145deg,
+            hsl(0 84% 30% / 0.3),
+            hsl(0 84% 25% / 0.2)
+        );
+        border-color: hsl(0 84% 60%);
+    }
 }
 
 @layer utilities {
-  .urgency-green {
-    @apply bg-green-100 border-green-500 text-green-800;
-  }
-  .urgency-yellow {
-    @apply bg-yellow-100 border-yellow-500 text-yellow-800;
-  }
-  .urgency-red {
-    @apply bg-red-100 border-red-500 text-red-800;
-  }
+    /* Urgency colors for waiter dashboard */
+    .urgency-green {
+        background: linear-gradient(
+            145deg,
+            hsl(142 76% 20% / 0.4),
+            hsl(142 76% 15% / 0.3)
+        );
+        border: 1px solid hsl(142 76% 36%);
+        color: hsl(142 76% 70%);
+    }
+
+    .urgency-yellow {
+        background: linear-gradient(
+            145deg,
+            hsl(45 93% 30% / 0.4),
+            hsl(45 93% 25% / 0.3)
+        );
+        border: 1px solid hsl(45 93% 47%);
+        color: hsl(45 93% 70%);
+    }
+
+    .urgency-red {
+        background: linear-gradient(
+            145deg,
+            hsl(0 84% 30% / 0.4),
+            hsl(0 84% 25% / 0.3)
+        );
+        border: 1px solid hsl(0 84% 60%);
+        color: hsl(0 84% 75%);
+    }
+
+    /* Animated background */
+    .bg-animated {
+        background: linear-gradient(
+            -45deg,
+            hsl(20 14% 4%),
+            hsl(20 14% 8%),
+            hsl(20 14% 6%),
+            hsl(20 14% 10%)
+        );
+        background-size: 400% 400%;
+        animation: gradient 15s ease infinite;
+    }
+
+    @keyframes gradient {
+        0% {
+            background-position: 0% 50%;
+        }
+        50% {
+            background-position: 100% 50%;
+        }
+        100% {
+            background-position: 0% 50%;
+        }
+    }
+
+    /* Shimmer loading effect */
+    .shimmer {
+        background: linear-gradient(
+            90deg,
+            hsl(20 14% 10%) 0%,
+            hsl(20 14% 15%) 50%,
+            hsl(20 14% 10%) 100%
+        );
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite;
+    }
+
+    @keyframes shimmer {
+        0% {
+            background-position: -200% 0;
+        }
+        100% {
+            background-position: 200% 0;
+        }
+    }
+
+    /* Pulse gold */
+    .pulse-gold {
+        animation: pulse-gold 2s infinite;
+    }
+
+    @keyframes pulse-gold {
+        0%,
+        100% {
+            box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.4);
+        }
+        50% {
+            box-shadow: 0 0 0 10px rgba(212, 175, 55, 0);
+        }
+    }
 }

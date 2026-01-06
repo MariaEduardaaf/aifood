@@ -2,8 +2,15 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslations } from "next-intl";
-import { Button, Card, CardContent, Badge } from "@/components/ui";
-import { Bell, Receipt, Check, Loader2, Volume2, VolumeX } from "lucide-react";
+import {
+  Bell,
+  Receipt,
+  Check,
+  Loader2,
+  Volume2,
+  VolumeX,
+  Clock,
+} from "lucide-react";
 import { cn, formatTime, getUrgencyClass } from "@/lib/utils";
 
 interface Call {
@@ -130,48 +137,74 @@ export function WaiterDashboard({ userId }: WaiterDashboardProps) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="flex items-center justify-center py-24">
+        <div className="text-center">
+          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+          <p className="text-muted-foreground">Carregando chamados...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">{t("calls")}</h1>
+        <div>
+          <h1 className="text-3xl font-bold text-gold">{t("calls")}</h1>
+          <p className="text-muted-foreground mt-1">
+            Gerencie os chamados em tempo real
+          </p>
+        </div>
         <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
+          <button
             onClick={() => setSoundEnabled(!soundEnabled)}
+            className={cn(
+              "p-3 rounded-xl transition-all duration-200",
+              soundEnabled
+                ? "bg-primary/10 text-primary hover:bg-primary/20"
+                : "bg-secondary text-muted-foreground hover:bg-secondary/80",
+            )}
             title={soundEnabled ? "Desativar som" : "Ativar som"}
           >
             {soundEnabled ? (
               <Volume2 className="h-5 w-5" />
             ) : (
-              <VolumeX className="h-5 w-5 text-muted-foreground" />
+              <VolumeX className="h-5 w-5" />
             )}
-          </Button>
-          <Badge
-            variant={calls.length > 0 ? "destructive" : "secondary"}
-            className="text-lg px-4 py-1"
+          </button>
+          <div
+            className={cn(
+              "flex items-center gap-2 px-5 py-3 rounded-xl font-semibold",
+              calls.length > 0
+                ? "bg-gradient-to-r from-red-500/20 to-orange-500/20 text-red-400 border border-red-500/30"
+                : "bg-secondary text-muted-foreground",
+            )}
           >
-            <Bell className="h-4 w-4 mr-2" />
-            {t("openCalls", { count: calls.length })}
-          </Badge>
+            <Bell
+              className={cn("h-5 w-5", calls.length > 0 && "animate-pulse")}
+            />
+            <span className="text-lg">{calls.length}</span>
+            <span className="text-sm opacity-80">abertos</span>
+          </div>
         </div>
       </div>
 
       {/* Calls List */}
       {calls.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            <Bell className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p className="text-lg">{t("noCalls")}</p>
-          </CardContent>
-        </Card>
+        <div className="card-premium rounded-2xl p-12 text-center">
+          <div className="w-20 h-20 rounded-2xl bg-secondary/50 flex items-center justify-center mx-auto mb-6">
+            <Bell className="h-10 w-10 text-muted-foreground/50" />
+          </div>
+          <h3 className="text-xl font-semibold text-foreground mb-2">
+            {t("noCalls")}
+          </h3>
+          <p className="text-muted-foreground">
+            Quando um cliente chamar, aparecerá aqui
+          </p>
+        </div>
       ) : (
         <div className="grid gap-4">
           {calls.map((call) => {
@@ -179,69 +212,98 @@ export function WaiterDashboard({ userId }: WaiterDashboardProps) {
             const seconds = timers[call.id] || 0;
             const urgencyClass = getUrgencyClass(seconds);
             const isResolving = resolvingId === call.id;
+            const isUrgent = seconds >= 180;
+            const isWarning = seconds >= 60 && seconds < 180;
 
             return (
-              <Card
+              <div
                 key={call.id}
-                className={cn("border-l-4 transition-all", urgencyClass)}
+                className={cn(
+                  "card-premium rounded-2xl p-6 transition-all duration-300",
+                  urgencyClass,
+                  isUrgent && "pulse-gold",
+                )}
               >
-                <CardContent className="py-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-5">
+                    {/* Icon */}
+                    <div
+                      className={cn(
+                        "p-4 rounded-xl",
+                        call.type === "CALL_WAITER"
+                          ? "bg-gradient-to-br from-blue-500/20 to-blue-600/10 border border-blue-500/30"
+                          : "bg-gradient-to-br from-green-500/20 to-green-600/10 border border-green-500/30",
+                      )}
+                    >
+                      <Icon
                         className={cn(
-                          "p-3 rounded-full",
+                          "h-7 w-7",
                           call.type === "CALL_WAITER"
-                            ? "bg-blue-100"
-                            : "bg-green-100",
+                            ? "text-blue-400"
+                            : "text-green-400",
                         )}
-                      >
-                        <Icon
-                          className={cn(
-                            "h-6 w-6",
-                            call.type === "CALL_WAITER"
-                              ? "text-blue-600"
-                              : "text-green-600",
-                          )}
-                        />
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-lg">
-                          {call.table.label}
-                        </h3>
-                        <p className="text-muted-foreground">
-                          {getCallLabel(call.type)}
-                        </p>
-                      </div>
+                      />
                     </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
-                        <p className="text-2xl font-mono font-bold">
-                          {formatTime(seconds)}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {t("timeOpen")}
-                        </p>
+
+                    {/* Info */}
+                    <div>
+                      <h3 className="font-bold text-xl text-foreground">
+                        {call.table.label}
+                      </h3>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span
+                          className={cn(
+                            "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
+                            call.type === "CALL_WAITER"
+                              ? "bg-blue-500/20 text-blue-400"
+                              : "bg-green-500/20 text-green-400",
+                          )}
+                        >
+                          {getCallLabel(call.type)}
+                        </span>
                       </div>
-                      <Button
-                        size="lg"
-                        variant="success"
-                        onClick={() => handleResolve(call.id)}
-                        disabled={isResolving}
-                      >
-                        {isResolving ? (
-                          <Loader2 className="h-5 w-5 animate-spin" />
-                        ) : (
-                          <>
-                            <Check className="h-5 w-5 mr-2" />
-                            {t("resolve")}
-                          </>
-                        )}
-                      </Button>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+
+                  <div className="flex items-center gap-6">
+                    {/* Timer */}
+                    <div className="text-right">
+                      <div
+                        className={cn(
+                          "flex items-center gap-2 text-3xl font-mono font-bold",
+                          isUrgent
+                            ? "text-red-400"
+                            : isWarning
+                              ? "text-yellow-400"
+                              : "text-green-400",
+                        )}
+                      >
+                        <Clock className="h-5 w-5 opacity-60" />
+                        {formatTime(seconds)}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {t("timeOpen")}
+                      </p>
+                    </div>
+
+                    {/* Resolve Button */}
+                    <button
+                      onClick={() => handleResolve(call.id)}
+                      disabled={isResolving}
+                      className="btn-gold flex items-center gap-2 py-3 px-6 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isResolving ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        <>
+                          <Check className="h-5 w-5" />
+                          <span>{t("resolve")}</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
             );
           })}
         </div>

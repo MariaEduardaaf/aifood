@@ -55,10 +55,32 @@ model Call {
   resolved_at DateTime?
   resolved_by String?
 
-  table    Table @relation(fields: [table_id], references: [id], onDelete: Cascade)
-  resolver User? @relation("ResolvedBy", fields: [resolved_by], references: [id])
+  table    Table  @relation(fields: [table_id], references: [id], onDelete: Cascade)
+  resolver User?  @relation("ResolvedBy", fields: [resolved_by], references: [id])
+  rating   Rating?
 
   @@index([status])
   @@index([table_id])
   @@index([created_at])
+}
+
+model Rating {
+  id                String   @id @default(cuid())
+  call_id           String   @unique
+  stars             Int      // 1-5
+  feedback          String?  // comentário se nota baixa
+  redirected_google Boolean  @default(false) // foi redirecionado pro Google?
+  created_at        DateTime @default(now())
+
+  call Call @relation(fields: [call_id], references: [id], onDelete: Cascade)
+
+  @@index([stars])
+  @@index([created_at])
+}
+
+model Settings {
+  id                  String  @id @default("default")
+  google_reviews_url  String? // URL do Google Reviews do restaurante
+  google_reviews_enabled Boolean @default(true)
+  min_stars_redirect  Int     @default(4) // nota mínima para redirecionar
 }
