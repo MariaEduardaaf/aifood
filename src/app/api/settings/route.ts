@@ -3,6 +3,8 @@ import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { z } from "zod";
 
+export const dynamic = "force-dynamic";
+
 const settingsSchema = z.object({
   google_reviews_url: z.string().url().optional().nullable(),
   google_reviews_enabled: z.boolean().optional(),
