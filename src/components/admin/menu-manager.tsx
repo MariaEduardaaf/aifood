@@ -14,6 +14,7 @@ import {
   Check,
   FolderOpen,
 } from "lucide-react";
+import { ImageUpload } from "@/components/ui/image-upload";
 
 interface MenuItem {
   id: string;
@@ -49,7 +50,9 @@ export function MenuManager() {
   const [showItemModal, setShowItemModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
+    null,
+  );
   const [saving, setSaving] = useState(false);
 
   // Form states
@@ -162,7 +165,10 @@ export function MenuManager() {
   };
 
   const deleteCategory = async (id: string) => {
-    if (!confirm("Tem certeza? Todos os itens desta categoria serão excluídos.")) return;
+    if (
+      !confirm("Tem certeza? Todos os itens desta categoria serão excluídos.")
+    )
+      return;
 
     try {
       const res = await fetch(`/api/categorias/${id}`, { method: "DELETE" });
@@ -452,7 +458,10 @@ export function MenuManager() {
                   type="text"
                   value={categoryForm.name_pt}
                   onChange={(e) =>
-                    setCategoryForm({ ...categoryForm, name_pt: e.target.value })
+                    setCategoryForm({
+                      ...categoryForm,
+                      name_pt: e.target.value,
+                    })
                   }
                   className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border/50 focus:outline-none focus:ring-2 focus:ring-primary/50"
                   placeholder="Ex: Entradas"
@@ -466,7 +475,10 @@ export function MenuManager() {
                   type="text"
                   value={categoryForm.name_es}
                   onChange={(e) =>
-                    setCategoryForm({ ...categoryForm, name_es: e.target.value })
+                    setCategoryForm({
+                      ...categoryForm,
+                      name_es: e.target.value,
+                    })
                   }
                   className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border/50 focus:outline-none focus:ring-2 focus:ring-primary/50"
                   placeholder="Ex: Entrantes"
@@ -480,7 +492,10 @@ export function MenuManager() {
                   type="text"
                   value={categoryForm.name_en}
                   onChange={(e) =>
-                    setCategoryForm({ ...categoryForm, name_en: e.target.value })
+                    setCategoryForm({
+                      ...categoryForm,
+                      name_en: e.target.value,
+                    })
                   }
                   className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border/50 focus:outline-none focus:ring-2 focus:ring-primary/50"
                   placeholder="Ex: Starters"
@@ -611,7 +626,9 @@ export function MenuManager() {
 
               {/* Price */}
               <div>
-                <label className="block text-sm font-medium mb-2">Preço (R$) *</label>
+                <label className="block text-sm font-medium mb-2">
+                  Preço (R$) *
+                </label>
                 <input
                   type="number"
                   step="0.01"
@@ -625,32 +642,18 @@ export function MenuManager() {
                 />
               </div>
 
-              {/* Image URL */}
+              {/* Image Upload */}
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  URL da Imagem
+                  Imagem do Prato
                 </label>
-                <input
-                  type="url"
+                <ImageUpload
                   value={itemForm.image_url}
-                  onChange={(e) =>
-                    setItemForm({ ...itemForm, image_url: e.target.value })
+                  onChange={(url) =>
+                    setItemForm({ ...itemForm, image_url: url })
                   }
-                  className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border/50 focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  placeholder="https://exemplo.com/imagem.jpg"
+                  disabled={saving}
                 />
-                {itemForm.image_url && (
-                  <div className="mt-2">
-                    <img
-                      src={itemForm.image_url}
-                      alt="Preview"
-                      className="w-20 h-20 rounded-lg object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = "none";
-                      }}
-                    />
-                  </div>
-                )}
               </div>
             </div>
 
