@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 
-// GET /api/mesa/[token] - Get table data by QR token (public)
+// GET /api/mesas/[id]/status - Get table status by ID (public - for client page)
 export async function GET(
   request: NextRequest,
-  { params }: { params: { token: string } },
+  { params }: { params: { id: string } },
 ) {
   try {
     const table = await prisma.table.findUnique({
-      where: { qr_token: params.token },
+      where: { id: params.id },
       select: {
         id: true,
         label: true,
@@ -53,7 +53,7 @@ export async function GET(
         resolved_at: true,
       },
       orderBy: { resolved_at: "desc" },
-      take: 1, // Only the most recent one
+      take: 1,
     });
 
     return NextResponse.json({
@@ -63,7 +63,7 @@ export async function GET(
       pendingRating: unresolvedRatings[0] || null,
     });
   } catch (error) {
-    console.error("Error fetching table:", error);
+    console.error("Error fetching table status:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },

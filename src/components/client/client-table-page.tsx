@@ -51,7 +51,7 @@ export function ClientTablePage({ tableId, tableLabel }: ClientTablePageProps) {
   useEffect(() => {
     const checkOpenCalls = async () => {
       try {
-        const res = await fetch(`/api/mesa/${tableId}`);
+        const res = await fetch(`/api/mesas/${tableId}/status`);
         if (res.ok) {
           const data = await res.json();
           setOpenCalls(data.openCalls || []);
@@ -97,7 +97,7 @@ export function ClientTablePage({ tableId, tableLabel }: ClientTablePageProps) {
     setLoading(loadingKey);
 
     try {
-      const res = await fetch("/api/chamado", {
+      const res = await fetch("/api/chamados", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ tableId, type }),
