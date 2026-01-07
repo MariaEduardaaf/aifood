@@ -39,15 +39,20 @@ export default function LoginPage() {
         redirect: false,
       });
 
+      console.log("Login result:", result);
+
       if (result?.error) {
         setError(t("invalidCredentials"));
+        setLoading(false);
+      } else if (result?.ok) {
+        window.location.href = callbackUrl;
       } else {
-        router.push(callbackUrl);
-        router.refresh();
+        setError(t("invalidCredentials"));
+        setLoading(false);
       }
-    } catch {
+    } catch (err) {
+      console.error("Login error:", err);
       setError(tErrors("generic"));
-    } finally {
       setLoading(false);
     }
   };
