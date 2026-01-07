@@ -34,12 +34,48 @@
     "thankYouRating": "Obrigado pela avaliação!",
     "skipRating": "Pular",
     "redirectingGoogle": "Redirecionando para Google Reviews...",
-    "viewMenu": "Ver Cardápio"
+    "viewMenu": "Ver Cardápio",
+    "viewMenuOrder": "Ver Cardápio e Pedir",
+    "myOrders": "Meus Pedidos"
   },
   "menu": {
     "title": "Cardápio",
     "empty": "Cardápio não disponível no momento",
-    "noItems": "Nenhum item nesta categoria"
+    "noItems": "Nenhum item nesta categoria",
+    "add": "Adicionar",
+    "viewCart": "Ver Carrinho"
+  },
+  "cart": {
+    "title": "Meu Pedido",
+    "emptyCart": "Seu carrinho está vazio",
+    "itemNotes": "Observações (ex: sem cebola)",
+    "orderNotes": "Observações do pedido",
+    "orderNotesPlaceholder": "Alguma observação geral? (ex: alergia)",
+    "total": "Total",
+    "submitOrder": "Enviar Pedido",
+    "orderSuccess": "Pedido Enviado!",
+    "orderSuccessMessage": "Seu pedido foi recebido e será preparado em breve.",
+    "orderError": "Erro ao enviar pedido. Tente novamente.",
+    "rateLimitError": "Aguarde alguns segundos antes de fazer outro pedido."
+  },
+  "orders": {
+    "title": "Meus Pedidos",
+    "noOrders": "Nenhum pedido",
+    "noOrdersMessage": "Você ainda não fez nenhum pedido.",
+    "makeOrder": "Fazer Pedido",
+    "makeAnotherOrder": "Fazer Novo Pedido",
+    "notes": "Obs",
+    "statusPending": "Aguardando confirmação",
+    "statusConfirmed": "Confirmado",
+    "statusPreparing": "Preparando",
+    "statusReady": "Pronto",
+    "statusDelivered": "Entregue",
+    "statusCancelled": "Cancelado",
+    "justNow": "Agora mesmo",
+    "oneMinuteAgo": "Há 1 minuto",
+    "minutesAgo": "Há {minutes} minutos",
+    "oneHourAgo": "Há 1 hora",
+    "hoursAgo": "Há {hours} horas"
   },
   "waiter": {
     "calls": "Chamados",
@@ -51,7 +87,16 @@
     "requestBill": "Conta",
     "table": "Mesa",
     "timeOpen": "Tempo aberto",
-    "newCall": "Novo chamado!"
+    "newCall": "Novo chamado!",
+    "orders": "Pedidos",
+    "noOrders": "Nenhum pedido no momento",
+    "noOrdersMessage": "Quando um cliente fizer pedido, aparecerá aqui",
+    "pending": "Pendente",
+    "confirmed": "Confirmado",
+    "confirm": "Confirmar",
+    "deliver": "Entregar",
+    "cancel": "Cancelar",
+    "confirmCancelOrder": "Tem certeza que deseja cancelar este pedido?"
   },
   "admin": {
     "dashboard": "Painel Administrativo",

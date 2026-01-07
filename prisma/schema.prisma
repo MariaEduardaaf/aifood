@@ -33,7 +33,8 @@ model User {
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
 
-  resolved_calls Call[] @relation("ResolvedBy")
+  resolved_calls   Call[]  @relation("ResolvedBy")
+  confirmed_orders Order[] @relation("ConfirmedBy")
 }
 
 model Table {
@@ -43,7 +44,8 @@ model Table {
   active     Boolean  @default(true)
   created_at DateTime @default(now())
 
-  calls Call[]
+  calls  Call[]
+  orders Order[]
 }
 
 model Call {
@@ -117,9 +119,56 @@ model MenuItem {
   order          Int      @default(0)
   created_at     DateTime @default(now())
 
-  category Category @relation(fields: [category_id], references: [id], onDelete: Cascade)
+  category   Category    @relation(fields: [category_id], references: [id], onDelete: Cascade)
+  orderItems OrderItem[]
 
   @@index([category_id])
   @@index([active])
   @@index([order])
+}
+
+// ============ FASE 3: SISTEMA DE PEDIDOS ============
+
+enum OrderStatus {
+  PENDING    // Aguardando confirmacao do garcom
+  CONFIRMED  // Garcom confirmou, enviado para preparo
+  PREPARING  // Cozinha preparando (Fase 4)
+  READY      // Pronto para entrega (Fase 4)
+  DELIVERED  // Entregue ao cliente
+  CANCELLED  // Cancelado
+}
+
+model Order {
+  id           String      @id @default(cuid())
+  table_id     String
+  status       OrderStatus @default(PENDING)
+  total        Decimal     @db.Decimal(10, 2)
+  notes        String?     // Observacoes gerais do pedido
+  created_at   DateTime    @default(now())
+  updated_at   DateTime    @updatedAt
+  confirmed_at DateTime?   // Quando garcom confirmou
+  delivered_at DateTime?   // Quando foi entregue
+  confirmed_by String?     // ID do garcom que confirmou
+
+  table     Table       @relation(fields: [table_id], references: [id], onDelete: Cascade)
+  confirmer User?       @relation("ConfirmedBy", fields: [confirmed_by], references: [id])
+  items     OrderItem[]
+
+  @@index([table_id])
+  @@index([status])
+  @@index([created_at])
+}
+
+model OrderItem {
+  id           String  @id @default(cuid())
+  order_id     String
+  menu_item_id String
+  quantity     Int
+  unit_price   Decimal @db.Decimal(10, 2) // Preco no momento do pedido
+  notes        String? // Ex: "sem cebola", "bem passado"
+
+  order    Order    @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  menuItem MenuItem @relation(fields: [menu_item_id], references: [id])
+
+  @@index([order_id])
 }

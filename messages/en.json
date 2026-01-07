@@ -34,12 +34,48 @@
     "thankYouRating": "Thank you for your feedback!",
     "skipRating": "Skip",
     "redirectingGoogle": "Redirecting to Google Reviews...",
-    "viewMenu": "View Menu"
+    "viewMenu": "View Menu",
+    "viewMenuOrder": "View Menu & Order",
+    "myOrders": "My Orders"
   },
   "menu": {
     "title": "Menu",
     "empty": "Menu not available at the moment",
-    "noItems": "No items in this category"
+    "noItems": "No items in this category",
+    "add": "Add",
+    "viewCart": "View Cart"
+  },
+  "cart": {
+    "title": "My Order",
+    "emptyCart": "Your cart is empty",
+    "itemNotes": "Notes (e.g.: no onions)",
+    "orderNotes": "Order notes",
+    "orderNotesPlaceholder": "Any general notes? (e.g.: allergy)",
+    "total": "Total",
+    "submitOrder": "Submit Order",
+    "orderSuccess": "Order Sent!",
+    "orderSuccessMessage": "Your order has been received and will be prepared soon.",
+    "orderError": "Error submitting order. Please try again.",
+    "rateLimitError": "Please wait a few seconds before placing another order."
+  },
+  "orders": {
+    "title": "My Orders",
+    "noOrders": "No orders",
+    "noOrdersMessage": "You haven't placed any orders yet.",
+    "makeOrder": "Make Order",
+    "makeAnotherOrder": "Make Another Order",
+    "notes": "Notes",
+    "statusPending": "Waiting confirmation",
+    "statusConfirmed": "Confirmed",
+    "statusPreparing": "Preparing",
+    "statusReady": "Ready",
+    "statusDelivered": "Delivered",
+    "statusCancelled": "Cancelled",
+    "justNow": "Just now",
+    "oneMinuteAgo": "1 minute ago",
+    "minutesAgo": "{minutes} minutes ago",
+    "oneHourAgo": "1 hour ago",
+    "hoursAgo": "{hours} hours ago"
   },
   "waiter": {
     "calls": "Calls",
@@ -51,7 +87,16 @@
     "requestBill": "Bill",
     "table": "Table",
     "timeOpen": "Time open",
-    "newCall": "New call!"
+    "newCall": "New call!",
+    "orders": "Orders",
+    "noOrders": "No orders at the moment",
+    "noOrdersMessage": "When a customer places an order, it will appear here",
+    "pending": "Pending",
+    "confirmed": "Confirmed",
+    "confirm": "Confirm",
+    "deliver": "Deliver",
+    "cancel": "Cancel",
+    "confirmCancelOrder": "Are you sure you want to cancel this order?"
   },
   "admin": {
     "dashboard": "Admin Dashboard",

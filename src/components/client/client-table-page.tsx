@@ -9,10 +9,14 @@ import {
   Check,
   Utensils,
   BookOpen,
+  ShoppingBag,
 } from "lucide-react";
 import { LanguageSelector } from "./language-selector";
 import { RatingModal } from "./rating-modal";
 import { MenuView } from "./menu-view";
+import { CartModal } from "./cart-modal";
+import { OrderStatusView } from "./order-status-view";
+import { CartProvider } from "./cart-context";
 
 interface OpenCall {
   id: string;
@@ -31,7 +35,9 @@ interface ClientTablePageProps {
   tableLabel: string;
 }
 
-export function ClientTablePage({ tableId, tableLabel }: ClientTablePageProps) {
+type View = "main" | "menu" | "cart" | "orders";
+
+function ClientTablePageContent({ tableId, tableLabel }: ClientTablePageProps) {
   const t = useTranslations("client");
 
   const [openCalls, setOpenCalls] = useState<OpenCall[]>([]);
@@ -45,7 +51,8 @@ export function ClientTablePage({ tableId, tableLabel }: ClientTablePageProps) {
     null,
   );
   const [showRatingModal, setShowRatingModal] = useState(false);
-  const [showMenu, setShowMenu] = useState(false);
+  const [currentView, setCurrentView] = useState<View>("main");
+  const [showCart, setShowCart] = useState(false);
 
   // Check for existing open calls and pending ratings
   useEffect(() => {
@@ -129,12 +136,41 @@ export function ClientTablePage({ tableId, tableLabel }: ClientTablePageProps) {
     loading === "bill" || cooldown.bill > 0 || hasOpenCall("REQUEST_BILL");
 
   // Show menu view
-  if (showMenu) {
-    return <MenuView onBack={() => setShowMenu(false)} />;
+  if (currentView === "menu") {
+    return (
+      <MenuView
+        tableId={tableId}
+        onBack={() => setCurrentView("main")}
+        onOpenCart={() => setShowCart(true)}
+      />
+    );
+  }
+
+  // Show orders view
+  if (currentView === "orders") {
+    return (
+      <OrderStatusView
+        tableId={tableId}
+        onBack={() => setCurrentView("main")}
+        onNewOrder={() => setCurrentView("menu")}
+      />
+    );
   }
 
   return (
     <div className="min-h-screen bg-animated flex flex-col">
+      {/* Cart Modal */}
+      {showCart && (
+        <CartModal
+          tableId={tableId}
+          onClose={() => setShowCart(false)}
+          onOrderSuccess={() => {
+            setShowCart(false);
+            setCurrentView("orders");
+          }}
+        />
+      )}
+
       {/* Decorative elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-3xl" />
@@ -238,14 +274,24 @@ export function ClientTablePage({ tableId, tableLabel }: ClientTablePageProps) {
                 </span>
               </button>
 
-              {/* View Menu Button */}
+              {/* View Menu / Make Order Button */}
               <button
-                onClick={() => setShowMenu(true)}
+                onClick={() => setCurrentView("menu")}
+                className="w-full flex items-center justify-center gap-3 py-4 px-6 rounded-xl text-base font-medium
+                  transition-all duration-300 bg-primary/10 border border-primary/30 text-primary hover:bg-primary/20"
+              >
+                <BookOpen className="h-5 w-5" />
+                <span>{t("viewMenuOrder")}</span>
+              </button>
+
+              {/* My Orders Button */}
+              <button
+                onClick={() => setCurrentView("orders")}
                 className="w-full flex items-center justify-center gap-3 py-4 px-6 rounded-xl text-base font-medium
                   transition-all duration-300 bg-secondary/50 border border-border/50 text-foreground hover:bg-secondary"
               >
-                <BookOpen className="h-5 w-5" />
-                <span>{t("viewMenu")}</span>
+                <ShoppingBag className="h-5 w-5" />
+                <span>{t("myOrders")}</span>
               </button>
             </div>
 
@@ -294,5 +340,14 @@ export function ClientTablePage({ tableId, tableLabel }: ClientTablePageProps) {
         />
       )}
     </div>
+  );
+}
+
+// Wrapper com CartProvider
+export function ClientTablePage({ tableId, tableLabel }: ClientTablePageProps) {
+  return (
+    <CartProvider>
+      <ClientTablePageContent tableId={tableId} tableLabel={tableLabel} />
+    </CartProvider>
   );
 }

@@ -1,13 +1,13 @@
-import { auth } from '@/lib/auth'
-import { redirect } from 'next/navigation'
-import { WaiterDashboard } from '@/components/waiter/waiter-dashboard'
+import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import { WaiterPage } from "@/components/waiter/waiter-page";
 
 export default async function GarcomPage() {
-  const session = await auth()
+  const session = await auth();
 
   if (!session) {
-    redirect('/login')
+    redirect("/login");
   }
 
-  return <WaiterDashboard userId={session.user.id} />
+  return <WaiterPage userId={session.user.id} />;
 }
