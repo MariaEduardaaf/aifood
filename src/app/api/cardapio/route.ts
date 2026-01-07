@@ -1,5 +1,7 @@
-import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/db'
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
+
+export const dynamic = "force-dynamic";
 
 // GET /api/cardapio - Cardápio público (apenas itens ativos)
 export async function GET() {
@@ -9,7 +11,7 @@ export async function GET() {
       include: {
         items: {
           where: { active: true },
-          orderBy: { order: 'asc' },
+          orderBy: { order: "asc" },
           select: {
             id: true,
             name_pt: true,
@@ -23,15 +25,18 @@ export async function GET() {
           },
         },
       },
-      orderBy: { order: 'asc' },
-    })
+      orderBy: { order: "asc" },
+    });
 
     // Filter out empty categories
-    const nonEmptyCategories = categories.filter(cat => cat.items.length > 0)
+    const nonEmptyCategories = categories.filter((cat) => cat.items.length > 0);
 
-    return NextResponse.json(nonEmptyCategories)
+    return NextResponse.json(nonEmptyCategories);
   } catch (error) {
-    console.error('Error fetching menu:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error("Error fetching menu:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }
