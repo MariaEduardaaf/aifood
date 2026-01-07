@@ -25,21 +25,23 @@ export function LanguageSelector() {
   };
 
   return (
-    <div className="flex items-center gap-1 p-1 rounded-xl bg-secondary/50 border border-border/50">
+    <div className="flex items-center gap-1 p-1.5 rounded-xl bg-secondary/50 border border-border/50">
       {locales.map((locale) => (
         <button
           key={locale.code}
           onClick={() => changeLocale(locale.code)}
           disabled={isPending}
           className="
-            px-3 py-1.5 rounded-lg text-xs font-semibold
+            min-w-[44px] min-h-[44px] px-3 py-2 rounded-lg text-sm font-semibold
             transition-all duration-200
             hover:bg-primary/20 hover:text-primary
+            active:scale-95
             disabled:opacity-50 disabled:cursor-not-allowed
             text-muted-foreground
+            flex items-center justify-center
           "
         >
-          <span className="mr-1">{locale.flag}</span>
+          <span className="mr-1.5 text-base">{locale.flag}</span>
           {locale.label}
         </button>
       ))}

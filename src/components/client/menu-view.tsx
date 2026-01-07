@@ -57,7 +57,11 @@ export function MenuView({ onBack }: MenuViewProps) {
     }
   };
 
-  const getName = (item: { name_pt: string; name_es: string; name_en: string }) => {
+  const getName = (item: {
+    name_pt: string;
+    name_es: string;
+    name_en: string;
+  }) => {
     switch (locale) {
       case "es":
         return item.name_es;
@@ -97,14 +101,16 @@ export function MenuView({ onBack }: MenuViewProps) {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 z-10 bg-card/95 backdrop-blur-sm border-b border-border/50">
-        <div className="flex items-center gap-4 p-4">
+        <div className="flex items-center gap-3 p-4">
           <button
             onClick={onBack}
-            className="p-2 rounded-xl hover:bg-secondary transition-colors"
+            className="p-2.5 rounded-xl hover:bg-secondary transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <h1 className="text-xl font-bold text-gold">{t("title")}</h1>
+          <h1 className="text-lg sm:text-xl font-bold text-gold">
+            {t("title")}
+          </h1>
         </div>
 
         {/* Category Tabs */}
@@ -114,10 +120,10 @@ export function MenuView({ onBack }: MenuViewProps) {
               <button
                 key={category.id}
                 onClick={() => setSelectedCategory(category.id)}
-                className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
+                className={`px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all min-h-[44px] ${
                   selectedCategory === category.id
                     ? "bg-primary text-primary-foreground"
-                    : "bg-secondary/50 text-muted-foreground hover:bg-secondary"
+                    : "bg-secondary/50 text-muted-foreground hover:bg-secondary active:scale-95"
                 }`}
               >
                 {getName(category)}
@@ -140,9 +146,9 @@ export function MenuView({ onBack }: MenuViewProps) {
                 key={item.id}
                 className="card-premium rounded-2xl overflow-hidden"
               >
-                <div className="flex gap-4 p-4">
+                <div className="flex gap-3 sm:gap-4 p-3 sm:p-4">
                   {/* Image */}
-                  <div className="w-24 h-24 rounded-xl bg-secondary flex-shrink-0 overflow-hidden">
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl bg-secondary flex-shrink-0 overflow-hidden">
                     {item.image_url ? (
                       <img
                         src={item.image_url}
@@ -151,22 +157,22 @@ export function MenuView({ onBack }: MenuViewProps) {
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <ImageIcon className="h-8 w-8 text-muted-foreground/30" />
+                        <ImageIcon className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground/30" />
                       </div>
                     )}
                   </div>
 
                   {/* Info */}
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-foreground mb-1">
+                    <h3 className="font-semibold text-foreground mb-1 text-sm sm:text-base">
                       {getName(item)}
                     </h3>
                     {getDescription(item) && (
-                      <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
+                      <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 mb-2">
                         {getDescription(item)}
                       </p>
                     )}
-                    <p className="text-lg font-bold text-primary">
+                    <p className="text-base sm:text-lg font-bold text-primary">
                       R$ {Number(item.price).toFixed(2)}
                     </p>
                   </div>

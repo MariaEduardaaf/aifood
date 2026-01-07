@@ -89,13 +89,14 @@ export function MetricsDashboard() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">{t("metrics")}</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <h1 className="text-xl sm:text-2xl font-bold">{t("metrics")}</h1>
         <div className="flex gap-2">
           <Button
             variant={period === "today" ? "default" : "outline"}
             size="sm"
             onClick={() => setPeriod("today")}
+            className="min-h-[40px] text-xs sm:text-sm"
           >
             {t("today")}
           </Button>
@@ -103,6 +104,7 @@ export function MetricsDashboard() {
             variant={period === "week" ? "default" : "outline"}
             size="sm"
             onClick={() => setPeriod("week")}
+            className="min-h-[40px] text-xs sm:text-sm"
           >
             {t("thisWeek")}
           </Button>
@@ -110,6 +112,7 @@ export function MetricsDashboard() {
             variant={period === "month" ? "default" : "outline"}
             size="sm"
             onClick={() => setPeriod("month")}
+            className="min-h-[40px] text-xs sm:text-sm"
           >
             {t("thisMonth")}
           </Button>
@@ -117,16 +120,18 @@ export function MetricsDashboard() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 p-3 sm:p-6 sm:pb-2">
+            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
               {t("totalCalls")}
             </CardTitle>
-            <Bell className="h-4 w-4 text-muted-foreground" />
+            <Bell className="h-4 w-4 text-muted-foreground hidden sm:block" />
           </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{metrics.totalCalls}</div>
+          <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+            <div className="text-2xl sm:text-3xl font-bold">
+              {metrics.totalCalls}
+            </div>
             <p className="text-xs text-muted-foreground mt-1">
               {metrics.openCalls} aberto(s)
             </p>
@@ -134,14 +139,14 @@ export function MetricsDashboard() {
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 p-3 sm:p-6 sm:pb-2">
+            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
               {t("avgResponseTime")}
             </CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+            <Clock className="h-4 w-4 text-muted-foreground hidden sm:block" />
           </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold font-mono">
+          <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+            <div className="text-2xl sm:text-3xl font-bold font-mono">
               {formatTime(metrics.avgResponseTime)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
@@ -151,15 +156,15 @@ export function MetricsDashboard() {
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 p-3 sm:p-6 sm:pb-2">
+            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
               {t("slaPercentage")}
             </CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
+            <CheckCircle className="h-4 w-4 text-muted-foreground hidden sm:block" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
             <div
-              className={`text-3xl font-bold ${
+              className={`text-2xl sm:text-3xl font-bold ${
                 metrics.slaPercentage >= 80
                   ? "text-green-600"
                   : metrics.slaPercentage >= 60
@@ -174,23 +179,23 @@ export function MetricsDashboard() {
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 p-3 sm:p-6 sm:pb-2">
+            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
               Por Tipo
             </CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <TrendingUp className="h-4 w-4 text-muted-foreground hidden sm:block" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
             <div className="space-y-1">
               <div className="flex justify-between">
-                <span className="text-sm">Garçom</span>
-                <span className="font-bold">
+                <span className="text-xs sm:text-sm">Garçom</span>
+                <span className="font-bold text-sm sm:text-base">
                   {metrics.callsByType.CALL_WAITER || 0}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm">Conta</span>
-                <span className="font-bold">
+                <span className="text-xs sm:text-sm">Conta</span>
+                <span className="font-bold text-sm sm:text-base">
                   {metrics.callsByType.REQUEST_BILL || 0}
                 </span>
               </div>
@@ -330,12 +335,12 @@ export function MetricsDashboard() {
       {/* Ratings Section */}
       {metrics.ratings && (
         <>
-          <h2 className="text-xl font-bold mt-8 flex items-center gap-2">
+          <h2 className="text-lg sm:text-xl font-bold mt-8 flex items-center gap-2">
             <Star className="h-5 w-5 text-primary" />
             Avaliações dos Clientes
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">

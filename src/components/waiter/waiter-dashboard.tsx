@@ -151,18 +151,20 @@ export function WaiterDashboard({ userId }: WaiterDashboardProps) {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gold">{t("calls")}</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gold">
+            {t("calls")}
+          </h1>
+          <p className="text-muted-foreground mt-1 text-sm sm:text-base">
             Gerencie os chamados em tempo real
           </p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 sm:gap-4">
           <button
             onClick={() => setSoundEnabled(!soundEnabled)}
             className={cn(
-              "p-3 rounded-xl transition-all duration-200",
+              "p-3 rounded-xl transition-all duration-200 min-w-[44px] min-h-[44px]",
               soundEnabled
                 ? "bg-primary/10 text-primary hover:bg-primary/20"
                 : "bg-secondary text-muted-foreground hover:bg-secondary/80",
@@ -177,7 +179,7 @@ export function WaiterDashboard({ userId }: WaiterDashboardProps) {
           </button>
           <div
             className={cn(
-              "flex items-center gap-2 px-5 py-3 rounded-xl font-semibold",
+              "flex items-center gap-2 px-4 sm:px-5 py-3 rounded-xl font-semibold",
               calls.length > 0
                 ? "bg-gradient-to-r from-red-500/20 to-orange-500/20 text-red-400 border border-red-500/30"
                 : "bg-secondary text-muted-foreground",
@@ -187,7 +189,7 @@ export function WaiterDashboard({ userId }: WaiterDashboardProps) {
               className={cn("h-5 w-5", calls.length > 0 && "animate-pulse")}
             />
             <span className="text-lg">{calls.length}</span>
-            <span className="text-sm opacity-80">abertos</span>
+            <span className="text-sm opacity-80 hidden sm:inline">abertos</span>
           </div>
         </div>
       </div>
@@ -219,17 +221,17 @@ export function WaiterDashboard({ userId }: WaiterDashboardProps) {
               <div
                 key={call.id}
                 className={cn(
-                  "card-premium rounded-2xl p-6 transition-all duration-300",
+                  "card-premium rounded-2xl p-4 sm:p-6 transition-all duration-300",
                   urgencyClass,
                   isUrgent && "pulse-gold",
                 )}
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-4 sm:gap-5">
                     {/* Icon */}
                     <div
                       className={cn(
-                        "p-4 rounded-xl",
+                        "p-3 sm:p-4 rounded-xl flex-shrink-0",
                         call.type === "CALL_WAITER"
                           ? "bg-gradient-to-br from-blue-500/20 to-blue-600/10 border border-blue-500/30"
                           : "bg-gradient-to-br from-green-500/20 to-green-600/10 border border-green-500/30",
@@ -237,7 +239,7 @@ export function WaiterDashboard({ userId }: WaiterDashboardProps) {
                     >
                       <Icon
                         className={cn(
-                          "h-7 w-7",
+                          "h-6 w-6 sm:h-7 sm:w-7",
                           call.type === "CALL_WAITER"
                             ? "text-blue-400"
                             : "text-green-400",
@@ -246,8 +248,8 @@ export function WaiterDashboard({ userId }: WaiterDashboardProps) {
                     </div>
 
                     {/* Info */}
-                    <div>
-                      <h3 className="font-bold text-xl text-foreground">
+                    <div className="min-w-0">
+                      <h3 className="font-bold text-lg sm:text-xl text-foreground truncate">
                         {call.table.label}
                       </h3>
                       <div className="flex items-center gap-2 mt-1">
@@ -265,12 +267,12 @@ export function WaiterDashboard({ userId }: WaiterDashboardProps) {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-6">
+                  <div className="flex items-center justify-between sm:justify-end gap-4 sm:gap-6">
                     {/* Timer */}
-                    <div className="text-right">
+                    <div className="text-left sm:text-right">
                       <div
                         className={cn(
-                          "flex items-center gap-2 text-3xl font-mono font-bold",
+                          "flex items-center gap-2 text-2xl sm:text-3xl font-mono font-bold",
                           isUrgent
                             ? "text-red-400"
                             : isWarning
@@ -278,7 +280,7 @@ export function WaiterDashboard({ userId }: WaiterDashboardProps) {
                               : "text-green-400",
                         )}
                       >
-                        <Clock className="h-5 w-5 opacity-60" />
+                        <Clock className="h-4 w-4 sm:h-5 sm:w-5 opacity-60" />
                         {formatTime(seconds)}
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">
@@ -290,14 +292,16 @@ export function WaiterDashboard({ userId }: WaiterDashboardProps) {
                     <button
                       onClick={() => handleResolve(call.id)}
                       disabled={isResolving}
-                      className="btn-gold flex items-center gap-2 py-3 px-6 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="btn-gold flex items-center gap-2 py-3 px-4 sm:px-6 disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
                     >
                       {isResolving ? (
                         <Loader2 className="h-5 w-5 animate-spin" />
                       ) : (
                         <>
                           <Check className="h-5 w-5" />
-                          <span>{t("resolve")}</span>
+                          <span className="hidden sm:inline">
+                            {t("resolve")}
+                          </span>
                         </>
                       )}
                     </button>

@@ -1,171 +1,186 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import { useTranslations } from 'next-intl'
-import { Button, Card, CardContent, Badge, Input, Label } from '@/components/ui'
-import { Plus, QrCode, Pencil, Trash2, X, Download, Loader2 } from 'lucide-react'
+import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
+import {
+  Button,
+  Card,
+  CardContent,
+  Badge,
+  Input,
+  Label,
+} from "@/components/ui";
+import {
+  Plus,
+  QrCode,
+  Pencil,
+  Trash2,
+  X,
+  Download,
+  Loader2,
+} from "lucide-react";
 
 interface Table {
-  id: string
-  label: string
-  qr_token: string
-  active: boolean
-  created_at: string
+  id: string;
+  label: string;
+  qr_token: string;
+  active: boolean;
+  created_at: string;
   _count?: {
-    calls: number
-  }
+    calls: number;
+  };
 }
 
 interface QRCodeData {
-  qrCode: string
-  url: string
-  label: string
+  qrCode: string;
+  url: string;
+  label: string;
 }
 
 export function TablesManager() {
-  const t = useTranslations('admin')
-  const tCommon = useTranslations('common')
+  const t = useTranslations("admin");
+  const tCommon = useTranslations("common");
 
-  const [tables, setTables] = useState<Table[]>([])
-  const [loading, setLoading] = useState(true)
-  const [showModal, setShowModal] = useState(false)
-  const [showQRModal, setShowQRModal] = useState(false)
-  const [editingTable, setEditingTable] = useState<Table | null>(null)
-  const [qrData, setQrData] = useState<QRCodeData | null>(null)
-  const [formLabel, setFormLabel] = useState('')
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState('')
+  const [tables, setTables] = useState<Table[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [showQRModal, setShowQRModal] = useState(false);
+  const [editingTable, setEditingTable] = useState<Table | null>(null);
+  const [qrData, setQrData] = useState<QRCodeData | null>(null);
+  const [formLabel, setFormLabel] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    fetchTables()
-  }, [])
+    fetchTables();
+  }, []);
 
   const fetchTables = async () => {
     try {
-      const res = await fetch('/api/mesas')
+      const res = await fetch("/api/mesas");
       if (res.ok) {
-        const data = await res.json()
-        setTables(data)
+        const data = await res.json();
+        setTables(data);
       }
     } catch (err) {
-      console.error('Error fetching tables:', err)
+      console.error("Error fetching tables:", err);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const openCreateModal = () => {
-    setEditingTable(null)
-    setFormLabel('')
-    setError('')
-    setShowModal(true)
-  }
+    setEditingTable(null);
+    setFormLabel("");
+    setError("");
+    setShowModal(true);
+  };
 
   const openEditModal = (table: Table) => {
-    setEditingTable(table)
-    setFormLabel(table.label)
-    setError('')
-    setShowModal(true)
-  }
+    setEditingTable(table);
+    setFormLabel(table.label);
+    setError("");
+    setShowModal(true);
+  };
 
   const closeModal = () => {
-    setShowModal(false)
-    setEditingTable(null)
-    setFormLabel('')
-    setError('')
-  }
+    setShowModal(false);
+    setEditingTable(null);
+    setFormLabel("");
+    setError("");
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     if (!formLabel.trim()) {
-      setError('Nome da mesa é obrigatório')
-      return
+      setError("Nome da mesa é obrigatório");
+      return;
     }
 
-    setSaving(true)
-    setError('')
+    setSaving(true);
+    setError("");
 
     try {
-      const url = editingTable ? `/api/mesas/${editingTable.id}` : '/api/mesas'
-      const method = editingTable ? 'PATCH' : 'POST'
+      const url = editingTable ? `/api/mesas/${editingTable.id}` : "/api/mesas";
+      const method = editingTable ? "PATCH" : "POST";
 
       const res = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ label: formLabel.trim() }),
-      })
+      });
 
       if (res.ok) {
-        await fetchTables()
-        closeModal()
+        await fetchTables();
+        closeModal();
       } else {
-        const data = await res.json()
-        setError(data.error || 'Erro ao salvar')
+        const data = await res.json();
+        setError(data.error || "Erro ao salvar");
       }
     } catch (err) {
-      setError('Erro ao salvar mesa')
+      setError("Erro ao salvar mesa");
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
-  }
+  };
 
   const handleDelete = async (table: Table) => {
-    if (!confirm(t('confirmDelete'))) return
+    if (!confirm(t("confirmDelete"))) return;
 
     try {
-      const res = await fetch(`/api/mesas/${table.id}`, { method: 'DELETE' })
+      const res = await fetch(`/api/mesas/${table.id}`, { method: "DELETE" });
       if (res.ok) {
-        await fetchTables()
+        await fetchTables();
       }
     } catch (err) {
-      console.error('Error deleting table:', err)
+      console.error("Error deleting table:", err);
     }
-  }
+  };
 
   const showQRCode = async (table: Table) => {
     try {
-      const res = await fetch(`/api/mesas/${table.id}/qrcode`)
+      const res = await fetch(`/api/mesas/${table.id}/qrcode`);
       if (res.ok) {
-        const data = await res.json()
-        setQrData(data)
-        setShowQRModal(true)
+        const data = await res.json();
+        setQrData(data);
+        setShowQRModal(true);
       }
     } catch (err) {
-      console.error('Error fetching QR code:', err)
+      console.error("Error fetching QR code:", err);
     }
-  }
+  };
 
   const downloadQRCode = () => {
-    if (!qrData) return
+    if (!qrData) return;
 
-    const link = document.createElement('a')
-    link.download = `qrcode-${qrData.label.replace(/\s+/g, '-').toLowerCase()}.png`
-    link.href = qrData.qrCode
-    link.click()
-  }
+    const link = document.createElement("a");
+    link.download = `qrcode-${qrData.label.replace(/\s+/g, "-").toLowerCase()}.png`;
+    link.href = qrData.qrCode;
+    link.click();
+  };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
-    )
+    );
   }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">{t('tables')}</h1>
+        <h1 className="text-2xl font-bold">{t("tables")}</h1>
         <Button onClick={openCreateModal}>
           <Plus className="h-4 w-4 mr-2" />
-          {t('newTable')}
+          {t("newTable")}
         </Button>
       </div>
 
       {tables.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
-            <p>{tCommon('noResults')}</p>
+            <p>{tCommon("noResults")}</p>
           </CardContent>
         </Card>
       ) : (
@@ -173,36 +188,40 @@ export function TablesManager() {
           {tables.map((table) => (
             <Card key={table.id}>
               <CardContent className="py-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div>
-                      <h3 className="font-semibold">{table.label}</h3>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                    <div className="min-w-0">
+                      <h3 className="font-semibold truncate">{table.label}</h3>
                       <p className="text-sm text-muted-foreground">
                         Token: {table.qr_token.substring(0, 8)}...
                       </p>
                     </div>
-                    {table._count && table._count.calls > 0 && (
-                      <Badge variant="warning">
-                        {table._count.calls} chamado(s) aberto(s)
+                    <div className="flex flex-wrap items-center gap-2">
+                      {table._count && table._count.calls > 0 && (
+                        <Badge variant="warning">
+                          {table._count.calls} chamado(s)
+                        </Badge>
+                      )}
+                      <Badge variant={table.active ? "success" : "secondary"}>
+                        {table.active ? t("active") : t("inactive")}
                       </Badge>
-                    )}
-                    <Badge variant={table.active ? 'success' : 'secondary'}>
-                      {table.active ? t('active') : t('inactive')}
-                    </Badge>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 self-end sm:self-auto">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => showQRCode(table)}
+                      className="min-h-[44px]"
                     >
-                      <QrCode className="h-4 w-4 mr-2" />
-                      {t('qrCode')}
+                      <QrCode className="h-4 w-4 sm:mr-2" />
+                      <span className="hidden sm:inline">{t("qrCode")}</span>
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => openEditModal(table)}
+                      className="min-w-[44px] min-h-[44px]"
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
@@ -210,6 +229,7 @@ export function TablesManager() {
                       variant="outline"
                       size="sm"
                       onClick={() => handleDelete(table)}
+                      className="min-w-[44px] min-h-[44px]"
                     >
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
@@ -228,7 +248,8 @@ export function TablesManager() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold">
-                  {editingTable ? tCommon('edit') : tCommon('create')} {t('tables')}
+                  {editingTable ? tCommon("edit") : tCommon("create")}{" "}
+                  {t("tables")}
                 </h2>
                 <Button variant="ghost" size="icon" onClick={closeModal}>
                   <X className="h-4 w-4" />
@@ -236,27 +257,30 @@ export function TablesManager() {
               </div>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="label">{t('tableLabel')}</Label>
+                  <Label htmlFor="label">{t("tableLabel")}</Label>
                   <Input
                     id="label"
-                    placeholder={t('tablePlaceholder')}
+                    placeholder={t("tablePlaceholder")}
                     value={formLabel}
                     onChange={(e) => setFormLabel(e.target.value)}
                     disabled={saving}
                   />
                 </div>
-                {error && (
-                  <p className="text-sm text-destructive">{error}</p>
-                )}
+                {error && <p className="text-sm text-destructive">{error}</p>}
                 <div className="flex justify-end gap-2">
-                  <Button type="button" variant="outline" onClick={closeModal} disabled={saving}>
-                    {tCommon('cancel')}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={closeModal}
+                    disabled={saving}
+                  >
+                    {tCommon("cancel")}
                   </Button>
                   <Button type="submit" disabled={saving}>
                     {saving ? (
                       <Loader2 className="h-4 w-4 animate-spin mr-2" />
                     ) : null}
-                    {tCommon('save')}
+                    {tCommon("save")}
                   </Button>
                 </div>
               </form>
@@ -272,7 +296,11 @@ export function TablesManager() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold">{qrData.label}</h2>
-                <Button variant="ghost" size="icon" onClick={() => setShowQRModal(false)}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowQRModal(false)}
+                >
                   <X className="h-4 w-4" />
                 </Button>
               </div>
@@ -280,14 +308,14 @@ export function TablesManager() {
                 <img
                   src={qrData.qrCode}
                   alt={`QR Code - ${qrData.label}`}
-                  className="w-64 h-64 border rounded-lg"
+                  className="w-48 h-48 sm:w-64 sm:h-64 border rounded-lg"
                 />
                 <p className="text-sm text-muted-foreground text-center break-all">
                   {qrData.url}
                 </p>
                 <Button onClick={downloadQRCode} className="w-full">
                   <Download className="h-4 w-4 mr-2" />
-                  {t('downloadQR')}
+                  {t("downloadQR")}
                 </Button>
               </div>
             </CardContent>
@@ -295,5 +323,5 @@ export function TablesManager() {
         </div>
       )}
     </div>
-  )
+  );
 }

@@ -302,10 +302,10 @@ export function UsersManager({ currentUserId }: UsersManagerProps) {
           {users.map((user) => (
             <Card key={user.id}>
               <CardContent className="py-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div>
-                      <h3 className="font-semibold flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                    <div className="min-w-0">
+                      <h3 className="font-semibold flex items-center gap-2 truncate">
                         {user.name}
                         {user.id === currentUserId && (
                           <span className="text-xs text-muted-foreground">
@@ -313,34 +313,37 @@ export function UsersManager({ currentUserId }: UsersManagerProps) {
                           </span>
                         )}
                       </h3>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm text-muted-foreground truncate">
                         {user.email}
                       </p>
                     </div>
-                    <Badge variant={getRoleVariant(user.role)}>
-                      {getRoleLabel(user.role)}
-                    </Badge>
-                    <Badge
-                      variant={user.active ? "success" : "secondary"}
-                      className="cursor-pointer"
-                      onClick={() =>
-                        user.id !== currentUserId && toggleActive(user)
-                      }
-                    >
-                      {user.active ? t("active") : t("inactive")}
-                    </Badge>
-                    {user._count && user._count.resolved_calls > 0 && (
-                      <span className="text-sm text-muted-foreground">
-                        {user._count.resolved_calls} chamado(s) resolvido(s)
-                      </span>
-                    )}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant={getRoleVariant(user.role)}>
+                        {getRoleLabel(user.role)}
+                      </Badge>
+                      <Badge
+                        variant={user.active ? "success" : "secondary"}
+                        className="cursor-pointer"
+                        onClick={() =>
+                          user.id !== currentUserId && toggleActive(user)
+                        }
+                      >
+                        {user.active ? t("active") : t("inactive")}
+                      </Badge>
+                      {user._count && user._count.resolved_calls > 0 && (
+                        <span className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">
+                          {user._count.resolved_calls} chamado(s)
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 self-end sm:self-auto">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => openEditModal(user)}
                       title="Editar"
+                      className="min-w-[44px] min-h-[44px]"
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
@@ -350,6 +353,7 @@ export function UsersManager({ currentUserId }: UsersManagerProps) {
                       onClick={() => handleResetPassword(user)}
                       disabled={resettingPasswordId === user.id}
                       title="Gerar Nova Senha"
+                      className="min-w-[44px] min-h-[44px]"
                     >
                       {resettingPasswordId === user.id ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
@@ -362,6 +366,7 @@ export function UsersManager({ currentUserId }: UsersManagerProps) {
                         variant="outline"
                         size="sm"
                         onClick={() => handleDelete(user)}
+                        className="min-w-[44px] min-h-[44px]"
                       >
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>

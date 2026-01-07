@@ -260,17 +260,17 @@ export function MenuManager() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gold flex items-center gap-3">
-          <ChefHat className="h-8 w-8" />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gold flex items-center gap-3">
+          <ChefHat className="h-7 w-7 sm:h-8 sm:w-8" />
           {t("menu")}
         </h1>
         <button
           onClick={() => openCategoryModal()}
-          className="btn-gold px-4 py-2 rounded-xl font-medium flex items-center gap-2"
+          className="btn-gold px-4 py-3 rounded-xl font-medium flex items-center justify-center gap-2 min-h-[44px]"
         >
           <Plus className="h-5 w-5" />
-          {t("newCategory")}
+          <span>{t("newCategory")}</span>
         </button>
       </div>
 
@@ -302,11 +302,11 @@ export function MenuManager() {
               }`}
             >
               {/* Category Header */}
-              <div className="p-4 border-b border-border/50 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <GripVertical className="h-5 w-5 text-muted-foreground cursor-move" />
-                  <div>
-                    <h3 className="font-semibold text-foreground">
+              <div className="p-4 border-b border-border/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <GripVertical className="h-5 w-5 text-muted-foreground cursor-move flex-shrink-0 hidden sm:block" />
+                  <div className="min-w-0">
+                    <h3 className="font-semibold text-foreground truncate">
                       {category.name_pt}
                     </h3>
                     <p className="text-xs text-muted-foreground">
@@ -315,17 +315,17 @@ export function MenuManager() {
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 self-end sm:self-auto">
                   <button
                     onClick={() => openItemModal(category.id)}
-                    className="p-2 rounded-lg hover:bg-secondary transition-colors text-primary"
+                    className="p-2 rounded-lg hover:bg-secondary transition-colors text-primary min-w-[40px] min-h-[40px] flex items-center justify-center"
                     title="Adicionar item"
                   >
                     <Plus className="h-5 w-5" />
                   </button>
                   <button
                     onClick={() => toggleCategoryActive(category)}
-                    className={`p-2 rounded-lg transition-colors ${
+                    className={`p-2 rounded-lg transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center ${
                       category.active
                         ? "text-green-500 hover:bg-green-500/10"
                         : "text-muted-foreground hover:bg-secondary"
@@ -336,14 +336,14 @@ export function MenuManager() {
                   </button>
                   <button
                     onClick={() => openCategoryModal(category)}
-                    className="p-2 rounded-lg hover:bg-secondary transition-colors text-muted-foreground"
+                    className="p-2 rounded-lg hover:bg-secondary transition-colors text-muted-foreground min-w-[40px] min-h-[40px] flex items-center justify-center"
                     title="Editar"
                   >
                     <Pencil className="h-5 w-5" />
                   </button>
                   <button
                     onClick={() => deleteCategory(category.id)}
-                    className="p-2 rounded-lg hover:bg-red-500/10 transition-colors text-red-500"
+                    className="p-2 rounded-lg hover:bg-red-500/10 transition-colors text-red-500 min-w-[40px] min-h-[40px] flex items-center justify-center"
                     title="Excluir"
                   >
                     <Trash2 className="h-5 w-5" />
@@ -362,66 +362,74 @@ export function MenuManager() {
                     {category.items.map((item) => (
                       <div
                         key={item.id}
-                        className={`flex items-center gap-4 p-3 rounded-xl bg-secondary/30 border border-border/30 ${
+                        className={`flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-3 rounded-xl bg-secondary/30 border border-border/30 ${
                           !item.active ? "opacity-60" : ""
                         }`}
                       >
-                        {/* Image */}
-                        <div className="w-16 h-16 rounded-lg bg-secondary flex items-center justify-center overflow-hidden flex-shrink-0">
-                          {item.image_url ? (
-                            <img
-                              src={item.image_url}
-                              alt={item.name_pt}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <ImageIcon className="h-6 w-6 text-muted-foreground/50" />
-                          )}
-                        </div>
+                        <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                          {/* Image */}
+                          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg bg-secondary flex items-center justify-center overflow-hidden flex-shrink-0">
+                            {item.image_url ? (
+                              <img
+                                src={item.image_url}
+                                alt={item.name_pt}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <ImageIcon className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground/50" />
+                            )}
+                          </div>
 
-                        {/* Info */}
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-medium text-foreground truncate">
-                            {item.name_pt}
-                          </h4>
-                          {item.description_pt && (
-                            <p className="text-sm text-muted-foreground truncate">
-                              {item.description_pt}
+                          {/* Info */}
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-medium text-foreground truncate text-sm sm:text-base">
+                              {item.name_pt}
+                            </h4>
+                            {item.description_pt && (
+                              <p className="text-xs sm:text-sm text-muted-foreground truncate">
+                                {item.description_pt}
+                              </p>
+                            )}
+                            {/* Price - mobile */}
+                            <p className="font-bold text-primary text-sm mt-1 sm:hidden">
+                              R$ {Number(item.price).toFixed(2)}
                             </p>
-                          )}
+                          </div>
                         </div>
 
-                        {/* Price */}
-                        <div className="text-right">
-                          <p className="font-bold text-primary">
-                            R$ {Number(item.price).toFixed(2)}
-                          </p>
-                        </div>
+                        <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4">
+                          {/* Price - desktop */}
+                          <div className="text-right hidden sm:block">
+                            <p className="font-bold text-primary">
+                              R$ {Number(item.price).toFixed(2)}
+                            </p>
+                          </div>
 
-                        {/* Actions */}
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={() => toggleItemActive(item)}
-                            className={`p-2 rounded-lg transition-colors ${
-                              item.active
-                                ? "text-green-500 hover:bg-green-500/10"
-                                : "text-muted-foreground hover:bg-secondary"
-                            }`}
-                          >
-                            <Check className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => openItemModal(category.id, item)}
-                            className="p-2 rounded-lg hover:bg-secondary transition-colors text-muted-foreground"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => deleteItem(item.id)}
-                            className="p-2 rounded-lg hover:bg-red-500/10 transition-colors text-red-500"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
+                          {/* Actions */}
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => toggleItemActive(item)}
+                              className={`p-2 rounded-lg transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center ${
+                                item.active
+                                  ? "text-green-500 hover:bg-green-500/10"
+                                  : "text-muted-foreground hover:bg-secondary"
+                              }`}
+                            >
+                              <Check className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => openItemModal(category.id, item)}
+                              className="p-2 rounded-lg hover:bg-secondary transition-colors text-muted-foreground min-w-[40px] min-h-[40px] flex items-center justify-center"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => deleteItem(item.id)}
+                              className="p-2 rounded-lg hover:bg-red-500/10 transition-colors text-red-500 min-w-[40px] min-h-[40px] flex items-center justify-center"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ))}
