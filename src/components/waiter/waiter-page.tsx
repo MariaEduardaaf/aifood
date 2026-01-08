@@ -5,6 +5,8 @@ import { useTranslations } from "next-intl";
 import { Bell, ShoppingBag } from "lucide-react";
 import { WaiterDashboard } from "./waiter-dashboard";
 import { OrdersPanel } from "./orders-panel";
+import { ThemeToggleCompact } from "@/components/ui/theme-toggle";
+import { SoundToggleCompact } from "@/components/ui/sound-settings";
 import { cn } from "@/lib/utils";
 
 interface WaiterPageProps {
@@ -19,8 +21,15 @@ export function WaiterPage({ userId }: WaiterPageProps) {
 
   return (
     <div className="min-h-screen">
-      {/* Tabs */}
+      {/* Header with Theme Toggle */}
       <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b border-border/50">
+        {/* Settings Row */}
+        <div className="flex items-center justify-end gap-2 px-4 py-2 border-b border-border/30">
+          <SoundToggleCompact />
+          <ThemeToggleCompact />
+        </div>
+
+        {/* Tabs */}
         <div className="flex">
           <button
             onClick={() => setActiveTab("calls")}

@@ -1,5 +1,20 @@
 # 🧠 BRAIN — Plataforma de Atendimento Inteligente para Restaurantes
 
+> **Última atualização:** 2026-01-08
+
+## Status de Implementação
+
+| Fase | Status | Observação |
+|------|--------|------------|
+| MVP (Chamados) | ✅ Completo | Funcionando 100% |
+| Fase 1.5 (Google Reviews) | ✅ Completo | Avaliação inteligente funcionando |
+| Fase 2 (Cardápio Digital) | ✅ Completo | Menu trilíngue com fotos |
+| Fase 3 (Pedidos) | ✅ Completo | Carrinho e acompanhamento |
+| Fase 4 (Cozinha) | ✅ Completo | Painel Kanban funcionando |
+| Deploy Produção | ⏳ Pendente | Aguardando configuração |
+
+---
+
 ## 1. Visão Geral
 
 Esta aplicação é uma **plataforma de operação e atendimento para restaurantes**, criada para resolver um problema muito comum (especialmente na Europa):
@@ -176,18 +191,18 @@ Validar que:
 
 ---
 
-## 7. O que NÃO entra no MVP (intencionalmente)
+## 7. O que NÃO entrava no MVP (já implementado pós-MVP)
 
-* ❌ Cardápio
-* ❌ Pedido pelo app
-* ❌ Cozinha
-* ❌ IA
-* ❌ Ranking
-* ❌ Google Reviews automático
-* ❌ Multi-restaurante
-* ❌ Tradução para outros idiomas (além de PT/ES/EN)
+* ✅ ~~Cardápio~~ → **Implementado na Fase 2**
+* ✅ ~~Pedido pelo app~~ → **Implementado na Fase 3**
+* ✅ ~~Cozinha~~ → **Implementado na Fase 4**
+* ❌ IA → Futuro
+* ❌ Ranking → Futuro
+* ✅ ~~Google Reviews automático~~ → **Implementado na Fase 1.5**
+* ❌ Multi-restaurante → Futuro
+* ❌ Tradução para outros idiomas (além de PT/ES/EN) → Futuro
 
-Essas coisas **só entram depois que o MVP provar valor**.
+Essas features foram implementadas **após validação do MVP**.
 
 ---
 

@@ -41,6 +41,24 @@ export default auth((req) => {
     }
   }
 
+  // Kitchen routes - only for KITCHEN
+  if (pathname.startsWith("/cozinha")) {
+    if (userRole !== "KITCHEN") {
+      // Redirect to appropriate dashboard based on role
+      if (userRole === "ADMIN" || userRole === "MANAGER") {
+        return NextResponse.redirect(new URL("/admin", req.nextUrl.origin));
+      }
+      return NextResponse.redirect(new URL("/garcom", req.nextUrl.origin));
+    }
+  }
+
+  // Waiter routes - only for WAITER (redirect KITCHEN to their dashboard)
+  if (pathname.startsWith("/garcom")) {
+    if (userRole === "KITCHEN") {
+      return NextResponse.redirect(new URL("/cozinha", req.nextUrl.origin));
+    }
+  }
+
   return NextResponse.next();
 });
 

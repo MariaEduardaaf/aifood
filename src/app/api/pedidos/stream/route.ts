@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { OrderStatus } from "@prisma/client";
 
 // GET /api/pedidos/stream - Server-Sent Events para pedidos em tempo real
 export async function GET(request: NextRequest) {
@@ -8,6 +9,19 @@ export async function GET(request: NextRequest) {
 
   if (!session) {
     return new Response("Unauthorized", { status: 401 });
+  }
+
+  const userRole = session.user.role;
+
+  // Definir quais status cada role pode ver
+  let statusFilter: OrderStatus[];
+
+  if (userRole === "KITCHEN") {
+    // Cozinha vê: pedidos confirmados (para iniciar), preparando, e prontos
+    statusFilter = ["CONFIRMED", "PREPARING", "READY"];
+  } else {
+    // Garçom/Admin vê: pendentes, confirmados, e prontos (para entregar)
+    statusFilter = ["PENDING", "CONFIRMED", "READY"];
   }
 
   const encoder = new TextEncoder();
@@ -22,7 +36,7 @@ export async function GET(request: NextRequest) {
           const orders = await prisma.order.findMany({
             where: {
               status: {
-                in: ["PENDING", "CONFIRMED"],
+                in: statusFilter,
               },
             },
             orderBy: { created_at: "asc" },
@@ -44,6 +58,12 @@ export async function GET(request: NextRequest) {
                       image_url: true,
                     },
                   },
+                },
+              },
+              preparer: {
+                select: {
+                  id: true,
+                  name: true,
                 },
               },
             },

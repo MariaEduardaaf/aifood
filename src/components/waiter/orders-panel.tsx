@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import {
   ShoppingBag,
@@ -14,6 +14,7 @@ import {
   Image as ImageIcon,
 } from "lucide-react";
 import { cn, formatTime, getUrgencyClass } from "@/lib/utils";
+import { useSound } from "@/components/providers/sound-provider";
 
 interface OrderItem {
   id: string;
@@ -36,6 +37,8 @@ interface Order {
   notes: string | null;
   created_at: string;
   confirmed_at: string | null;
+  preparing_at: string | null;
+  ready_at: string | null;
   table: {
     id: string;
     label: string;
@@ -45,6 +48,7 @@ interface Order {
 
 export function OrdersPanel() {
   const t = useTranslations("waiter");
+  const { playNotification } = useSound();
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,21 +57,7 @@ export function OrdersPanel() {
   const [timers, setTimers] = useState<Record<string, number>>({});
 
   const previousOrdersRef = useRef<string[]>([]);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-
-  // Initialize audio
-  useEffect(() => {
-    audioRef.current = new Audio("/notification.mp3");
-    audioRef.current.volume = 0.5;
-  }, []);
-
-  // Play notification sound
-  const playNotification = useCallback(() => {
-    if (audioRef.current) {
-      audioRef.current.currentTime = 0;
-      audioRef.current.play().catch(() => {});
-    }
-  }, []);
+  const previousReadyRef = useRef<string[]>([]);
 
   // Fetch orders with SSE
   useEffect(() => {
@@ -82,11 +72,17 @@ export function OrdersPanel() {
         const previousIds = previousOrdersRef.current;
         const hasNewOrder = currentIds.some((id) => !previousIds.includes(id));
 
-        if (hasNewOrder && previousIds.length > 0) {
+        // Check for new READY orders (kitchen finished)
+        const readyIds = newOrders.filter((o) => o.status === "READY").map((o) => o.id);
+        const previousReadyIds = previousReadyRef.current;
+        const hasNewReady = readyIds.some((id) => !previousReadyIds.includes(id));
+
+        if ((hasNewOrder || hasNewReady) && previousIds.length > 0) {
           playNotification();
         }
 
         previousOrdersRef.current = currentIds;
+        previousReadyRef.current = readyIds;
         setOrders(newOrders);
         setLoading(false);
       } catch (err) {
@@ -185,6 +181,7 @@ export function OrdersPanel() {
 
   const pendingOrders = orders.filter((o) => o.status === "PENDING");
   const confirmedOrders = orders.filter((o) => o.status === "CONFIRMED");
+  const readyOrders = orders.filter((o) => o.status === "READY");
 
   if (loading) {
     return (
@@ -202,7 +199,12 @@ export function OrdersPanel() {
           <ShoppingBag className="h-6 w-6 text-primary" />
           <h2 className="text-xl font-bold">{t("orders")}</h2>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {readyOrders.length > 0 && (
+            <span className="px-3 py-1 bg-green-500/20 text-green-500 rounded-full text-sm font-medium animate-pulse">
+              {readyOrders.length} {t("ready")}
+            </span>
+          )}
           {pendingOrders.length > 0 && (
             <span className="px-3 py-1 bg-yellow-500/20 text-yellow-500 rounded-full text-sm font-medium">
               {pendingOrders.length} {t("pending")}
@@ -233,14 +235,17 @@ export function OrdersPanel() {
             const isExpanded = expandedOrders.has(order.id);
             const isLoading = actionLoading === order.id;
             const isPending = order.status === "PENDING";
+            const isReady = order.status === "READY";
+            const isConfirmed = order.status === "CONFIRMED";
 
             return (
               <div
                 key={order.id}
                 className={cn(
                   "card-premium rounded-2xl overflow-hidden transition-all duration-300",
-                  urgencyClass,
-                  isPending && seconds >= 180 && "pulse-gold"
+                  isReady ? "ring-2 ring-green-500 bg-green-500/5" : urgencyClass,
+                  isPending && seconds >= 180 && "pulse-gold",
+                  isReady && "animate-pulse"
                 )}
               >
                 {/* Order Header */}
@@ -256,10 +261,12 @@ export function OrdersPanel() {
                           "px-3 py-1 rounded-full text-sm font-medium",
                           isPending
                             ? "bg-yellow-500/20 text-yellow-500"
-                            : "bg-blue-500/20 text-blue-500"
+                            : isReady
+                              ? "bg-green-500/20 text-green-500"
+                              : "bg-blue-500/20 text-blue-500"
                         )}
                       >
-                        {isPending ? t("pending") : t("confirmed")}
+                        {isPending ? t("pending") : isReady ? t("ready") : t("confirmed")}
                       </div>
 
                       {/* Table */}
@@ -377,36 +384,30 @@ export function OrdersPanel() {
                             )}
                           </button>
                         </>
+                      ) : isReady ? (
+                        // Ready orders - prominent deliver button
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeliver(order.id);
+                          }}
+                          disabled={isLoading}
+                          className="flex-1 py-3 px-4 rounded-xl font-medium bg-green-500 hover:bg-green-600 text-white transition-colors flex items-center justify-center gap-2"
+                        >
+                          {isLoading ? (
+                            <Loader2 className="h-5 w-5 animate-spin" />
+                          ) : (
+                            <>
+                              <Truck className="h-5 w-5" />
+                              {t("deliver")}
+                            </>
+                          )}
+                        </button>
                       ) : (
-                        <>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleCancel(order.id);
-                            }}
-                            disabled={isLoading}
-                            className="py-3 px-4 rounded-xl font-medium bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors flex items-center justify-center gap-2"
-                          >
-                            <X className="h-5 w-5" />
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeliver(order.id);
-                            }}
-                            disabled={isLoading}
-                            className="flex-1 btn-gold py-3 px-4 rounded-xl font-medium flex items-center justify-center gap-2"
-                          >
-                            {isLoading ? (
-                              <Loader2 className="h-5 w-5 animate-spin" />
-                            ) : (
-                              <>
-                                <Truck className="h-5 w-5" />
-                                {t("deliver")}
-                              </>
-                            )}
-                          </button>
-                        </>
+                        // Confirmed orders - waiting for kitchen
+                        <div className="flex-1 py-3 px-4 rounded-xl font-medium bg-blue-500/10 text-blue-500 text-center">
+                          {t("waitingKitchen")}
+                        </div>
                       )}
                     </div>
                   </div>

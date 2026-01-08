@@ -36,6 +36,21 @@ async function main() {
   });
   console.log("Created waiter user:", waiter.email);
 
+  // Create kitchen user
+  const kitchenPassword = await hash("cozinha123", 12);
+  const kitchen = await prisma.user.upsert({
+    where: { email: "cozinha@aifood.com" },
+    update: {},
+    create: {
+      email: "cozinha@aifood.com",
+      password_hash: kitchenPassword,
+      name: "Cozinha",
+      role: "KITCHEN",
+      active: true,
+    },
+  });
+  console.log("Created kitchen user:", kitchen.email);
+
   // Create sample tables
   const tables = [];
   for (let i = 1; i <= 10; i++) {
@@ -263,6 +278,7 @@ async function main() {
   console.log("\n--- Login Credentials ---");
   console.log("Admin: admin@aifood.com / admin123");
   console.log("Garçom: garcom@aifood.com / garcom123");
+  console.log("Cozinha: cozinha@aifood.com / cozinha123");
 }
 
 main()

@@ -1,5 +1,11 @@
 # Plano de Implementacao - Fase 3: Sistema de Pedidos
 
+> **Status:** ✅ 100% IMPLEMENTADO  
+> **Data de conclusão:** 2026-01-07  
+> **Próxima fase:** Ver [PLANO-FASE4-COZINHA.md](./PLANO-FASE4-COZINHA.md)
+
+---
+
 ## Visao Geral
 
 Permitir que o cliente faca pedidos diretamente pelo celular, sem precisar chamar o garcom.
@@ -292,36 +298,36 @@ Nota: PREPARING e READY serao usados na Fase 4 (Cozinha)
 ## 6. Ordem de Implementacao
 
 ### Etapa 1: Backend Base
-1. [ ] Atualizar schema.prisma com novos models
-2. [ ] Rodar prisma db push
-3. [ ] Criar POST /api/pedidos
-4. [ ] Criar GET /api/pedidos?tableId=xxx
+1. [x] Atualizar schema.prisma com novos models
+2. [x] Rodar prisma db push
+3. [x] Criar POST /api/pedidos
+4. [x] Criar GET /api/pedidos?tableId=xxx
 
 ### Etapa 2: Cliente - Carrinho
-5. [ ] Criar CartContext
-6. [ ] Modificar MenuView para adicionar itens
-7. [ ] Criar CartModal
-8. [ ] Integrar carrinho no ClientTablePage
+5. [x] Criar CartContext
+6. [x] Modificar MenuView para adicionar itens
+7. [x] Criar CartModal
+8. [x] Integrar carrinho no ClientTablePage
 
 ### Etapa 3: Cliente - Acompanhamento
-9. [ ] Criar OrderStatusView
-10. [ ] Adicionar botao "Meus Pedidos" no ClientTablePage
+9. [x] Criar OrderStatusView
+10. [x] Adicionar botao "Meus Pedidos" no ClientTablePage
 
 ### Etapa 4: Garcom - Tempo Real
-11. [ ] Criar GET /api/pedidos/stream (SSE)
-12. [ ] Criar PATCH /api/pedidos/[id]/confirmar
-13. [ ] Criar PATCH /api/pedidos/[id]/entregar
-14. [ ] Criar PATCH /api/pedidos/[id]/cancelar
+11. [x] Criar GET /api/pedidos/stream (SSE)
+12. [x] Criar PATCH /api/pedidos/[id]/confirmar
+13. [x] Criar PATCH /api/pedidos/[id]/entregar
+14. [x] Criar PATCH /api/pedidos/[id]/cancelar
 
 ### Etapa 5: Garcom - Interface
-15. [ ] Criar OrdersPanel
-16. [ ] Adicionar tabs no WaiterDashboard
-17. [ ] Som de notificacao
+15. [x] Criar OrdersPanel
+16. [x] Adicionar tabs no WaiterDashboard
+17. [x] Som de notificacao
 
 ### Etapa 6: Traducoes e Polish
-18. [ ] Adicionar traducoes PT/ES/EN
-19. [ ] Testar fluxo completo
-20. [ ] Ajustes de UX
+18. [x] Adicionar traducoes PT/ES/EN
+19. [x] Testar fluxo completo
+20. [x] Ajustes de UX
 
 ---
 

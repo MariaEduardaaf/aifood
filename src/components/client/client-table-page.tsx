@@ -138,11 +138,24 @@ function ClientTablePageContent({ tableId, tableLabel }: ClientTablePageProps) {
   // Show menu view
   if (currentView === "menu") {
     return (
-      <MenuView
-        tableId={tableId}
-        onBack={() => setCurrentView("main")}
-        onOpenCart={() => setShowCart(true)}
-      />
+      <>
+        <MenuView
+          tableId={tableId}
+          onBack={() => setCurrentView("main")}
+          onOpenCart={() => setShowCart(true)}
+        />
+        {/* Cart Modal - também disponível na view do menu */}
+        {showCart && (
+          <CartModal
+            tableId={tableId}
+            onClose={() => setShowCart(false)}
+            onOrderSuccess={() => {
+              setShowCart(false);
+              setCurrentView("orders");
+            }}
+          />
+        )}
+      </>
     );
   }
 

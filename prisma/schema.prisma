@@ -11,6 +11,7 @@ enum Role {
   WAITER
   ADMIN
   MANAGER
+  KITCHEN
 }
 
 enum CallType {
@@ -35,6 +36,7 @@ model User {
 
   resolved_calls   Call[]  @relation("ResolvedBy")
   confirmed_orders Order[] @relation("ConfirmedBy")
+  prepared_orders  Order[] @relation("PreparedBy")
 }
 
 model Table {
@@ -149,9 +151,13 @@ model Order {
   confirmed_at DateTime?   // Quando garcom confirmou
   delivered_at DateTime?   // Quando foi entregue
   confirmed_by String?     // ID do garcom que confirmou
+  preparing_at DateTime?   // Quando cozinha iniciou preparo
+  ready_at     DateTime?   // Quando ficou pronto
+  prepared_by  String?     // ID do cozinheiro
 
   table     Table       @relation(fields: [table_id], references: [id], onDelete: Cascade)
   confirmer User?       @relation("ConfirmedBy", fields: [confirmed_by], references: [id])
+  preparer  User?       @relation("PreparedBy", fields: [prepared_by], references: [id])
   items     OrderItem[]
 
   @@index([table_id])

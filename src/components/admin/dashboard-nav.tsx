@@ -17,6 +17,7 @@ import {
   Settings,
   ChefHat,
 } from "lucide-react";
+import { ThemeToggleCompact } from "@/components/ui/theme-toggle";
 import type { Role } from "@prisma/client";
 
 interface DashboardNavProps {
@@ -126,6 +127,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
 
           {/* User Menu */}
           <div className="flex items-center gap-2 sm:gap-3">
+            <ThemeToggleCompact />
             <div className="flex items-center gap-2 sm:gap-3 px-2 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-secondary/50 border border-border/50">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
                 <span className="text-sm font-semibold text-primary">
