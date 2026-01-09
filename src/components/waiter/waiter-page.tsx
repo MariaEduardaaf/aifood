@@ -18,45 +18,41 @@ export function WaiterPage({ userId }: WaiterPageProps) {
   const [activeTab, setActiveTab] = useState<Tab>("calls");
 
   return (
-    <div className="min-h-screen">
-      {/* Tabs */}
-      <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b border-border/50">
-        <div className="flex">
-          <button
-            onClick={() => setActiveTab("calls")}
-            className={cn(
-              "flex-1 flex items-center justify-center gap-2 py-4 px-4 font-medium transition-colors",
-              activeTab === "calls"
-                ? "text-primary border-b-2 border-primary bg-primary/5"
-                : "text-muted-foreground hover:text-foreground hover:bg-secondary/50",
-            )}
-          >
-            <Bell className="h-5 w-5" />
-            <span>{t("calls")}</span>
-          </button>
-          <button
-            onClick={() => setActiveTab("orders")}
-            className={cn(
-              "flex-1 flex items-center justify-center gap-2 py-4 px-4 font-medium transition-colors",
-              activeTab === "orders"
-                ? "text-primary border-b-2 border-primary bg-primary/5"
-                : "text-muted-foreground hover:text-foreground hover:bg-secondary/50",
-            )}
-          >
-            <ShoppingBag className="h-5 w-5" />
-            <span>{t("orders")}</span>
-          </button>
-        </div>
+    <div className="min-h-[calc(100vh-4rem)]">
+      {/* Tabs compactas */}
+      <div className="flex gap-2 mb-6">
+        <button
+          onClick={() => setActiveTab("calls")}
+          className={cn(
+            "flex items-center gap-2 px-5 py-2.5 rounded-full font-medium transition-all duration-200",
+            activeTab === "calls"
+              ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
+              : "bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground",
+          )}
+        >
+          <Bell className="h-4 w-4" />
+          <span>{t("calls")}</span>
+        </button>
+        <button
+          onClick={() => setActiveTab("orders")}
+          className={cn(
+            "flex items-center gap-2 px-5 py-2.5 rounded-full font-medium transition-all duration-200",
+            activeTab === "orders"
+              ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
+              : "bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground",
+          )}
+        >
+          <ShoppingBag className="h-4 w-4" />
+          <span>{t("orders")}</span>
+        </button>
       </div>
 
       {/* Content */}
-      <div className="p-4 sm:p-6">
-        {activeTab === "calls" ? (
-          <WaiterDashboard userId={userId} />
-        ) : (
-          <OrdersPanel />
-        )}
-      </div>
+      {activeTab === "calls" ? (
+        <WaiterDashboard userId={userId} />
+      ) : (
+        <OrdersPanel />
+      )}
     </div>
   );
 }
