@@ -2,15 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslations } from "next-intl";
-import {
-  Bell,
-  Receipt,
-  Check,
-  Loader2,
-  Volume2,
-  VolumeX,
-  Clock,
-} from "lucide-react";
+import { Bell, Receipt, Check, Loader2, Clock } from "lucide-react";
 import { cn, formatTime, getUrgencyClass } from "@/lib/utils";
 
 interface Call {
@@ -34,7 +26,6 @@ export function WaiterDashboard({ userId }: WaiterDashboardProps) {
   const [calls, setCalls] = useState<Call[]>([]);
   const [loading, setLoading] = useState(true);
   const [resolvingId, setResolvingId] = useState<string | null>(null);
-  const [soundEnabled, setSoundEnabled] = useState(true);
   const [timers, setTimers] = useState<Record<string, number>>({});
 
   const previousCallsRef = useRef<string[]>([]);
@@ -48,13 +39,13 @@ export function WaiterDashboard({ userId }: WaiterDashboardProps) {
 
   // Play notification sound
   const playNotification = useCallback(() => {
-    if (soundEnabled && audioRef.current) {
+    if (audioRef.current) {
       audioRef.current.currentTime = 0;
       audioRef.current.play().catch(() => {
         // Autoplay blocked, ignore
       });
     }
-  }, [soundEnabled]);
+  }, []);
 
   // Fetch calls with SSE
   useEffect(() => {
@@ -161,22 +152,6 @@ export function WaiterDashboard({ userId }: WaiterDashboardProps) {
           </p>
         </div>
         <div className="flex items-center gap-3 sm:gap-4">
-          <button
-            onClick={() => setSoundEnabled(!soundEnabled)}
-            className={cn(
-              "p-3 rounded-xl transition-all duration-200 min-w-[44px] min-h-[44px]",
-              soundEnabled
-                ? "bg-primary/10 text-primary hover:bg-primary/20"
-                : "bg-secondary text-muted-foreground hover:bg-secondary/80",
-            )}
-            title={soundEnabled ? "Desativar som" : "Ativar som"}
-          >
-            {soundEnabled ? (
-              <Volume2 className="h-5 w-5" />
-            ) : (
-              <VolumeX className="h-5 w-5" />
-            )}
-          </button>
           <div
             className={cn(
               "flex items-center gap-2 px-4 sm:px-5 py-3 rounded-xl font-semibold",
