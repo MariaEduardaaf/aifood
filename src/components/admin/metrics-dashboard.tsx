@@ -9,13 +9,7 @@ import {
   CardTitle,
   Button,
 } from "@/components/ui";
-import {
-  ShoppingBag,
-  DollarSign,
-  Loader2,
-  ArrowUp,
-  ArrowDown,
-} from "lucide-react";
+import { ShoppingBag, DollarSign, Loader2 } from "lucide-react";
 
 interface Metrics {
   totalOrders: number;
@@ -127,13 +121,8 @@ export function MetricsDashboard() {
                   metrics.ordersChange >= 0 ? "text-green-500" : "text-red-500"
                 }`}
               >
-                {metrics.ordersChange >= 0 ? (
-                  <ArrowUp className="h-4 w-4" />
-                ) : (
-                  <ArrowDown className="h-4 w-4" />
-                )}
                 <span>
-                  {metrics.ordersChange >= 0 ? "+" : ""}
+                  {metrics.ordersChange >= 0 ? "▲ +" : "▼ "}
                   {metrics.ordersChange}% vs período anterior
                 </span>
               </div>
@@ -162,13 +151,8 @@ export function MetricsDashboard() {
                   metrics.revenueChange >= 0 ? "text-green-500" : "text-red-500"
                 }`}
               >
-                {metrics.revenueChange >= 0 ? (
-                  <ArrowUp className="h-4 w-4" />
-                ) : (
-                  <ArrowDown className="h-4 w-4" />
-                )}
                 <span>
-                  {metrics.revenueChange >= 0 ? "+" : ""}
+                  {metrics.revenueChange >= 0 ? "▲ +" : "▼ "}
                   {metrics.revenueChange}% vs período anterior
                 </span>
               </div>
