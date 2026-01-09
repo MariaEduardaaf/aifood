@@ -28,7 +28,13 @@ interface OrderItem {
 
 interface Order {
   id: string;
-  status: "PENDING" | "CONFIRMED" | "PREPARING" | "READY" | "DELIVERED" | "CANCELLED";
+  status:
+    | "PENDING"
+    | "CONFIRMED"
+    | "PREPARING"
+    | "READY"
+    | "DELIVERED"
+    | "CANCELLED";
   total: number;
   notes: string | null;
   created_at: string;
@@ -71,7 +77,7 @@ export function KitchenPanel() {
           .map((o) => o.id);
         const previousConfirmedIds = previousOrdersRef.current;
         const hasNewOrder = confirmedIds.some(
-          (id) => !previousConfirmedIds.includes(id)
+          (id) => !previousConfirmedIds.includes(id),
         );
 
         if (hasNewOrder && previousConfirmedIds.length > 0) {
@@ -177,7 +183,10 @@ export function KitchenPanel() {
     );
   }
 
-  const renderOrderCard = (order: Order, type: "confirmed" | "preparing" | "ready") => {
+  const renderOrderCard = (
+    order: Order,
+    type: "confirmed" | "preparing" | "ready",
+  ) => {
     const seconds = timers[order.id] || 0;
     const isLoading = actionLoading === order.id;
 
@@ -186,7 +195,7 @@ export function KitchenPanel() {
         key={order.id}
         className={cn(
           "card-premium rounded-xl overflow-hidden border-l-4 transition-all",
-          getUrgencyBorder(seconds)
+          getUrgencyBorder(seconds),
         )}
       >
         {/* Header */}
@@ -196,7 +205,7 @@ export function KitchenPanel() {
             <div
               className={cn(
                 "flex items-center gap-1 font-mono font-bold text-sm",
-                getUrgencyColor(seconds)
+                getUrgencyColor(seconds),
               )}
             >
               <Clock className="h-4 w-4" />
@@ -224,7 +233,9 @@ export function KitchenPanel() {
               </div>
               <div className="flex-1">
                 <p className="font-medium text-sm">
-                  <span className="text-primary font-bold">{item.quantity}x</span>{" "}
+                  <span className="text-primary font-bold">
+                    {item.quantity}x
+                  </span>{" "}
                   {item.menuItem.name_pt}
                 </p>
                 {item.notes && (
@@ -292,7 +303,8 @@ export function KitchenPanel() {
     );
   };
 
-  const totalOrders = confirmedOrders.length + preparingOrders.length + readyOrders.length;
+  const totalOrders =
+    confirmedOrders.length + preparingOrders.length + readyOrders.length;
 
   if (totalOrders === 0) {
     return (
@@ -310,17 +322,49 @@ export function KitchenPanel() {
     <div className="space-y-6">
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
-        <div className="card-premium rounded-xl p-4 text-center">
-          <p className="text-2xl font-bold text-yellow-500">{confirmedOrders.length}</p>
+        <div
+          className={cn(
+            "card-premium rounded-xl p-4 text-center relative",
+            confirmedOrders.length > 0 &&
+              "ring-2 ring-yellow-500/50 animate-pulse",
+          )}
+        >
+          <p className="text-2xl font-bold text-yellow-500">
+            {confirmedOrders.length}
+          </p>
           <p className="text-xs text-muted-foreground">{t("newOrders")}</p>
+          {confirmedOrders.length > 0 && (
+            <span className="absolute -top-2 -right-2 min-w-[24px] h-6 px-1.5 flex items-center justify-center bg-yellow-500 text-white text-xs font-bold rounded-full animate-bounce">
+              {confirmedOrders.length}
+            </span>
+          )}
         </div>
-        <div className="card-premium rounded-xl p-4 text-center">
-          <p className="text-2xl font-bold text-orange-500">{preparingOrders.length}</p>
+        <div
+          className={cn(
+            "card-premium rounded-xl p-4 text-center relative",
+            preparingOrders.length > 0 && "ring-2 ring-orange-500/50",
+          )}
+        >
+          <p className="text-2xl font-bold text-orange-500">
+            {preparingOrders.length}
+          </p>
           <p className="text-xs text-muted-foreground">{t("preparing")}</p>
         </div>
-        <div className="card-premium rounded-xl p-4 text-center">
-          <p className="text-2xl font-bold text-green-500">{readyOrders.length}</p>
+        <div
+          className={cn(
+            "card-premium rounded-xl p-4 text-center relative",
+            readyOrders.length > 0 && "ring-2 ring-green-500/50 animate-pulse",
+          )}
+        >
+          <p className="text-2xl font-bold text-green-500">
+            {readyOrders.length}
+          </p>
           <p className="text-xs text-muted-foreground">{t("ready")}</p>
+          {readyOrders.length > 0 && (
+            <span className="absolute -top-2 -right-2 min-w-[24px] h-6 px-1.5 flex items-center justify-center bg-green-500 text-white text-xs font-bold rounded-full animate-bounce">
+              {readyOrders.length}
+            </span>
+          )}
         </div>
       </div>
 
@@ -331,7 +375,9 @@ export function KitchenPanel() {
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-yellow-500" />
             <h3 className="font-bold">{t("newOrders")}</h3>
-            <span className="text-sm text-muted-foreground">({confirmedOrders.length})</span>
+            <span className="text-sm text-muted-foreground">
+              ({confirmedOrders.length})
+            </span>
           </div>
           <div className="space-y-3">
             {confirmedOrders.length === 0 ? (
@@ -339,7 +385,9 @@ export function KitchenPanel() {
                 {t("noNewOrders")}
               </div>
             ) : (
-              confirmedOrders.map((order) => renderOrderCard(order, "confirmed"))
+              confirmedOrders.map((order) =>
+                renderOrderCard(order, "confirmed"),
+              )
             )}
           </div>
         </div>
@@ -349,7 +397,9 @@ export function KitchenPanel() {
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-orange-500" />
             <h3 className="font-bold">{t("preparing")}</h3>
-            <span className="text-sm text-muted-foreground">({preparingOrders.length})</span>
+            <span className="text-sm text-muted-foreground">
+              ({preparingOrders.length})
+            </span>
           </div>
           <div className="space-y-3">
             {preparingOrders.length === 0 ? (
@@ -357,7 +407,9 @@ export function KitchenPanel() {
                 {t("noPreparing")}
               </div>
             ) : (
-              preparingOrders.map((order) => renderOrderCard(order, "preparing"))
+              preparingOrders.map((order) =>
+                renderOrderCard(order, "preparing"),
+              )
             )}
           </div>
         </div>
@@ -367,7 +419,9 @@ export function KitchenPanel() {
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-green-500" />
             <h3 className="font-bold">{t("ready")}</h3>
-            <span className="text-sm text-muted-foreground">({readyOrders.length})</span>
+            <span className="text-sm text-muted-foreground">
+              ({readyOrders.length})
+            </span>
           </div>
           <div className="space-y-3">
             {readyOrders.length === 0 ? (

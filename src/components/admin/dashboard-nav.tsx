@@ -1,19 +1,17 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import {
-  LayoutDashboard,
   TableProperties,
   Users,
   BarChart3,
-  Bell,
   LogOut,
   Utensils,
-  ChevronRight,
   Settings,
   ChefHat,
   MessageSquare,
@@ -29,12 +27,46 @@ interface DashboardNavProps {
   };
 }
 
+interface NotificationCounts {
+  feedbacks: number;
+}
+
 export function DashboardNav({ user }: DashboardNavProps) {
   const pathname = usePathname();
   const t = useTranslations("admin");
   const tAuth = useTranslations("auth");
+  const [counts, setCounts] = useState<NotificationCounts>({ feedbacks: 0 });
 
   const isAdmin = user.role === "ADMIN" || user.role === "MANAGER";
+
+  // Fetch notification counts
+  useEffect(() => {
+    const fetchCounts = async () => {
+      try {
+        // Fetch recent feedbacks (last 24h as "new")
+        const feedbacksRes = await fetch("/api/admin/feedbacks");
+        if (feedbacksRes.ok) {
+          const data = await feedbacksRes.json();
+          // Count feedbacks from last 24 hours
+          const now = new Date();
+          const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+          const newFeedbacks =
+            data.feedbacks?.filter(
+              (f: any) => new Date(f.created_at) > oneDayAgo,
+            ).length || 0;
+          setCounts((prev) => ({ ...prev, feedbacks: newFeedbacks }));
+        }
+      } catch (err) {
+        console.error("Error fetching notification counts:", err);
+      }
+    };
+
+    if (isAdmin) {
+      fetchCounts();
+      const interval = setInterval(fetchCounts, 30000); // Every 30 seconds
+      return () => clearInterval(interval);
+    }
+  }, [isAdmin]);
 
   const navItems = [
     {
@@ -42,36 +74,42 @@ export function DashboardNav({ user }: DashboardNavProps) {
       label: t("tables"),
       icon: TableProperties,
       show: isAdmin,
+      badge: 0,
     },
     {
       href: "/admin/usuarios",
       label: t("users"),
       icon: Users,
       show: isAdmin,
+      badge: 0,
     },
     {
       href: "/admin/metricas",
       label: t("metricsPage"),
       icon: BarChart3,
       show: isAdmin,
+      badge: 0,
     },
     {
       href: "/admin/feedbacks",
       label: "Feedbacks",
       icon: MessageSquare,
       show: isAdmin,
+      badge: counts.feedbacks,
     },
     {
       href: "/admin/cardapio",
       label: t("menu"),
       icon: ChefHat,
       show: isAdmin,
+      badge: 0,
     },
     {
       href: "/admin/configuracoes",
       label: t("settings"),
       icon: Settings,
       show: isAdmin,
+      badge: 0,
     },
   ];
 
@@ -107,7 +145,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
                       key={item.href}
                       href={item.href}
                       className={cn(
-                        "flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200",
+                        "flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 relative",
                         isActive
                           ? "bg-white/20 text-white"
                           : "text-white/70 hover:bg-white/10 hover:text-white",
@@ -115,6 +153,11 @@ export function DashboardNav({ user }: DashboardNavProps) {
                     >
                       <Icon className="h-4 w-4" />
                       <span className="hidden xl:inline">{item.label}</span>
+                      {item.badge > 0 && (
+                        <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-red-500 text-white text-[10px] font-bold rounded-full">
+                          {item.badge > 99 ? "99+" : item.badge}
+                        </span>
+                      )}
                     </Link>
                   );
                 })}
@@ -172,7 +215,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-all duration-200 whitespace-nowrap min-h-[40px]",
+                    "flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-all duration-200 whitespace-nowrap min-h-[40px] relative",
                     isActive
                       ? "bg-white/20 text-white"
                       : "text-white/70 hover:bg-white/10 hover:text-white",
@@ -180,6 +223,11 @@ export function DashboardNav({ user }: DashboardNavProps) {
                 >
                   <Icon className="h-4 w-4" />
                   {item.label}
+                  {item.badge > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-red-500 text-white text-[10px] font-bold rounded-full">
+                      {item.badge > 99 ? "99+" : item.badge}
+                    </span>
+                  )}
                 </Link>
               );
             })}
