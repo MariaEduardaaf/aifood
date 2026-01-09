@@ -5,7 +5,7 @@ import {
   Star,
   Loader2,
   MessageSquare,
-  Filter,
+  SlidersHorizontal,
   Clock,
   MapPin,
   User,
@@ -88,7 +88,7 @@ export function FeedbacksPage() {
             "h-4 w-4",
             i <= stars
               ? "text-yellow-500 fill-yellow-500"
-              : "text-muted-foreground/30"
+              : "text-muted-foreground/30",
           )}
         />
       ))}
@@ -123,7 +123,9 @@ export function FeedbacksPage() {
           <div className="bg-card border border-border/50 rounded-xl p-4">
             <p className="text-sm text-muted-foreground">Média</p>
             <div className="flex items-center gap-2 mt-1">
-              <span className="text-2xl font-bold">{stats.average.toFixed(1)}</span>
+              <span className="text-2xl font-bold">
+                {stats.average.toFixed(1)}
+              </span>
               <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
             </div>
           </div>
@@ -136,7 +138,9 @@ export function FeedbacksPage() {
           <div className="bg-card border border-border/50 rounded-xl p-4">
             <p className="text-sm text-muted-foreground">Negativas (1-3)</p>
             <p className="text-2xl font-bold text-red-500 mt-1">
-              {(stats.distribution[1] || 0) + (stats.distribution[2] || 0) + (stats.distribution[3] || 0)}
+              {(stats.distribution[1] || 0) +
+                (stats.distribution[2] || 0) +
+                (stats.distribution[3] || 0)}
             </p>
           </div>
         </div>
@@ -144,7 +148,7 @@ export function FeedbacksPage() {
 
       {/* Filter */}
       <div className="flex items-center gap-2 flex-wrap">
-        <Filter className="h-4 w-4 text-muted-foreground" />
+        <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
         <span className="text-sm text-muted-foreground">Filtrar:</span>
         <button
           onClick={() => setFilter(null)}
@@ -152,7 +156,7 @@ export function FeedbacksPage() {
             "px-3 py-1.5 rounded-full text-sm font-medium transition-colors",
             filter === null
               ? "bg-primary text-primary-foreground"
-              : "bg-secondary text-muted-foreground hover:text-foreground"
+              : "bg-secondary text-muted-foreground hover:text-foreground",
           )}
         >
           Todos
@@ -165,14 +169,18 @@ export function FeedbacksPage() {
               "px-3 py-1.5 rounded-full text-sm font-medium transition-colors flex items-center gap-1",
               filter === star
                 ? "bg-primary text-primary-foreground"
-                : "bg-secondary text-muted-foreground hover:text-foreground"
+                : "bg-secondary text-muted-foreground hover:text-foreground",
             )}
           >
             {star}
-            <Star className={cn(
-              "h-3 w-3",
-              filter === star ? "fill-primary-foreground" : "fill-muted-foreground"
-            )} />
+            <Star
+              className={cn(
+                "h-3 w-3",
+                filter === star
+                  ? "fill-primary-foreground"
+                  : "fill-muted-foreground",
+              )}
+            />
           </button>
         ))}
       </div>
@@ -198,7 +206,7 @@ export function FeedbacksPage() {
                   ? "border-red-500/30 bg-red-500/5"
                   : rating.stars === 3
                     ? "border-yellow-500/30 bg-yellow-500/5"
-                    : "border-border/50"
+                    : "border-border/50",
               )}
             >
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
