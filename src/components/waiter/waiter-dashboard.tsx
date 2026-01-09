@@ -140,32 +140,22 @@ export function WaiterDashboard({ userId }: WaiterDashboardProps) {
   }
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gold">
-            {t("calls")}
-          </h1>
-          <p className="text-muted-foreground mt-1 text-sm sm:text-base">
-            Gerencie os chamados em tempo real
-          </p>
-        </div>
-        <div className="flex items-center gap-3 sm:gap-4">
-          <div
-            className={cn(
-              "flex items-center gap-2 px-4 sm:px-5 py-3 rounded-xl font-semibold",
-              calls.length > 0
-                ? "bg-gradient-to-r from-red-500/20 to-orange-500/20 text-red-400 border border-red-500/30"
-                : "bg-secondary text-muted-foreground",
-            )}
-          >
-            <Bell
-              className={cn("h-5 w-5", calls.length > 0 && "animate-pulse")}
-            />
-            <span className="text-lg">{calls.length}</span>
-            <span className="text-sm opacity-80 hidden sm:inline">abertos</span>
-          </div>
+    <div className="space-y-6">
+      {/* Counter */}
+      <div className="flex justify-end">
+        <div
+          className={cn(
+            "flex items-center gap-2 px-4 sm:px-5 py-3 rounded-xl font-semibold",
+            calls.length > 0
+              ? "bg-gradient-to-r from-red-500/20 to-orange-500/20 text-red-400 border border-red-500/30"
+              : "bg-secondary text-muted-foreground",
+          )}
+        >
+          <Bell
+            className={cn("h-5 w-5", calls.length > 0 && "animate-pulse")}
+          />
+          <span className="text-lg">{calls.length}</span>
+          <span className="text-sm opacity-80">abertos</span>
         </div>
       </div>
 
