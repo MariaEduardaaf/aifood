@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { Bell, ShoppingBag, LogOut, Utensils } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { WaiterDashboard } from "./waiter-dashboard";
-import { OrdersPanel } from "./orders-panel";
+import { OrdersKanban } from "./orders-kanban";
 import { ThemeToggleCompact } from "@/components/ui/theme-toggle";
 import { SoundToggleCompact } from "@/components/ui/sound-settings";
 import { cn } from "@/lib/utils";
@@ -132,7 +132,7 @@ export function WaiterPage({ userId, userName = "Garçom" }: WaiterPageProps) {
       {activeTab === "calls" ? (
         <WaiterDashboard userId={userId} />
       ) : (
-        <OrdersPanel />
+        <OrdersKanban />
       )}
     </div>
   );
