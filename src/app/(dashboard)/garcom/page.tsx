@@ -9,5 +9,5 @@ export default async function GarcomPage() {
     redirect("/login");
   }
 
-  return <WaiterPage userId={session.user.id} />;
+  return <WaiterPage userId={session.user.id} userName={session.user.name} />;
 }

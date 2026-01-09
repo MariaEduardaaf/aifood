@@ -2,18 +2,22 @@
 
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
-import { Bell, ShoppingBag } from "lucide-react";
+import { Bell, ShoppingBag, LogOut, Utensils } from "lucide-react";
+import { signOut } from "next-auth/react";
 import { WaiterDashboard } from "./waiter-dashboard";
 import { OrdersPanel } from "./orders-panel";
+import { ThemeToggleCompact } from "@/components/ui/theme-toggle";
+import { SoundToggleCompact } from "@/components/ui/sound-settings";
 import { cn } from "@/lib/utils";
 
 interface WaiterPageProps {
   userId: string;
+  userName?: string;
 }
 
 type Tab = "calls" | "orders";
 
-export function WaiterPage({ userId }: WaiterPageProps) {
+export function WaiterPage({ userId, userName = "Garçom" }: WaiterPageProps) {
   const t = useTranslations("waiter");
   const [activeTab, setActiveTab] = useState<Tab>("calls");
   const [callsCount, setCallsCount] = useState(0);
@@ -52,9 +56,41 @@ export function WaiterPage({ userId }: WaiterPageProps) {
     return () => clearInterval(interval);
   }, []);
 
+  const handleLogout = async () => {
+    await signOut({ callbackUrl: "/login" });
+  };
+
   return (
-    <div className="min-h-[calc(100vh-4rem)]">
-      {/* Tabs compactas */}
+    <div className="min-h-screen">
+      {/* Header */}
+      <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b border-border/50 -mx-4 px-4 -mt-6 pt-4 pb-4 mb-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary/10 rounded-xl">
+              <Utensils className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <h1 className="font-bold text-lg">Garçom</h1>
+              <p className="text-sm text-muted-foreground">{userName}</p>
+            </div>
+          </div>
+
+          {/* Controles */}
+          <div className="flex items-center gap-1 p-1 rounded-xl bg-secondary/50 border border-border/50">
+            <SoundToggleCompact />
+            <ThemeToggleCompact />
+            <button
+              onClick={handleLogout}
+              className="p-2 rounded-lg hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground"
+              title="Sair"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Tabs */}
       <div className="flex gap-2 mb-6">
         <button
           onClick={() => setActiveTab("calls")}
