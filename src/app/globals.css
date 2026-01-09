@@ -6,57 +6,57 @@
     /* Tema Claro */
     :root,
     .light {
-        --background: 40 33% 98%;
-        --foreground: 20 14% 10%;
+        --background: 210 25% 97%;
+        --foreground: 210 24% 16%;
         --card: 0 0% 100%;
-        --card-foreground: 20 14% 10%;
+        --card-foreground: 210 24% 16%;
         --popover: 0 0% 100%;
-        --popover-foreground: 20 14% 10%;
-        --primary: 38 92% 45%;
+        --popover-foreground: 210 24% 16%;
+        --primary: 192 73% 21%;
         --primary-foreground: 0 0% 100%;
-        --secondary: 40 20% 92%;
-        --secondary-foreground: 20 14% 10%;
-        --muted: 40 20% 92%;
-        --muted-foreground: 20 14% 45%;
-        --accent: 38 92% 45%;
-        --accent-foreground: 0 0% 100%;
-        --destructive: 0 84% 55%;
+        --secondary: 210 20% 93%;
+        --secondary-foreground: 210 24% 16%;
+        --muted: 210 20% 93%;
+        --muted-foreground: 220 9% 46%;
+        --accent: 40 100% 50%;
+        --accent-foreground: 210 24% 16%;
+        --destructive: 355 78% 56%;
         --destructive-foreground: 0 0% 100%;
-        --success: 142 76% 36%;
+        --success: 173 72% 44%;
         --success-foreground: 0 0% 100%;
-        --warning: 38 92% 50%;
-        --warning-foreground: 20 14% 4%;
-        --border: 40 20% 85%;
-        --input: 40 20% 92%;
-        --ring: 38 92% 45%;
+        --warning: 40 100% 50%;
+        --warning-foreground: 210 24% 16%;
+        --border: 210 20% 88%;
+        --input: 210 20% 93%;
+        --ring: 192 73% 21%;
         --radius: 0.75rem;
     }
 
-    /* Tema Escuro (Premium) */
+    /* Tema Escuro */
     .dark {
-        --background: 20 14% 4%;
-        --foreground: 38 36% 93%;
-        --card: 20 14% 8%;
-        --card-foreground: 38 36% 93%;
-        --popover: 20 14% 8%;
-        --popover-foreground: 38 36% 93%;
-        --primary: 38 92% 50%;
-        --primary-foreground: 20 14% 4%;
-        --secondary: 20 14% 14%;
-        --secondary-foreground: 38 36% 93%;
-        --muted: 20 14% 14%;
-        --muted-foreground: 38 20% 60%;
-        --accent: 38 92% 50%;
-        --accent-foreground: 20 14% 4%;
-        --destructive: 0 84% 60%;
+        --background: 210 24% 10%;
+        --foreground: 210 20% 95%;
+        --card: 210 24% 14%;
+        --card-foreground: 210 20% 95%;
+        --popover: 210 24% 14%;
+        --popover-foreground: 210 20% 95%;
+        --primary: 173 72% 44%;
+        --primary-foreground: 210 24% 10%;
+        --secondary: 210 24% 18%;
+        --secondary-foreground: 210 20% 95%;
+        --muted: 210 24% 18%;
+        --muted-foreground: 220 9% 60%;
+        --accent: 40 100% 50%;
+        --accent-foreground: 210 24% 10%;
+        --destructive: 355 78% 56%;
         --destructive-foreground: 0 0% 100%;
-        --success: 142 76% 36%;
-        --success-foreground: 0 0% 100%;
-        --warning: 38 92% 50%;
-        --warning-foreground: 20 14% 4%;
-        --border: 38 20% 20%;
-        --input: 20 14% 14%;
-        --ring: 38 92% 50%;
+        --success: 173 72% 44%;
+        --success-foreground: 210 24% 10%;
+        --warning: 40 100% 50%;
+        --warning-foreground: 210 24% 10%;
+        --border: 210 20% 25%;
+        --input: 210 24% 18%;
+        --ring: 173 72% 44%;
         --radius: 0.75rem;
     }
 }
@@ -73,21 +73,21 @@
 }
 
 @layer components {
-    /* Card Premium com borda dourada */
+    /* Card Premium */
     .card-premium {
-        @apply bg-card rounded-xl border border-border/50 shadow-xl;
+        @apply bg-card rounded-xl border border-border/50 shadow-lg;
     }
 
     .dark .card-premium {
-        background: linear-gradient(145deg, hsl(20 14% 10%), hsl(20 14% 6%));
+        background: linear-gradient(145deg, hsl(210 24% 16%), hsl(210 24% 12%));
         box-shadow:
             0 4px 6px -1px rgba(0, 0, 0, 0.3),
             0 2px 4px -2px rgba(0, 0, 0, 0.2),
-            inset 0 1px 0 0 rgba(255, 200, 100, 0.05);
+            inset 0 1px 0 0 rgba(46, 196, 182, 0.05);
     }
 
     .light .card-premium {
-        background: linear-gradient(145deg, hsl(0 0% 100%), hsl(40 33% 97%));
+        background: linear-gradient(145deg, hsl(0 0% 100%), hsl(210 25% 96%));
         box-shadow:
             0 4px 6px -1px rgba(0, 0, 0, 0.08),
             0 2px 4px -2px rgba(0, 0, 0, 0.05),
@@ -98,7 +98,7 @@
         box-shadow:
             0 10px 15px -3px rgba(0, 0, 0, 0.4),
             0 4px 6px -4px rgba(0, 0, 0, 0.3),
-            inset 0 1px 0 0 rgba(255, 200, 100, 0.1);
+            inset 0 1px 0 0 rgba(46, 196, 182, 0.1);
     }
 
     .light .card-premium:hover {
@@ -108,18 +108,18 @@
             inset 0 1px 0 0 rgba(255, 255, 255, 0.9);
     }
 
-    /* Botão Premium Dourado */
+    /* Botão Primary */
     .btn-gold {
         @apply relative overflow-hidden font-semibold py-4 px-8 rounded-xl text-lg;
         background: linear-gradient(
             135deg,
-            hsl(38 92% 50%),
-            hsl(32 90% 45%),
-            hsl(38 92% 50%)
+            hsl(173 72% 44%),
+            hsl(173 72% 38%),
+            hsl(173 72% 44%)
         );
-        color: hsl(20 14% 4%);
+        color: hsl(210 24% 10%);
         box-shadow:
-            0 4px 15px rgba(212, 175, 55, 0.4),
+            0 4px 15px rgba(46, 196, 182, 0.4),
             inset 0 1px 0 rgba(255, 255, 255, 0.2);
         transition: all 0.3s ease;
     }
@@ -127,7 +127,7 @@
     .btn-gold:hover {
         transform: translateY(-2px);
         box-shadow:
-            0 6px 20px rgba(212, 175, 55, 0.5),
+            0 6px 20px rgba(46, 196, 182, 0.5),
             inset 0 1px 0 rgba(255, 255, 255, 0.3);
     }
 
@@ -155,25 +155,25 @@
         left: 100%;
     }
 
-    /* Botão Secundário Premium */
+    /* Botão Secundário */
     .btn-secondary-premium {
         @apply relative font-semibold py-4 px-8 rounded-xl text-lg;
         transition: all 0.3s ease;
     }
 
     .dark .btn-secondary-premium {
-        background: linear-gradient(145deg, hsl(20 14% 16%), hsl(20 14% 12%));
-        color: hsl(38 36% 93%);
-        border: 1px solid hsl(38 20% 25%);
+        background: linear-gradient(145deg, hsl(210 24% 20%), hsl(210 24% 16%));
+        color: hsl(210 20% 95%);
+        border: 1px solid hsl(210 20% 30%);
         box-shadow:
             0 4px 10px rgba(0, 0, 0, 0.3),
-            inset 0 1px 0 rgba(255, 200, 100, 0.05);
+            inset 0 1px 0 rgba(46, 196, 182, 0.05);
     }
 
     .light .btn-secondary-premium {
-        background: linear-gradient(145deg, hsl(0 0% 100%), hsl(40 20% 95%));
-        color: hsl(20 14% 10%);
-        border: 1px solid hsl(40 20% 80%);
+        background: linear-gradient(145deg, hsl(0 0% 100%), hsl(210 20% 95%));
+        color: hsl(210 24% 16%);
+        border: 1px solid hsl(210 20% 85%);
         box-shadow:
             0 4px 10px rgba(0, 0, 0, 0.08),
             inset 0 1px 0 rgba(255, 255, 255, 0.8);
@@ -181,29 +181,29 @@
 
     .dark .btn-secondary-premium:hover {
         transform: translateY(-2px);
-        border-color: hsl(38 92% 50%);
+        border-color: hsl(173 72% 44%);
         box-shadow:
             0 6px 15px rgba(0, 0, 0, 0.4),
-            0 0 20px rgba(212, 175, 55, 0.1),
-            inset 0 1px 0 rgba(255, 200, 100, 0.1);
+            0 0 20px rgba(46, 196, 182, 0.1),
+            inset 0 1px 0 rgba(46, 196, 182, 0.1);
     }
 
     .light .btn-secondary-premium:hover {
         transform: translateY(-2px);
-        border-color: hsl(38 92% 45%);
+        border-color: hsl(192 73% 21%);
         box-shadow:
             0 6px 15px rgba(0, 0, 0, 0.12),
-            0 0 20px rgba(212, 175, 55, 0.1),
+            0 0 20px rgba(15, 76, 92, 0.1),
             inset 0 1px 0 rgba(255, 255, 255, 0.9);
     }
 
-    /* Texto Dourado Gradiente */
+    /* Texto Primary Gradiente */
     .text-gold {
         background: linear-gradient(
             135deg,
-            hsl(45 93% 60%),
-            hsl(38 92% 50%),
-            hsl(32 90% 45%)
+            hsl(173 72% 50%),
+            hsl(173 72% 44%),
+            hsl(192 73% 30%)
         );
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
@@ -213,9 +213,9 @@
     /* Badge Premium */
     .badge-premium {
         @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold;
-        background: linear-gradient(135deg, hsl(38 92% 50%), hsl(32 90% 45%));
-        color: hsl(20 14% 4%);
-        box-shadow: 0 2px 8px rgba(212, 175, 55, 0.3);
+        background: linear-gradient(135deg, hsl(173 72% 44%), hsl(173 72% 38%));
+        color: hsl(210 24% 10%);
+        box-shadow: 0 2px 8px rgba(46, 196, 182, 0.3);
     }
 
     /* Input Premium */
@@ -237,126 +237,126 @@
         background: linear-gradient(
             90deg,
             transparent,
-            hsl(38 92% 50% / 0.5),
+            hsl(173 72% 44% / 0.5),
             transparent
         );
     }
 
     /* Glow effect */
     .glow-gold {
-        box-shadow: 0 0 30px rgba(212, 175, 55, 0.2);
+        box-shadow: 0 0 30px rgba(46, 196, 182, 0.2);
     }
 
     /* Status cards */
     .status-waiting {
         @apply border-2;
-        border-color: hsl(142 76% 36%);
+        border-color: hsl(173 72% 44%);
     }
 
     .dark .status-waiting {
         background: linear-gradient(
             145deg,
-            hsl(142 76% 20% / 0.3),
-            hsl(142 76% 15% / 0.2)
+            hsl(173 72% 20% / 0.3),
+            hsl(173 72% 15% / 0.2)
         );
     }
 
     .light .status-waiting {
         background: linear-gradient(
             145deg,
-            hsl(142 76% 90% / 0.5),
-            hsl(142 76% 95% / 0.3)
+            hsl(173 72% 90% / 0.5),
+            hsl(173 72% 95% / 0.3)
         );
     }
 
     .status-urgent {
         @apply border-2;
-        border-color: hsl(0 84% 60%);
+        border-color: hsl(355 78% 56%);
     }
 
     .dark .status-urgent {
         background: linear-gradient(
             145deg,
-            hsl(0 84% 30% / 0.3),
-            hsl(0 84% 25% / 0.2)
+            hsl(355 78% 30% / 0.3),
+            hsl(355 78% 25% / 0.2)
         );
     }
 
     .light .status-urgent {
         background: linear-gradient(
             145deg,
-            hsl(0 84% 95% / 0.5),
-            hsl(0 84% 98% / 0.3)
+            hsl(355 78% 95% / 0.5),
+            hsl(355 78% 98% / 0.3)
         );
     }
 }
 
 @layer utilities {
-    /* Urgency colors for waiter dashboard */
+    /* Urgency colors */
     .urgency-green {
-        border: 1px solid hsl(142 76% 36%);
+        border: 1px solid hsl(173 72% 44%);
     }
 
     .dark .urgency-green {
         background: linear-gradient(
             145deg,
-            hsl(142 76% 20% / 0.4),
-            hsl(142 76% 15% / 0.3)
+            hsl(173 72% 20% / 0.4),
+            hsl(173 72% 15% / 0.3)
         );
-        color: hsl(142 76% 70%);
+        color: hsl(173 72% 60%);
     }
 
     .light .urgency-green {
         background: linear-gradient(
             145deg,
-            hsl(142 76% 92% / 0.6),
-            hsl(142 76% 96% / 0.4)
+            hsl(173 72% 92% / 0.6),
+            hsl(173 72% 96% / 0.4)
         );
-        color: hsl(142 76% 30%);
+        color: hsl(173 72% 30%);
     }
 
     .urgency-yellow {
-        border: 1px solid hsl(45 93% 47%);
+        border: 1px solid hsl(40 100% 50%);
     }
 
     .dark .urgency-yellow {
         background: linear-gradient(
             145deg,
-            hsl(45 93% 30% / 0.4),
-            hsl(45 93% 25% / 0.3)
+            hsl(40 100% 30% / 0.4),
+            hsl(40 100% 25% / 0.3)
         );
-        color: hsl(45 93% 70%);
+        color: hsl(40 100% 65%);
     }
 
     .light .urgency-yellow {
         background: linear-gradient(
             145deg,
-            hsl(45 93% 90% / 0.6),
-            hsl(45 93% 95% / 0.4)
+            hsl(40 100% 90% / 0.6),
+            hsl(40 100% 95% / 0.4)
         );
-        color: hsl(45 93% 30%);
+        color: hsl(40 100% 30%);
     }
 
     .urgency-red {
-        border: 1px solid hsl(0 84% 60%);
+        border: 1px solid hsl(355 78% 56%);
     }
 
     .dark .urgency-red {
         background: linear-gradient(
             145deg,
-            hsl(0 84% 30% / 0.4),
-            hsl(0 84% 25% / 0.3)
+            hsl(355 78% 30% / 0.4),
+            hsl(355 78% 25% / 0.3)
         );
-        color: hsl(0 84% 75%);
+        color: hsl(355 78% 70%);
     }
 
     .light .urgency-red {
         background: linear-gradient(
             145deg,
-            hsl(0 84% 95% / 0.6),
-            hsl(0 84% 98% / 0.4)
+            hsl(355 78% 95% / 0.6),
+            hsl(355 78% 98% / 0.4)
         );
-        color: hsl(0 84% 45%);
+        color: hsl(355 78% 45%);
     }
 
     /* Animated background */
@@ -368,20 +368,20 @@
     .dark .bg-animated {
         background: linear-gradient(
             -45deg,
-            hsl(20 14% 4%),
-            hsl(20 14% 8%),
-            hsl(20 14% 6%),
-            hsl(20 14% 10%)
+            hsl(210 24% 10%),
+            hsl(210 24% 14%),
+            hsl(210 24% 12%),
+            hsl(210 24% 16%)
         );
     }
 
     .light .bg-animated {
         background: linear-gradient(
             -45deg,
-            hsl(40 33% 98%),
-            hsl(40 33% 95%),
-            hsl(40 33% 97%),
-            hsl(40 33% 93%)
+            hsl(210 25% 97%),
+            hsl(210 25% 94%),
+            hsl(210 25% 96%),
+            hsl(210 25% 92%)
         );
     }
 
@@ -406,18 +406,18 @@
     .dark .shimmer {
         background: linear-gradient(
             90deg,
-            hsl(20 14% 10%) 0%,
-            hsl(20 14% 15%) 50%,
-            hsl(20 14% 10%) 100%
+            hsl(210 24% 14%) 0%,
+            hsl(210 24% 20%) 50%,
+            hsl(210 24% 14%) 100%
         );
     }
 
     .light .shimmer {
         background: linear-gradient(
             90deg,
-            hsl(40 20% 92%) 0%,
-            hsl(40 20% 88%) 50%,
-            hsl(40 20% 92%) 100%
+            hsl(210 20% 93%) 0%,
+            hsl(210 20% 88%) 50%,
+            hsl(210 20% 93%) 100%
         );
     }
 
@@ -430,18 +430,18 @@
         }
     }
 
-    /* Pulse gold */
+    /* Pulse primary */
     .pulse-gold {
-        animation: pulse-gold 2s infinite;
+        animation: pulse-primary 2s infinite;
     }
 
-    @keyframes pulse-gold {
+    @keyframes pulse-primary {
         0%,
         100% {
-            box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.4);
+            box-shadow: 0 0 0 0 rgba(46, 196, 182, 0.4);
         }
         50% {
-            box-shadow: 0 0 0 10px rgba(212, 175, 55, 0);
+            box-shadow: 0 0 0 10px rgba(46, 196, 182, 0);
         }
     }
 }
