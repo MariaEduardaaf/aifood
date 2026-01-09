@@ -183,7 +183,9 @@ export function DashboardNav({ user }: DashboardNavProps) {
                     ? "Admin"
                     : user.role === "MANAGER"
                       ? "Gerente"
-                      : "Garçom"}
+                      : user.role === "KITCHEN"
+                        ? "Cozinha"
+                        : "Garçom"}
                 </p>
               </div>
             </div>
