@@ -37,12 +37,6 @@ export function DashboardNav({ user }: DashboardNavProps) {
 
   const navItems = [
     {
-      href: "/admin",
-      label: t("dashboard"),
-      icon: LayoutDashboard,
-      show: isAdmin,
-    },
-    {
       href: "/admin/mesas",
       label: t("tables"),
       icon: TableProperties,
