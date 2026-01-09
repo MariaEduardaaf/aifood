@@ -5,7 +5,6 @@ import {
   Star,
   Loader2,
   MessageSquare,
-  SlidersHorizontal,
   Clock,
   MapPin,
   User,
@@ -148,7 +147,7 @@ export function FeedbacksPage() {
 
       {/* Filter */}
       <div className="flex items-center gap-2 flex-wrap">
-        <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
+        <Star className="h-4 w-4 text-muted-foreground" />
         <span className="text-sm text-muted-foreground">Filtrar:</span>
         <button
           onClick={() => setFilter(null)}
