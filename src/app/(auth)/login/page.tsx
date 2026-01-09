@@ -192,6 +192,10 @@ export default function LoginPage() {
                 <span className="text-foreground">Garçom:</span>{" "}
                 garcom@aifood.com / garcom123
               </p>
+              <p>
+                <span className="text-foreground">Cozinha:</span>{" "}
+                cozinha@aifood.com / cozinha123
+              </p>
             </div>
           </div>
         </div>
