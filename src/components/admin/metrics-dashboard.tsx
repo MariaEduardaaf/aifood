@@ -69,7 +69,7 @@ export function MetricsDashboard() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">{t("metrics")}</h1>
+          <h1 className="text-2xl font-bold">{t("metricsPage")}</h1>
           <p className="text-muted-foreground text-sm mt-1">
             Acompanhe o desempenho do seu restaurante
           </p>
