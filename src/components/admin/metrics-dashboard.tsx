@@ -13,8 +13,8 @@ import {
   ShoppingBag,
   DollarSign,
   Loader2,
-  TrendingUp,
-  TrendingDown,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 
 interface Metrics {
@@ -128,9 +128,9 @@ export function MetricsDashboard() {
                 }`}
               >
                 {metrics.ordersChange >= 0 ? (
-                  <TrendingUp className="h-4 w-4" />
+                  <ArrowUp className="h-4 w-4" />
                 ) : (
-                  <TrendingDown className="h-4 w-4" />
+                  <ArrowDown className="h-4 w-4" />
                 )}
                 <span>
                   {metrics.ordersChange >= 0 ? "+" : ""}
@@ -163,9 +163,9 @@ export function MetricsDashboard() {
                 }`}
               >
                 {metrics.revenueChange >= 0 ? (
-                  <TrendingUp className="h-4 w-4" />
+                  <ArrowUp className="h-4 w-4" />
                 ) : (
-                  <TrendingDown className="h-4 w-4" />
+                  <ArrowDown className="h-4 w-4" />
                 )}
                 <span>
                   {metrics.revenueChange >= 0 ? "+" : ""}
