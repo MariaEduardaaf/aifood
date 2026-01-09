@@ -37,12 +37,6 @@ export function DashboardNav({ user }: DashboardNavProps) {
 
   const navItems = [
     {
-      href: "/garcom",
-      label: "Chamados",
-      icon: Bell,
-      show: true,
-    },
-    {
       href: "/admin",
       label: t("dashboard"),
       icon: LayoutDashboard,
