@@ -1,14 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  Star,
-  Loader2,
-  MessageSquare,
-  Clock,
-  MapPin,
-  User,
-} from "lucide-react";
+import { Star, Loader2, MessageSquare, Clock, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Rating {
@@ -218,7 +211,6 @@ export function FeedbacksPage() {
 
                   <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                     <span className="flex items-center gap-1">
-                      <MapPin className="h-3.5 w-3.5" />
                       {rating.call.table.label}
                     </span>
                     {rating.call.resolver && (
