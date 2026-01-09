@@ -51,7 +51,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
     },
     {
       href: "/admin/metricas",
-      label: t("metrics"),
+      label: t("metricsPage"),
       icon: BarChart3,
       show: isAdmin,
     },
