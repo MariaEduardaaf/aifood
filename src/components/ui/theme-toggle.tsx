@@ -34,7 +34,7 @@ export function ThemeToggle() {
   );
 }
 
-export function ThemeToggleCompact() {
+export function ThemeToggleCompact({ className }: { className?: string }) {
   const { resolvedTheme, setTheme } = useTheme();
 
   const toggleTheme = () => {
@@ -44,7 +44,11 @@ export function ThemeToggleCompact() {
   return (
     <button
       onClick={toggleTheme}
-      className="p-2 rounded-lg bg-secondary/50 border border-border/50 text-muted-foreground hover:text-foreground hover:bg-secondary transition-all duration-200"
+      className={cn(
+        "p-2 rounded-lg transition-all duration-200",
+        className ||
+          "bg-secondary/50 border border-border/50 text-muted-foreground hover:text-foreground hover:bg-secondary",
+      )}
       title={resolvedTheme === "dark" ? "Modo Claro" : "Modo Escuro"}
     >
       {resolvedTheme === "dark" ? (

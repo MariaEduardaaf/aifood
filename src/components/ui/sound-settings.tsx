@@ -27,13 +27,13 @@ export function SoundSettings() {
           onClick={() => updateSettings({ enabled: !settings.enabled })}
           className={cn(
             "w-12 h-6 rounded-full transition-colors relative",
-            settings.enabled ? "bg-primary" : "bg-secondary"
+            settings.enabled ? "bg-primary" : "bg-secondary",
           )}
         >
           <span
             className={cn(
               "absolute top-1 w-4 h-4 rounded-full bg-white transition-transform shadow-sm",
-              settings.enabled ? "translate-x-7" : "translate-x-1"
+              settings.enabled ? "translate-x-7" : "translate-x-1",
             )}
           />
         </button>
@@ -43,7 +43,9 @@ export function SoundSettings() {
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <span className="text-sm">{t("sound.volume")}</span>
-          <span className="text-sm text-muted-foreground">{settings.volume}%</span>
+          <span className="text-sm text-muted-foreground">
+            {settings.volume}%
+          </span>
         </div>
         <input
           type="range"
@@ -68,7 +70,7 @@ export function SoundSettings() {
             "[&::-moz-range-thumb]:bg-primary",
             "[&::-moz-range-thumb]:border-0",
             "[&::-moz-range-thumb]:cursor-pointer",
-            !settings.enabled && "opacity-50 cursor-not-allowed"
+            !settings.enabled && "opacity-50 cursor-not-allowed",
           )}
         />
       </div>
@@ -79,7 +81,7 @@ export function SoundSettings() {
         disabled={!settings.enabled}
         className={cn(
           "w-full py-2 px-4 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors text-sm font-medium",
-          !settings.enabled && "opacity-50 cursor-not-allowed"
+          !settings.enabled && "opacity-50 cursor-not-allowed",
         )}
       >
         {t("sound.test")}
@@ -88,17 +90,18 @@ export function SoundSettings() {
   );
 }
 
-export function SoundToggleCompact() {
+export function SoundToggleCompact({ className }: { className?: string }) {
   const { settings, updateSettings } = useSound();
 
   return (
     <button
       onClick={() => updateSettings({ enabled: !settings.enabled })}
       className={cn(
-        "p-2 rounded-lg border border-border/50 transition-all duration-200",
-        settings.enabled
-          ? "bg-secondary/50 text-foreground"
-          : "bg-secondary/30 text-muted-foreground"
+        "p-2 rounded-lg transition-all duration-200",
+        className ||
+          (settings.enabled
+            ? "bg-secondary/50 border border-border/50 text-foreground"
+            : "bg-secondary/30 border border-border/50 text-muted-foreground"),
       )}
       title={settings.enabled ? "Som ativado" : "Som desativado"}
     >
