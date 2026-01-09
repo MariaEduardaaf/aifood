@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { ChefHat, LogOut, LayoutGrid, List } from "lucide-react";
+import { ChefHat, LogOut, LayoutGrid, List, Utensils } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { KitchenPanel } from "./kitchen-panel";
 import { KitchenKanban } from "./kitchen-kanban";
@@ -28,59 +28,84 @@ export function KitchenPage({ userId, userName }: KitchenPageProps) {
   return (
     <div className="min-h-screen">
       {/* Header */}
-      <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b border-border/50">
-        <div className="flex items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-xl">
-              <ChefHat className="h-6 w-6 text-primary" />
+      <header className="sticky top-0 z-20 bg-primary shadow-lg">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between h-16">
+            {/* Logo + Title */}
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
+                  <Utensils className="h-4 w-4 text-white" />
+                </div>
+                <span className="font-bold text-xl text-white hidden sm:inline">
+                  aiFood
+                </span>
+              </div>
+              <div className="hidden sm:block h-8 w-px bg-white/20" />
+              <div className="flex items-center gap-2">
+                <ChefHat className="h-5 w-5 text-white/80" />
+                <span className="font-semibold text-white">{t("title")}</span>
+              </div>
             </div>
-            <div>
-              <h1 className="font-bold text-lg">{t("title")}</h1>
-              <p className="text-sm text-muted-foreground">{userName}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            {/* View Mode Toggle */}
-            <div className="flex items-center gap-1 p-1 rounded-lg bg-secondary/50 border border-border/50">
+
+            {/* Controls */}
+            <div className="flex items-center gap-2">
+              {/* View Mode Toggle */}
+              <div className="flex items-center gap-1 p-1 rounded-lg bg-white/10 border border-white/20">
+                <button
+                  onClick={() => setViewMode("kanban")}
+                  className={cn(
+                    "p-2 rounded-md transition-all duration-200",
+                    viewMode === "kanban"
+                      ? "bg-white text-primary shadow-sm"
+                      : "text-white/70 hover:text-white hover:bg-white/10",
+                  )}
+                  title="Kanban"
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => setViewMode("list")}
+                  className={cn(
+                    "p-2 rounded-md transition-all duration-200",
+                    viewMode === "list"
+                      ? "bg-white text-primary shadow-sm"
+                      : "text-white/70 hover:text-white hover:bg-white/10",
+                  )}
+                  title="Lista"
+                >
+                  <List className="h-4 w-4" />
+                </button>
+              </div>
+              <SoundToggleCompact className="text-white/70 hover:text-white hover:bg-white/10" />
+              <ThemeToggleCompact className="text-white/70 hover:text-white hover:bg-white/10" />
+
+              {/* User info */}
+              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/10">
+                <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center">
+                  <span className="text-sm font-semibold text-white">
+                    {userName.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <span className="text-sm font-medium text-white">
+                  {userName}
+                </span>
+              </div>
+
               <button
-                onClick={() => setViewMode("kanban")}
-                className={cn(
-                  "p-2 rounded-md transition-all duration-200",
-                  viewMode === "kanban"
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                )}
-                title="Kanban (Drag & Drop)"
+                onClick={handleLogout}
+                className="p-2 rounded-xl text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+                title="Sair"
               >
-                <LayoutGrid className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => setViewMode("list")}
-                className={cn(
-                  "p-2 rounded-md transition-all duration-200",
-                  viewMode === "list"
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                )}
-                title="Lista"
-              >
-                <List className="h-4 w-4" />
+                <LogOut className="h-5 w-5" />
               </button>
             </div>
-            <SoundToggleCompact />
-            <ThemeToggleCompact />
-            <button
-              onClick={handleLogout}
-              className="p-2 rounded-xl hover:bg-secondary/50 transition-colors text-muted-foreground hover:text-foreground"
-            >
-              <LogOut className="h-5 w-5" />
-            </button>
           </div>
         </div>
-      </div>
+      </header>
 
       {/* Content */}
-      <div className="p-4 sm:p-6">
+      <div className="container mx-auto p-4 sm:p-6">
         {viewMode === "kanban" ? <KitchenKanban /> : <KitchenPanel />}
       </div>
     </div>
