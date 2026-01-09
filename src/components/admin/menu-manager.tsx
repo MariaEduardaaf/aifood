@@ -261,9 +261,7 @@ export function MenuManager() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
-          {t("menu")}
-        </h1>
+        <h1 className="text-2xl font-bold">{t("menu")}</h1>
         <button
           onClick={() => openCategoryModal()}
           className="btn-gold px-4 py-3 rounded-xl font-medium flex items-center justify-center gap-2 min-h-[44px]"

@@ -84,7 +84,7 @@ export default function ConfiguracoesPage() {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-foreground">{t("settings")}</h1>
+        <h1 className="text-2xl font-bold">{t("settings")}</h1>
       </div>
 
       {/* Google Reviews Card */}
