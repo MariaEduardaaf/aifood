@@ -5,8 +5,6 @@ import { useTranslations } from "next-intl";
 import { Bell, ShoppingBag } from "lucide-react";
 import { WaiterDashboard } from "./waiter-dashboard";
 import { OrdersPanel } from "./orders-panel";
-import { ThemeToggleCompact } from "@/components/ui/theme-toggle";
-import { SoundToggleCompact } from "@/components/ui/sound-settings";
 import { cn } from "@/lib/utils";
 
 interface WaiterPageProps {
@@ -21,15 +19,8 @@ export function WaiterPage({ userId }: WaiterPageProps) {
 
   return (
     <div className="min-h-screen">
-      {/* Header with Theme Toggle */}
+      {/* Tabs */}
       <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b border-border/50">
-        {/* Settings Row */}
-        <div className="flex items-center justify-end gap-2 px-4 py-2 border-b border-border/30">
-          <SoundToggleCompact />
-          <ThemeToggleCompact />
-        </div>
-
-        {/* Tabs */}
         <div className="flex">
           <button
             onClick={() => setActiveTab("calls")}
@@ -37,7 +28,7 @@ export function WaiterPage({ userId }: WaiterPageProps) {
               "flex-1 flex items-center justify-center gap-2 py-4 px-4 font-medium transition-colors",
               activeTab === "calls"
                 ? "text-primary border-b-2 border-primary bg-primary/5"
-                : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                : "text-muted-foreground hover:text-foreground hover:bg-secondary/50",
             )}
           >
             <Bell className="h-5 w-5" />
@@ -49,7 +40,7 @@ export function WaiterPage({ userId }: WaiterPageProps) {
               "flex-1 flex items-center justify-center gap-2 py-4 px-4 font-medium transition-colors",
               activeTab === "orders"
                 ? "text-primary border-b-2 border-primary bg-primary/5"
-                : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                : "text-muted-foreground hover:text-foreground hover:bg-secondary/50",
             )}
           >
             <ShoppingBag className="h-5 w-5" />

@@ -23,7 +23,7 @@ export function ThemeToggle() {
             "p-2 rounded-md transition-all duration-200",
             theme === opt.value
               ? "bg-primary text-primary-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+              : "text-muted-foreground hover:text-foreground hover:bg-secondary",
           )}
           title={opt.label}
         >
@@ -35,26 +35,22 @@ export function ThemeToggle() {
 }
 
 export function ThemeToggleCompact() {
-  const { theme, setTheme, resolvedTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
 
-  const cycleTheme = () => {
-    if (theme === "light") setTheme("dark");
-    else if (theme === "dark") setTheme("system");
-    else setTheme("light");
+  const toggleTheme = () => {
+    setTheme(resolvedTheme === "dark" ? "light" : "dark");
   };
 
   return (
     <button
-      onClick={cycleTheme}
+      onClick={toggleTheme}
       className="p-2 rounded-lg bg-secondary/50 border border-border/50 text-muted-foreground hover:text-foreground hover:bg-secondary transition-all duration-200"
-      title={theme === "system" ? "Sistema" : theme === "dark" ? "Escuro" : "Claro"}
+      title={resolvedTheme === "dark" ? "Modo Claro" : "Modo Escuro"}
     >
-      {theme === "system" ? (
-        <Monitor className="h-5 w-5" />
-      ) : resolvedTheme === "dark" ? (
-        <Moon className="h-5 w-5" />
-      ) : (
+      {resolvedTheme === "dark" ? (
         <Sun className="h-5 w-5" />
+      ) : (
+        <Moon className="h-5 w-5" />
       )}
     </button>
   );
