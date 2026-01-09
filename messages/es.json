@@ -18,12 +18,12 @@
   "client": {
     "table": "Mesa {number}",
     "callWaiter": "Llamar Camarero",
-    "requestBill": "Pedir la Cuenta",
-    "waiterOnTheWay": "¡Camarero en camino!",
-    "billRequested": "¡Cuenta solicitada!",
-    "pleaseWait": "Por favor, espere...",
+    "requestBill": "Pedir Cuenta",
+    "waiterOnTheWay": "¡En camino!",
+    "billRequested": "¡Solicitada!",
+    "pleaseWait": "Espere, estamos en camino...",
     "thankYou": "¡Gracias!",
-    "callSent": "Llamada enviada con éxito",
+    "callSent": "¡Llamada enviada con éxito!",
     "waitBeforeNewCall": "Espere {seconds} segundos antes de hacer una nueva llamada",
     "invalidTable": "Mesa inválida",
     "tableNotFound": "Mesa no encontrada",
@@ -36,7 +36,11 @@
     "redirectingGoogle": "Redirigiendo a Google Reviews...",
     "viewMenu": "Ver Menú",
     "viewMenuOrder": "Ver Menú y Pedir",
-    "myOrders": "Mis Pedidos"
+    "myOrders": "Mis Pedidos",
+    "welcomeMessage": "¡Bienvenido! ¿Cómo podemos ayudar?",
+    "browseAndOrder": "Navega por el menú y haz tu pedido",
+    "trackYourOrders": "Sigue el estado de tus pedidos",
+    "needAssistance": "¿Necesitas asistencia?"
   },
   "menu": {
     "title": "Menú",

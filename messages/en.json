@@ -19,11 +19,11 @@
     "table": "Table {number}",
     "callWaiter": "Call Waiter",
     "requestBill": "Request Bill",
-    "waiterOnTheWay": "Waiter on the way!",
-    "billRequested": "Bill requested!",
-    "pleaseWait": "Please wait...",
+    "waiterOnTheWay": "On the way!",
+    "billRequested": "Requested!",
+    "pleaseWait": "Please wait, we're on our way...",
     "thankYou": "Thank you!",
-    "callSent": "Call sent successfully",
+    "callSent": "Call sent successfully!",
     "waitBeforeNewCall": "Wait {seconds} seconds before making a new call",
     "invalidTable": "Invalid table",
     "tableNotFound": "Table not found",
@@ -36,7 +36,11 @@
     "redirectingGoogle": "Redirecting to Google Reviews...",
     "viewMenu": "View Menu",
     "viewMenuOrder": "View Menu & Order",
-    "myOrders": "My Orders"
+    "myOrders": "My Orders",
+    "welcomeMessage": "Welcome! How can we help?",
+    "browseAndOrder": "Browse the menu and place your order",
+    "trackYourOrders": "Track your order status",
+    "needAssistance": "Need assistance?"
   },
   "menu": {
     "title": "Menu",

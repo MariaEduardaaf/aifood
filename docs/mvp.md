@@ -1,6 +1,6 @@
-# aiFood — Plano de Desenvolvimento
+# Visionary — Plano de Desenvolvimento
 
-**Repositório:** https://github.com/MariaEduardaaf/aifood  
+**Repositório:** https://github.com/MariaEduardaaf/visionary  
 **Última atualização:** 2026-01-08
 
 ---
@@ -62,8 +62,8 @@
 
 | Usuário | Email | Senha | Role |
 |---------|-------|-------|------|
-| Admin | admin@aifood.com | admin123 | ADMIN |
-| Garçom | garcom@aifood.com | garcom123 | WAITER |
+| Admin | admin@visionary.com | admin123 | ADMIN |
+| Garçom | garcom@visionary.com | garcom123 | WAITER |
 
 ### Comandos
 
@@ -338,7 +338,7 @@ enum Role {
 **3. Seed (adicionar usuário):**
 ```typescript
 {
-  email: 'cozinha@aifood.com',
+  email: 'cozinha@visionary.com',
   password: 'cozinha123',
   name: 'Cozinha',
   role: 'KITCHEN'

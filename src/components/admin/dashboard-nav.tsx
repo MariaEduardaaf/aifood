@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -11,7 +12,6 @@ import {
   Users,
   BarChart3,
   LogOut,
-  Utensils,
   Settings,
   ChefHat,
   MessageSquare,
@@ -120,11 +120,16 @@ export function DashboardNav({ user }: DashboardNavProps) {
           <div className="flex items-center gap-4 sm:gap-8">
             {/* Logo */}
             <Link href="/garcom" className="flex items-center gap-2 group">
-              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white/20 flex items-center justify-center group-hover:bg-white/30 transition-all">
-                <Utensils className="h-4 w-4 text-white" />
-              </div>
+              <Image
+                src="/darklogo.webp"
+                alt="Visionary Logo"
+                width={36}
+                height={36}
+                className="object-contain"
+                priority
+              />
               <span className="font-bold text-lg sm:text-xl text-white hidden xs:inline">
-                aiFood
+                Visionary
               </span>
             </Link>
 

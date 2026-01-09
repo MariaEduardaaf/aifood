@@ -20,7 +20,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   // Carregar tema salvo ao montar
   useEffect(() => {
     setMounted(true);
-    const saved = localStorage.getItem("aifood-theme") as Theme | null;
+    const saved = localStorage.getItem("visionary-theme") as Theme | null;
     if (saved && ["light", "dark", "system"].includes(saved)) {
       setThemeState(saved);
     }
@@ -44,7 +44,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     root.classList.remove("light", "dark");
     root.classList.add(resolved);
     setResolvedTheme(resolved);
-    localStorage.setItem("aifood-theme", theme);
+    localStorage.setItem("visionary-theme", theme);
   }, [theme, mounted]);
 
   // Listener para mudancas no sistema
@@ -70,7 +70,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   // Evitar flash de tema errado no SSR
   if (!mounted) {
     return (
-      <ThemeContext.Provider value={{ theme: "dark", setTheme, resolvedTheme: "dark" }}>
+      <ThemeContext.Provider
+        value={{ theme: "dark", setTheme, resolvedTheme: "dark" }}
+      >
         {children}
       </ThemeContext.Provider>
     );

@@ -196,7 +196,7 @@ if (kitchenRoutes.some(route => pathname.startsWith(route))) {
 
 // Adicionar usuário de cozinha
 {
-  email: 'cozinha@aifood.com',
+  email: 'cozinha@visionary.com',
   password: await bcrypt.hash('cozinha123', 10),
   name: 'Cozinha',
   role: 'KITCHEN'
@@ -404,9 +404,9 @@ Três colunas para visualização clara:
 
 | Usuário | Email | Senha | Role |
 |---------|-------|-------|------|
-| Admin | admin@aifood.com | admin123 | ADMIN |
-| Garçom | garcom@aifood.com | garcom123 | WAITER |
-| Cozinha | cozinha@aifood.com | cozinha123 | KITCHEN |
+| Admin | admin@visionary.com | admin123 | ADMIN |
+| Garçom | garcom@visionary.com | garcom123 | WAITER |
+| Cozinha | cozinha@visionary.com | cozinha123 | KITCHEN |
 
 ---
 

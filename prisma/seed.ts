@@ -9,10 +9,10 @@ async function main() {
   // Create admin user
   const adminPassword = await hash("admin123", 12);
   const admin = await prisma.user.upsert({
-    where: { email: "admin@aifood.com" },
+    where: { email: "admin@visionary.com" },
     update: {},
     create: {
-      email: "admin@aifood.com",
+      email: "admin@visionary.com",
       password_hash: adminPassword,
       name: "Administrador",
       role: "ADMIN",
@@ -24,10 +24,10 @@ async function main() {
   // Create waiter user
   const waiterPassword = await hash("garcom123", 12);
   const waiter = await prisma.user.upsert({
-    where: { email: "garcom@aifood.com" },
+    where: { email: "garcom@visionary.com" },
     update: {},
     create: {
-      email: "garcom@aifood.com",
+      email: "garcom@visionary.com",
       password_hash: waiterPassword,
       name: "Garçom Demo",
       role: "WAITER",
@@ -39,10 +39,10 @@ async function main() {
   // Create kitchen user
   const kitchenPassword = await hash("cozinha123", 12);
   const kitchen = await prisma.user.upsert({
-    where: { email: "cozinha@aifood.com" },
+    where: { email: "cozinha@visionary.com" },
     update: {},
     create: {
-      email: "cozinha@aifood.com",
+      email: "cozinha@visionary.com",
       password_hash: kitchenPassword,
       name: "Cozinha",
       role: "KITCHEN",
@@ -276,9 +276,9 @@ async function main() {
 
   console.log("Seeding completed!");
   console.log("\n--- Login Credentials ---");
-  console.log("Admin: admin@aifood.com / admin123");
-  console.log("Garçom: garcom@aifood.com / garcom123");
-  console.log("Cozinha: cozinha@aifood.com / cozinha123");
+  console.log("Admin: admin@visionary.com / admin123");
+  console.log("Garçom: garcom@visionary.com / garcom123");
+  console.log("Cozinha: cozinha@visionary.com / cozinha123");
 }
 
 main()

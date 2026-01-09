@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { ChefHat, LogOut, LayoutGrid, List, Utensils } from "lucide-react";
+import Image from "next/image";
+import { ChefHat, LogOut, LayoutGrid, List } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { KitchenPanel } from "./kitchen-panel";
 import { KitchenKanban } from "./kitchen-kanban";
@@ -34,11 +35,16 @@ export function KitchenPage({ userId, userName }: KitchenPageProps) {
             {/* Logo + Title */}
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
-                  <Utensils className="h-4 w-4 text-white" />
-                </div>
+                <Image
+                  src="/darklogo.webp"
+                  alt="Visionary Logo"
+                  width={36}
+                  height={36}
+                  className="object-contain"
+                  priority
+                />
                 <span className="font-bold text-xl text-white hidden sm:inline">
-                  aiFood
+                  Visionary
                 </span>
               </div>
               <div className="hidden sm:block h-8 w-px bg-white/20" />

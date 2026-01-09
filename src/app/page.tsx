@@ -1,6 +1,6 @@
 import Link from "next/link";
+import Image from "next/image";
 import {
-  Utensils,
   Bell,
   Receipt,
   BarChart3,
@@ -47,10 +47,15 @@ export default function Home() {
         <header className="py-6 px-6">
           <div className="container mx-auto flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/20">
-                <Utensils className="h-5 w-5 text-primary-foreground" />
-              </div>
-              <span className="text-xl font-bold text-gold">aiFood</span>
+              <Image
+                src="/darklogo.webp"
+                alt="Visionary Logo"
+                width={40}
+                height={40}
+                className="object-contain"
+                priority
+              />
+              <span className="text-xl font-bold text-gold">Visionary</span>
             </div>
             <Link
               href="/login"
@@ -95,7 +100,6 @@ export default function Home() {
                 href="/login"
                 className="btn-gold inline-flex items-center justify-center gap-2"
               >
-                <Utensils className="h-5 w-5" />
                 <span>Sou Garçom / Admin</span>
               </Link>
             </div>
@@ -188,16 +192,20 @@ export default function Home() {
         <footer className="py-10 px-6 border-t border-border/50">
           <div className="container mx-auto text-center">
             <div className="flex items-center justify-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center">
-                <Utensils className="h-4 w-4 text-primary-foreground" />
-              </div>
-              <span className="font-bold text-gold">aiFood</span>
+              <Image
+                src="/darklogo.webp"
+                alt="Visionary Logo"
+                width={32}
+                height={32}
+                className="object-contain"
+              />
+              <span className="font-bold text-gold">Visionary</span>
             </div>
             <p className="text-sm text-muted-foreground">
               Plataforma de Atendimento Inteligente para Restaurantes
             </p>
             <p className="text-xs text-muted-foreground/60 mt-4">
-              © 2026 aiFood. Todos os direitos reservados.
+              © 2026 Visionary. Todos os direitos reservados.
             </p>
           </div>
         </footer>

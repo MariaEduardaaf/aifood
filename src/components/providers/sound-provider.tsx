@@ -1,6 +1,13 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, useRef, useCallback } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+} from "react";
 
 interface SoundSettings {
   enabled: boolean;
@@ -35,7 +42,7 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
     setMounted(true);
 
     // Carregar configuracoes salvas
-    const saved = localStorage.getItem("aifood-sound-settings");
+    const saved = localStorage.getItem("visionary-sound-settings");
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -69,20 +76,23 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
   const updateSettings = useCallback((newSettings: Partial<SoundSettings>) => {
     setSettings((prev) => {
       const updated = { ...prev, ...newSettings };
-      localStorage.setItem("aifood-sound-settings", JSON.stringify(updated));
+      localStorage.setItem("visionary-sound-settings", JSON.stringify(updated));
       return updated;
     });
   }, []);
 
-  const playSound = useCallback((audio: HTMLAudioElement | null) => {
-    if (!settings.enabled || !audio) return;
+  const playSound = useCallback(
+    (audio: HTMLAudioElement | null) => {
+      if (!settings.enabled || !audio) return;
 
-    // Reset e play
-    audio.currentTime = 0;
-    audio.play().catch(() => {
-      // Ignorar erros de autoplay (browser pode bloquear)
-    });
-  }, [settings.enabled]);
+      // Reset e play
+      audio.currentTime = 0;
+      audio.play().catch(() => {
+        // Ignorar erros de autoplay (browser pode bloquear)
+      });
+    },
+    [settings.enabled],
+  );
 
   const playNotification = useCallback(() => {
     playSound(notificationRef.current);

@@ -18,12 +18,12 @@
   "client": {
     "table": "Mesa {number}",
     "callWaiter": "Chamar Garçom",
-    "requestBill": "Pedir a Conta",
-    "waiterOnTheWay": "Garçom a caminho!",
-    "billRequested": "Conta solicitada!",
-    "pleaseWait": "Por favor, aguarde...",
+    "requestBill": "Pedir Conta",
+    "waiterOnTheWay": "A caminho!",
+    "billRequested": "Solicitada!",
+    "pleaseWait": "Aguarde, estamos a caminho...",
     "thankYou": "Obrigado!",
-    "callSent": "Chamado enviado com sucesso",
+    "callSent": "Chamado enviado com sucesso!",
     "waitBeforeNewCall": "Aguarde {seconds} segundos antes de fazer um novo chamado",
     "invalidTable": "Mesa inválida",
     "tableNotFound": "Mesa não encontrada",
@@ -36,7 +36,11 @@
     "redirectingGoogle": "Redirecionando para Google Reviews...",
     "viewMenu": "Ver Cardápio",
     "viewMenuOrder": "Ver Cardápio e Pedir",
-    "myOrders": "Meus Pedidos"
+    "myOrders": "Meus Pedidos",
+    "welcomeMessage": "Bem-vindo! Como podemos ajudar?",
+    "browseAndOrder": "Navegue pelo cardápio e faça seu pedido",
+    "trackYourOrders": "Acompanhe o status dos seus pedidos",
+    "needAssistance": "Precisa de assistência?"
   },
   "menu": {
     "title": "Cardápio",

@@ -1,24 +1,28 @@
-import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
-import { NextIntlClientProvider } from 'next-intl'
-import { getMessages } from 'next-intl/server'
-import { ThemeProvider } from '@/components/providers/theme-provider'
-import { SoundProvider } from '@/components/providers/sound-provider'
-import './globals.css'
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import { NextIntlClientProvider } from "next-intl";
+import { getMessages } from "next-intl/server";
+import { ThemeProvider } from "@/components/providers/theme-provider";
+import { SoundProvider } from "@/components/providers/sound-provider";
+import "./globals.css";
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'aiFood - Atendimento Inteligente',
-  description: 'Plataforma de atendimento inteligente para restaurantes',
-}
+  title: "Visionary - Atendimento Inteligente",
+  description: "Plataforma de atendimento inteligente para restaurantes",
+  icons: {
+    icon: "/darklogo.webp",
+    apple: "/darklogo.webp",
+  },
+};
 
 export default async function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
-  const messages = await getMessages()
+  const messages = await getMessages();
 
   return (
     <html lang="pt" suppressHydrationWarning>
@@ -32,5 +36,5 @@ export default async function RootLayout({
         </ThemeProvider>
       </body>
     </html>
-  )
+  );
 }

@@ -18,14 +18,14 @@ export async function GET(request: NextRequest) {
 
     // Check/Create/Update Admin
     const existingAdmin = await prisma.user.findUnique({
-      where: { email: "admin@aifood.com" },
+      where: { email: "admin@visionary.com" },
     });
 
     if (existingAdmin) {
       results.admin.exists = true;
       if (existingAdmin.role !== "ADMIN") {
         await prisma.user.update({
-          where: { email: "admin@aifood.com" },
+          where: { email: "admin@visionary.com" },
           data: { role: "ADMIN" },
         });
         results.admin.updated = true;
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
       const adminPassword = await hash("admin123", 12);
       await prisma.user.create({
         data: {
-          email: "admin@aifood.com",
+          email: "admin@visionary.com",
           password_hash: adminPassword,
           name: "Administrador",
           role: "ADMIN",
@@ -46,14 +46,14 @@ export async function GET(request: NextRequest) {
 
     // Check/Create/Update Waiter
     const existingWaiter = await prisma.user.findUnique({
-      where: { email: "garcom@aifood.com" },
+      where: { email: "garcom@visionary.com" },
     });
 
     if (existingWaiter) {
       results.waiter.exists = true;
       if (existingWaiter.role !== "WAITER") {
         await prisma.user.update({
-          where: { email: "garcom@aifood.com" },
+          where: { email: "garcom@visionary.com" },
           data: { role: "WAITER" },
         });
         results.waiter.updated = true;
@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
       const waiterPassword = await hash("garcom123", 12);
       await prisma.user.create({
         data: {
-          email: "garcom@aifood.com",
+          email: "garcom@visionary.com",
           password_hash: waiterPassword,
           name: "Garçom Demo",
           role: "WAITER",
@@ -74,14 +74,14 @@ export async function GET(request: NextRequest) {
 
     // Check/Create/Update Kitchen
     const existingKitchen = await prisma.user.findUnique({
-      where: { email: "cozinha@aifood.com" },
+      where: { email: "cozinha@visionary.com" },
     });
 
     if (existingKitchen) {
       results.kitchen.exists = true;
       if (existingKitchen.role !== "KITCHEN") {
         await prisma.user.update({
-          where: { email: "cozinha@aifood.com" },
+          where: { email: "cozinha@visionary.com" },
           data: { role: "KITCHEN" },
         });
         results.kitchen.updated = true;
@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
       const kitchenPassword = await hash("cozinha123", 12);
       await prisma.user.create({
         data: {
-          email: "cozinha@aifood.com",
+          email: "cozinha@visionary.com",
           password_hash: kitchenPassword,
           name: "Cozinha",
           role: "KITCHEN",
