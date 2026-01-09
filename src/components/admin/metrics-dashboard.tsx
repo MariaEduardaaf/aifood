@@ -92,13 +92,22 @@ export function MetricsDashboard() {
 
   const fetchTopProducts = async () => {
     try {
-      const periodMap = { today: "hoje", week: "semana", month: "mes" };
+      const periodMap = { today: "today", week: "week", month: "month" };
       const res = await fetch(
-        `/api/admin/metricas/produtos/top?periodo=${periodMap[period]}&limit=5`,
+        `/api/admin/metricas/produtos/top?periodo=${periodMap[period]}&limite=5`,
       );
       if (res.ok) {
         const data = await res.json();
-        setTopProducts(data);
+        // API retorna { dados: [...] }
+        const produtos = data.dados || [];
+        setTopProducts(
+          produtos.map((p: any) => ({
+            id: p.id,
+            name: p.nome,
+            quantity: p.quantidade,
+            revenue: p.receita,
+          })),
+        );
       }
     } catch (err) {
       console.error("Error fetching top products:", err);
