@@ -1,24 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
 import { hash } from "bcryptjs";
 import { prisma } from "@/lib/db";
+import { auth } from "@/lib/auth";
 
 // GET /api/setup - Verificar e criar usuários padrão
 // REMOVER ESTA ROTA APÓS CONFIGURAÇÃO INICIAL
 export async function GET(request: NextRequest) {
   try {
+    // Get current session for debugging
+    const session = await auth();
+
     const results = {
-      admin: { exists: false, created: false },
-      waiter: { exists: false, created: false },
-      kitchen: { exists: false, created: false },
+      admin: { exists: false, created: false, updated: false },
+      waiter: { exists: false, created: false, updated: false },
+      kitchen: { exists: false, created: false, updated: false },
     };
 
-    // Check/Create Admin
+    // Check/Create/Update Admin
     const existingAdmin = await prisma.user.findUnique({
       where: { email: "admin@aifood.com" },
     });
 
     if (existingAdmin) {
       results.admin.exists = true;
+      if (existingAdmin.role !== "ADMIN") {
+        await prisma.user.update({
+          where: { email: "admin@aifood.com" },
+          data: { role: "ADMIN" },
+        });
+        results.admin.updated = true;
+      }
     } else {
       const adminPassword = await hash("admin123", 12);
       await prisma.user.create({
@@ -33,13 +44,20 @@ export async function GET(request: NextRequest) {
       results.admin.created = true;
     }
 
-    // Check/Create Waiter
+    // Check/Create/Update Waiter
     const existingWaiter = await prisma.user.findUnique({
       where: { email: "garcom@aifood.com" },
     });
 
     if (existingWaiter) {
       results.waiter.exists = true;
+      if (existingWaiter.role !== "WAITER") {
+        await prisma.user.update({
+          where: { email: "garcom@aifood.com" },
+          data: { role: "WAITER" },
+        });
+        results.waiter.updated = true;
+      }
     } else {
       const waiterPassword = await hash("garcom123", 12);
       await prisma.user.create({
@@ -54,13 +72,20 @@ export async function GET(request: NextRequest) {
       results.waiter.created = true;
     }
 
-    // Check/Create Kitchen
+    // Check/Create/Update Kitchen
     const existingKitchen = await prisma.user.findUnique({
       where: { email: "cozinha@aifood.com" },
     });
 
     if (existingKitchen) {
       results.kitchen.exists = true;
+      if (existingKitchen.role !== "KITCHEN") {
+        await prisma.user.update({
+          where: { email: "cozinha@aifood.com" },
+          data: { role: "KITCHEN" },
+        });
+        results.kitchen.updated = true;
+      }
     } else {
       const kitchenPassword = await hash("cozinha123", 12);
       await prisma.user.create({
@@ -88,14 +113,23 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       message: "Setup completed",
+      currentSession: session
+        ? {
+            userId: session.user.id,
+            email: session.user.email,
+            name: session.user.name,
+            role: session.user.role,
+          }
+        : null,
       results,
       users,
+      note: "Se o role na sessão estiver errado, faça LOGOUT e LOGIN novamente para atualizar o token JWT",
     });
   } catch (error) {
     console.error("Setup error:", error);
     return NextResponse.json(
       { error: "Setup failed", details: String(error) },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
