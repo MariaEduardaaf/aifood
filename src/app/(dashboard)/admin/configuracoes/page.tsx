@@ -84,10 +84,7 @@ export default function ConfiguracoesPage() {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gold flex items-center gap-3">
-          <Settings className="h-8 w-8" />
-          {t("settings")}
-        </h1>
+        <h1 className="text-3xl font-bold text-foreground">{t("settings")}</h1>
       </div>
 
       {/* Google Reviews Card */}
@@ -120,7 +117,8 @@ export default function ConfiguracoesPage() {
               className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
             />
             <p className="mt-2 text-xs text-muted-foreground">
-              Dica: Use o formato https://search.google.com/local/writereview?placeid=SEU_PLACE_ID
+              Dica: Use o formato
+              https://search.google.com/local/writereview?placeid=SEU_PLACE_ID
             </p>
           </div>
 
@@ -176,7 +174,8 @@ export default function ConfiguracoesPage() {
               </span>
             </div>
             <p className="mt-2 text-xs text-muted-foreground">
-              Clientes que derem {minStars} ou mais estrelas serão redirecionados ao Google Reviews
+              Clientes que derem {minStars} ou mais estrelas serão
+              redirecionados ao Google Reviews
             </p>
           </div>
         </div>
@@ -214,9 +213,16 @@ export default function ConfiguracoesPage() {
       <div className="card-premium rounded-2xl p-6 border-l-4 border-l-primary">
         <h3 className="font-semibold text-foreground mb-2">Como funciona?</h3>
         <ul className="space-y-2 text-sm text-muted-foreground">
-          <li>1. Quando um chamado é resolvido, o cliente vê uma tela de avaliação</li>
-          <li>2. Se a nota for {minStars}+ estrelas, o cliente é convidado a avaliar no Google</li>
-          <li>3. Notas baixas ficam apenas no sistema interno com feedback privado</li>
+          <li>
+            1. Quando um chamado é resolvido, o cliente vê uma tela de avaliação
+          </li>
+          <li>
+            2. Se a nota for {minStars}+ estrelas, o cliente é convidado a
+            avaliar no Google
+          </li>
+          <li>
+            3. Notas baixas ficam apenas no sistema interno com feedback privado
+          </li>
           <li>4. Isso ajuda a aumentar as avaliações positivas no Google</li>
         </ul>
       </div>
