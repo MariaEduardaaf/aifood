@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
                 in: statusFilter,
               },
             },
-            orderBy: { created_at: "asc" },
+            orderBy: { created_at: "desc" },
             include: {
               table: {
                 select: {
