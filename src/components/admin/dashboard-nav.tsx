@@ -16,6 +16,7 @@ import {
   ChevronRight,
   Settings,
   ChefHat,
+  MessageSquare,
 } from "lucide-react";
 import { ThemeToggleCompact } from "@/components/ui/theme-toggle";
 import { SoundToggleCompact } from "@/components/ui/sound-settings";
@@ -52,6 +53,12 @@ export function DashboardNav({ user }: DashboardNavProps) {
       href: "/admin/metricas",
       label: t("metrics"),
       icon: BarChart3,
+      show: isAdmin,
+    },
+    {
+      href: "/admin/feedbacks",
+      label: "Feedbacks",
+      icon: MessageSquare,
       show: isAdmin,
     },
     {
