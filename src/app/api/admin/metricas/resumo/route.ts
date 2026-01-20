@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
 // GET /api/admin/metricas/resumo - Resumo geral de metricas
 export async function GET(request: NextRequest) {
   try {
@@ -71,10 +73,10 @@ export async function GET(request: NextRequest) {
     // Calcular métricas de pedidos
     const totalPedidos = orders.length;
     const pedidosConfirmados = orders.filter(
-      (o) => o.status !== "PENDING" && o.status !== "CANCELLED"
+      (o) => o.status !== "PENDING" && o.status !== "CANCELLED",
     ).length;
     const pedidosCancelados = orders.filter(
-      (o) => o.status === "CANCELLED"
+      (o) => o.status === "CANCELLED",
     ).length;
     const taxaCancelamento =
       totalPedidos > 0 ? (pedidosCancelados / totalPedidos) * 100 : 0;
@@ -83,11 +85,12 @@ export async function GET(request: NextRequest) {
       .filter((o) => o.status !== "CANCELLED")
       .reduce((sum, o) => sum + Number(o.total), 0);
 
-    const ticketMedio = pedidosConfirmados > 0 ? receitaTotal / pedidosConfirmados : 0;
+    const ticketMedio =
+      pedidosConfirmados > 0 ? receitaTotal / pedidosConfirmados : 0;
 
     // Calcular tempos
     const pedidosComConfirmacao = orders.filter(
-      (o) => o.confirmed_at && o.created_at
+      (o) => o.confirmed_at && o.created_at,
     );
     const mediaConfirmacao =
       pedidosComConfirmacao.length > 0
@@ -100,7 +103,7 @@ export async function GET(request: NextRequest) {
         : 0;
 
     const pedidosComPreparo = orders.filter(
-      (o) => o.ready_at && o.preparing_at
+      (o) => o.ready_at && o.preparing_at,
     );
     const mediaPreparo =
       pedidosComPreparo.length > 0
@@ -113,7 +116,7 @@ export async function GET(request: NextRequest) {
         : 0;
 
     const pedidosComEntrega = orders.filter(
-      (o) => o.delivered_at && o.created_at
+      (o) => o.delivered_at && o.created_at,
     );
     const mediaTotal =
       pedidosComEntrega.length > 0
@@ -127,7 +130,7 @@ export async function GET(request: NextRequest) {
 
     // SLA: pedidos prontos em menos de 15 minutos
     const pedidosComTempoPreparo = orders.filter(
-      (o) => o.ready_at && o.confirmed_at
+      (o) => o.ready_at && o.confirmed_at,
     );
     const pedidosDentroSLA = pedidosComTempoPreparo.filter((o) => {
       const diff =
@@ -172,7 +175,7 @@ export async function GET(request: NextRequest) {
     const chamadosConta = calls.filter((c) => c.type === "REQUEST_BILL").length;
 
     const chamadosResolvidos = calls.filter(
-      (c) => c.resolved_at && c.created_at
+      (c) => c.resolved_at && c.created_at,
     );
     const tempoMedioAtendimento =
       chamadosResolvidos.length > 0
@@ -237,7 +240,7 @@ export async function GET(request: NextRequest) {
     console.error("Error fetching metrics summary:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

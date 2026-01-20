@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
 // GET /api/admin/metricas/pedidos/hora - Pedidos por hora
 export async function GET(request: NextRequest) {
   try {
@@ -88,7 +90,7 @@ export async function GET(request: NextRequest) {
     console.error("Error fetching orders by hour:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

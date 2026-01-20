@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
 // GET /api/admin/metricas/produtos/top - Top produtos mais vendidos
 export async function GET(request: NextRequest) {
   try {
@@ -100,7 +102,7 @@ export async function GET(request: NextRequest) {
     // Ordenar por quantidade e pegar top N
     const totalQuantidade = Array.from(produtoMap.values()).reduce(
       (sum, p) => sum + p.quantidade,
-      0
+      0,
     );
 
     const dados = Array.from(produtoMap.values())
@@ -120,7 +122,7 @@ export async function GET(request: NextRequest) {
     console.error("Error fetching top products:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

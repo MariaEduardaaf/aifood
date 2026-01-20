@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
 // GET /api/admin/metricas/tempo-real - Dados em tempo real
 export async function GET(request: NextRequest) {
   try {
@@ -40,9 +42,15 @@ export async function GET(request: NextRequest) {
     });
 
     // Contar por status
-    const pendentes = pedidosAtivos.filter((o) => o.status === "PENDING").length;
-    const confirmados = pedidosAtivos.filter((o) => o.status === "CONFIRMED").length;
-    const preparando = pedidosAtivos.filter((o) => o.status === "PREPARING").length;
+    const pendentes = pedidosAtivos.filter(
+      (o) => o.status === "PENDING",
+    ).length;
+    const confirmados = pedidosAtivos.filter(
+      (o) => o.status === "CONFIRMED",
+    ).length;
+    const preparando = pedidosAtivos.filter(
+      (o) => o.status === "PREPARING",
+    ).length;
     const prontos = pedidosAtivos.filter((o) => o.status === "READY").length;
 
     // Chamados abertos
@@ -73,7 +81,7 @@ export async function GET(request: NextRequest) {
       .filter((o) => o.status !== "READY")
       .forEach((pedido) => {
         const tempoMinutos = Math.floor(
-          (now - new Date(pedido.created_at).getTime()) / 60000
+          (now - new Date(pedido.created_at).getTime()) / 60000,
         );
         if (tempoMinutos >= 15 && tempoMinutos < 20) {
           alertas.push({
@@ -112,7 +120,7 @@ export async function GET(request: NextRequest) {
     console.error("Error fetching real-time metrics:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
