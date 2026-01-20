@@ -13,10 +13,16 @@ export default auth((req) => {
   );
 
   // API routes that are public
-  const publicApiRoutes = ["/api/auth", "/api/chamados"];
-  const isPublicApiRoute = publicApiRoutes.some((route) =>
-    pathname.startsWith(route),
-  );
+  const publicApiPrefixes = ["/api/auth"];
+  const publicApiExact = [
+    "/api/chamados",
+    "/api/cardapio",
+    "/api/pedidos",
+    "/api/avaliacao",
+  ];
+  const isPublicApiRoute =
+    publicApiPrefixes.some((route) => pathname.startsWith(route)) ||
+    publicApiExact.includes(pathname);
 
   // Special public routes for mesas (token lookup and status)
   const isPublicMesaRoute =

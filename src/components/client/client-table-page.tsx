@@ -219,7 +219,7 @@ function ClientTablePageContent({ tableId, tableLabel }: ClientTablePageProps) {
               src={
                 resolvedTheme === "dark" ? "/darklogo.webp" : "/lightlogo.webp"
               }
-              alt="Visionary Logo"
+              alt="aiFood Logo"
               width={44}
               height={44}
               className="object-contain"
@@ -227,7 +227,7 @@ function ClientTablePageContent({ tableId, tableLabel }: ClientTablePageProps) {
             />
             <div>
               <span className="text-xl font-bold text-gold block leading-tight">
-                Visionary
+                aiFood
               </span>
               <span className="text-xs text-muted-foreground flex items-center gap-1">
                 <Clock className="h-3 w-3" />
@@ -410,7 +410,7 @@ function ClientTablePageContent({ tableId, tableLabel }: ClientTablePageProps) {
       <footer className="relative z-10 py-4 text-center">
         <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground/60">
           <span>Powered by</span>
-          <span className="text-gold font-semibold">Visionary</span>
+          <span className="text-gold font-semibold">aiFood</span>
         </div>
       </footer>
 

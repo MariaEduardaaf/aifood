@@ -64,14 +64,14 @@ export default function LoginPage() {
           <div className="inline-flex items-center justify-center mb-4">
             <Image
               src="/darklogo.webp"
-              alt="Visionary Logo"
+              alt="aiFood Logo"
               width={64}
               height={64}
               className="object-contain"
               priority
             />
           </div>
-          <h1 className="text-3xl font-bold text-gold">Visionary</h1>
+          <h1 className="text-3xl font-bold text-gold">aiFood</h1>
           <p className="text-muted-foreground mt-2">
             Plataforma de Atendimento
           </p>
@@ -185,16 +185,16 @@ export default function LoginPage() {
             <p className="mb-2">Credenciais de demonstração:</p>
             <div className="space-y-1 text-xs">
               <p>
-                <span className="text-foreground">Admin:</span>{" "}
-                admin@visionary.com / admin123
+                <span className="text-foreground">Admin:</span> admin@aifood.com
+                / admin123
               </p>
               <p>
                 <span className="text-foreground">Garçom:</span>{" "}
-                garcom@visionary.com / garcom123
+                garcom@aifood.com / garcom123
               </p>
               <p>
                 <span className="text-foreground">Cozinha:</span>{" "}
-                cozinha@visionary.com / cozinha123
+                cozinha@aifood.com / cozinha123
               </p>
             </div>
           </div>
@@ -202,7 +202,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <p className="text-center text-sm text-muted-foreground/60 mt-6">
-          Powered by <span className="text-gold font-semibold">Visionary</span>
+          Powered by <span className="text-gold font-semibold">aiFood</span>
         </p>
       </div>
     </div>

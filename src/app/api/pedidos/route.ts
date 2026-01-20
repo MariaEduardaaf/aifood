@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { z } from "zod";
 import { Decimal } from "@prisma/client/runtime/library";
@@ -28,10 +29,28 @@ export async function GET(request: NextRequest) {
     const tableId = searchParams.get("tableId");
 
     if (!tableId) {
-      return NextResponse.json(
-        { error: "tableId is required" },
-        { status: 400 }
-      );
+      const session = await auth();
+
+      if (!session) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+
+      const orders = await prisma.order.findMany({
+        where: {
+          status: { in: ["PENDING", "CONFIRMED", "READY"] },
+        },
+        include: {
+          table: {
+            select: {
+              id: true,
+              label: true,
+            },
+          },
+        },
+        orderBy: { created_at: "desc" },
+      });
+
+      return NextResponse.json(orders);
     }
 
     // Verificar se mesa existe

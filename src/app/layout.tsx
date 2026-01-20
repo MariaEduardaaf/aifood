@@ -9,7 +9,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Visionary - Atendimento Inteligente",
+  title: "aiFood - Atendimento Inteligente",
   description: "Plataforma de atendimento inteligente para restaurantes",
   icons: {
     icon: "/darklogo.webp",

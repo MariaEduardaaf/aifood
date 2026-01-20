@@ -16,45 +16,54 @@ const sizes = {
   xl: { width: 64, height: 64, text: "text-3xl" },
 };
 
-export function Logo({ size = "md", showText = true, className = "" }: LogoProps) {
+export function Logo({
+  size = "md",
+  showText = true,
+  className = "",
+}: LogoProps) {
   const { resolvedTheme } = useTheme();
   const { width, height, text } = sizes[size];
 
-  const logoSrc = resolvedTheme === "dark" ? "/darklogo.webp" : "/lightlogo.webp";
+  const logoSrc =
+    resolvedTheme === "dark" ? "/darklogo.webp" : "/lightlogo.webp";
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       <Image
         src={logoSrc}
-        alt="Visionary Logo"
+        alt="aiFood Logo"
         width={width}
         height={height}
         className="object-contain"
         priority
       />
       {showText && (
-        <span className={`font-bold text-gold ${text}`}>Visionary</span>
+        <span className={`font-bold text-gold ${text}`}>aiFood</span>
       )}
     </div>
   );
 }
 
 // Versão para header com fundo escuro (admin/cozinha)
-export function LogoWhite({ size = "md", showText = true, className = "" }: LogoProps) {
+export function LogoWhite({
+  size = "md",
+  showText = true,
+  className = "",
+}: LogoProps) {
   const { width, height, text } = sizes[size];
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       <Image
         src="/darklogo.webp"
-        alt="Visionary Logo"
+        alt="aiFood Logo"
         width={width}
         height={height}
         className="object-contain"
         priority
       />
       {showText && (
-        <span className={`font-bold text-white ${text}`}>Visionary</span>
+        <span className={`font-bold text-white ${text}`}>aiFood</span>
       )}
     </div>
   );

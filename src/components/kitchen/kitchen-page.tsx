@@ -37,14 +37,14 @@ export function KitchenPage({ userId, userName }: KitchenPageProps) {
               <div className="flex items-center gap-2">
                 <Image
                   src="/darklogo.webp"
-                  alt="Visionary Logo"
+                  alt="aiFood Logo"
                   width={36}
                   height={36}
                   className="object-contain"
                   priority
                 />
                 <span className="font-bold text-xl text-white hidden sm:inline">
-                  Visionary
+                  aiFood
                 </span>
               </div>
               <div className="hidden sm:block h-8 w-px bg-white/20" />

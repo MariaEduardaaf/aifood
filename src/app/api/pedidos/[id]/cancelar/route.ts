@@ -14,6 +14,13 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    if (!["WAITER", "ADMIN", "MANAGER"].includes(session.user.role)) {
+      return NextResponse.json(
+        { error: "Only waiter or admin can cancel orders" },
+        { status: 403 }
+      );
+    }
+
     const order = await prisma.order.findUnique({
       where: { id: params.id },
     });

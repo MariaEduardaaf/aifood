@@ -1,7 +1,7 @@
-# Visionary — Plano de Desenvolvimento
+# aiFood — Plano de Desenvolvimento
 
-**Repositório:** https://github.com/MariaEduardaaf/visionary  
-**Última atualização:** 2026-01-08
+**Repositório:** https://github.com/MariaEduardaaf/aifood  
+**Última atualização:** 2026-01-20
 
 ---
 
@@ -62,8 +62,8 @@
 
 | Usuário | Email | Senha | Role |
 |---------|-------|-------|------|
-| Admin | admin@visionary.com | admin123 | ADMIN |
-| Garçom | garcom@visionary.com | garcom123 | WAITER |
+| Admin | admin@aifood.com | admin123 | ADMIN |
+| Garçom | garcom@aifood.com | garcom123 | WAITER |
 
 ### Comandos
 
@@ -320,30 +320,7 @@ Garçom entrega (DELIVERED)
 
 ### Modificações Necessárias
 
-**1. Schema (adicionar ao enum Role):**
-```prisma
-enum Role {
-  WAITER
-  ADMIN
-  MANAGER
-  KITCHEN  // Novo
-}
-```
-
-**2. Middleware (adicionar rota):**
-```typescript
-// Permitir KITCHEN acessar /cozinha
-```
-
-**3. Seed (adicionar usuário):**
-```typescript
-{
-  email: 'cozinha@visionary.com',
-  password: 'cozinha123',
-  name: 'Cozinha',
-  role: 'KITCHEN'
-}
-```
+Nenhuma. Implementacao concluida.
 
 ---
 

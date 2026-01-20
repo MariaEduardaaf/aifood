@@ -14,6 +14,13 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    if (!["WAITER", "ADMIN", "MANAGER"].includes(session.user.role)) {
+      return NextResponse.json(
+        { error: "Only waiter or admin can deliver orders" },
+        { status: 403 }
+      );
+    }
+
     const order = await prisma.order.findUnique({
       where: { id: params.id },
     });
@@ -22,11 +29,10 @@ export async function PATCH(
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    // Pode entregar se estiver CONFIRMED, PREPARING ou READY
-    const allowedStatuses = ["CONFIRMED", "PREPARING", "READY"];
-    if (!allowedStatuses.includes(order.status)) {
+    // Pode entregar apenas se estiver READY
+    if (order.status !== "READY") {
       return NextResponse.json(
-        { error: "Order cannot be delivered in current status" },
+        { error: "Order must be ready before delivery" },
         { status: 400 }
       );
     }

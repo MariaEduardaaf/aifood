@@ -122,14 +122,14 @@ export function DashboardNav({ user }: DashboardNavProps) {
             <Link href="/garcom" className="flex items-center gap-2 group">
               <Image
                 src="/darklogo.webp"
-                alt="Visionary Logo"
+                alt="aiFood Logo"
                 width={36}
                 height={36}
                 className="object-contain"
                 priority
               />
               <span className="font-bold text-lg sm:text-xl text-white hidden xs:inline">
-                Visionary
+                aiFood
               </span>
             </Link>
 
