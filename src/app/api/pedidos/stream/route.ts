@@ -13,6 +13,15 @@ export async function GET(request: NextRequest) {
 
   const userRole = session.user.role;
 
+  if (
+    userRole !== "WAITER" &&
+    userRole !== "ADMIN" &&
+    userRole !== "MANAGER" &&
+    userRole !== "KITCHEN"
+  ) {
+    return new Response("Forbidden", { status: 403 });
+  }
+
   // Definir quais status cada role pode ver
   let statusFilter: OrderStatus[];
 

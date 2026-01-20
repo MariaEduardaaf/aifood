@@ -35,6 +35,14 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       }
 
+      if (
+        session.user.role !== "WAITER" &&
+        session.user.role !== "ADMIN" &&
+        session.user.role !== "MANAGER"
+      ) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+
       const orders = await prisma.order.findMany({
         where: {
           status: { in: ["PENDING", "CONFIRMED", "READY"] },
@@ -94,7 +102,7 @@ export async function GET(request: NextRequest) {
     console.error("Error fetching orders:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -108,7 +116,7 @@ export async function POST(request: NextRequest) {
     if (!validation.success) {
       return NextResponse.json(
         { error: "Invalid data", details: validation.error.issues },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -124,10 +132,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!table.active) {
-      return NextResponse.json(
-        { error: "Table is inactive" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Table is inactive" }, { status: 400 });
     }
 
     // Rate limiting por mesa
@@ -145,7 +150,7 @@ export async function POST(request: NextRequest) {
             waitTime,
             message: `Aguarde ${waitTime} segundos antes de fazer um novo pedido`,
           },
-          { status: 429 }
+          { status: 429 },
         );
       }
     }
@@ -168,7 +173,7 @@ export async function POST(request: NextRequest) {
           error: "Some menu items not found or inactive",
           missingIds,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -232,7 +237,7 @@ export async function POST(request: NextRequest) {
     console.error("Error creating order:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
