@@ -29,7 +29,10 @@ export async function GET(request: NextRequest) {
 
         try {
           const calls = await prisma.call.findMany({
-            where: { status: "OPEN" },
+            where: {
+              status: "OPEN",
+              restaurant_id: session.user.restaurant_id,
+            },
             orderBy: { created_at: "asc" },
             include: {
               table: {

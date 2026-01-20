@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db";
 // PATCH /api/pedidos/[id]/cancelar - Cancelar pedido
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: string } },
 ) {
   try {
     const session = await auth();
@@ -17,12 +17,12 @@ export async function PATCH(
     if (!["WAITER", "ADMIN", "MANAGER"].includes(session.user.role)) {
       return NextResponse.json(
         { error: "Only waiter or admin can cancel orders" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
-    const order = await prisma.order.findUnique({
-      where: { id: params.id },
+    const order = await prisma.order.findFirst({
+      where: { id: params.id, restaurant_id: session.user.restaurant_id },
     });
 
     if (!order) {
@@ -33,14 +33,14 @@ export async function PATCH(
     if (order.status === "DELIVERED") {
       return NextResponse.json(
         { error: "Cannot cancel delivered order" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (order.status === "CANCELLED") {
       return NextResponse.json(
         { error: "Order already cancelled" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -64,7 +64,7 @@ export async function PATCH(
     console.error("Error cancelling order:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

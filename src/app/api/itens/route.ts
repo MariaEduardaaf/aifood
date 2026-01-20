@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/db'
-import { auth } from '@/lib/auth'
-import { z } from 'zod'
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
+import { auth } from "@/lib/auth";
+import { z } from "zod";
 
 const menuItemSchema = z.object({
   category_id: z.string(),
@@ -15,77 +15,103 @@ const menuItemSchema = z.object({
   image_url: z.string().url().optional().nullable(),
   order: z.number().optional(),
   active: z.boolean().optional(),
-})
+});
 
 // GET /api/itens - Listar itens
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const categoryId = searchParams.get('categoryId')
-    const activeOnly = searchParams.get('active') === 'true'
+    const session = await auth();
+
+    if (
+      !session ||
+      (session.user.role !== "ADMIN" && session.user.role !== "MANAGER")
+    ) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const categoryId = searchParams.get("categoryId");
+    const activeOnly = searchParams.get("active") === "true";
 
     const items = await prisma.menuItem.findMany({
       where: {
+        restaurant_id: session.user.restaurant_id,
         ...(categoryId ? { category_id: categoryId } : {}),
         ...(activeOnly ? { active: true } : {}),
       },
       include: {
         category: true,
       },
-      orderBy: [{ category: { order: 'asc' } }, { order: 'asc' }],
-    })
+      orderBy: [{ category: { order: "asc" } }, { order: "asc" }],
+    });
 
-    return NextResponse.json(items)
+    return NextResponse.json(items);
   } catch (error) {
-    console.error('Error fetching items:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error("Error fetching items:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }
 
 // POST /api/itens - Criar item (admin only)
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth()
+    const session = await auth();
 
-    if (!session || session.user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!session || session.user.role !== "ADMIN") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json()
-    const validation = menuItemSchema.safeParse(body)
+    const body = await request.json();
+    const validation = menuItemSchema.safeParse(body);
 
     if (!validation.success) {
       return NextResponse.json(
-        { error: 'Invalid data', details: validation.error.issues },
-        { status: 400 }
-      )
+        { error: "Invalid data", details: validation.error.issues },
+        { status: 400 },
+      );
     }
 
     // Verify category exists
-    const category = await prisma.category.findUnique({
-      where: { id: validation.data.category_id },
-    })
+    const category = await prisma.category.findFirst({
+      where: {
+        id: validation.data.category_id,
+        restaurant_id: session.user.restaurant_id,
+      },
+    });
 
     if (!category) {
-      return NextResponse.json({ error: 'Category not found' }, { status: 404 })
+      return NextResponse.json(
+        { error: "Category not found" },
+        { status: 404 },
+      );
     }
 
     // Get max order for this category
     const maxOrder = await prisma.menuItem.aggregate({
-      where: { category_id: validation.data.category_id },
+      where: {
+        category_id: validation.data.category_id,
+        restaurant_id: session.user.restaurant_id,
+      },
       _max: { order: true },
-    })
+    });
 
     const item = await prisma.menuItem.create({
       data: {
         ...validation.data,
         order: validation.data.order ?? (maxOrder._max.order ?? 0) + 1,
+        restaurant_id: session.user.restaurant_id,
       },
-    })
+    });
 
-    return NextResponse.json(item, { status: 201 })
+    return NextResponse.json(item, { status: 201 });
   } catch (error) {
-    console.error('Error creating item:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error("Error creating item:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }

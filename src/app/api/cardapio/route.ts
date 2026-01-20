@@ -1,16 +1,43 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
 // GET /api/cardapio - Cardápio público (apenas itens ativos)
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const tableId = searchParams.get("tableId");
+    let restaurantId: string | null = null;
+
+    if (tableId) {
+      const table = await prisma.table.findUnique({
+        where: { id: tableId },
+        select: { restaurant_id: true, active: true },
+      });
+
+      if (!table || !table.active) {
+        return NextResponse.json({ error: "Table not found" }, { status: 404 });
+      }
+
+      restaurantId = table.restaurant_id;
+    } else {
+      const session = await auth();
+      if (!session) {
+        return NextResponse.json(
+          { error: "tableId is required" },
+          { status: 400 },
+        );
+      }
+      restaurantId = session.user.restaurant_id;
+    }
+
     const categories = await prisma.category.findMany({
-      where: { active: true },
+      where: { active: true, restaurant_id: restaurantId },
       include: {
         items: {
-          where: { active: true },
+          where: { active: true, restaurant_id: restaurantId },
           orderBy: { order: "asc" },
           select: {
             id: true,

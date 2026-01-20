@@ -13,6 +13,7 @@ export async function GET(
         id: true,
         label: true,
         active: true,
+        restaurant_id: true,
       },
     });
 
@@ -29,6 +30,7 @@ export async function GET(
       where: {
         table_id: table.id,
         status: "OPEN",
+        restaurant_id: table.restaurant_id,
       },
       select: {
         id: true,
@@ -46,6 +48,7 @@ export async function GET(
         status: "RESOLVED",
         resolved_at: { gte: thirtyMinutesAgo },
         rating: null,
+        restaurant_id: table.restaurant_id,
       },
       select: {
         id: true,

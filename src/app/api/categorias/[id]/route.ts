@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/db'
-import { auth } from '@/lib/auth'
-import { z } from 'zod'
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
+import { auth } from "@/lib/auth";
+import { z } from "zod";
 
 const categoryUpdateSchema = z.object({
   name_pt: z.string().min(1).optional(),
@@ -9,87 +9,130 @@ const categoryUpdateSchema = z.object({
   name_en: z.string().min(1).optional(),
   order: z.number().optional(),
   active: z.boolean().optional(),
-})
+});
 
 // GET /api/categorias/[id] - Obter categoria
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: string } },
 ) {
   try {
-    const category = await prisma.category.findUnique({
-      where: { id: params.id },
-      include: {
-        items: {
-          orderBy: { order: 'asc' },
-        },
-      },
-    })
+    const session = await auth();
 
-    if (!category) {
-      return NextResponse.json({ error: 'Category not found' }, { status: 404 })
+    if (
+      !session ||
+      (session.user.role !== "ADMIN" && session.user.role !== "MANAGER")
+    ) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    return NextResponse.json(category)
+    const category = await prisma.category.findFirst({
+      where: { id: params.id, restaurant_id: session.user.restaurant_id },
+      include: {
+        items: {
+          orderBy: { order: "asc" },
+        },
+      },
+    });
+
+    if (!category) {
+      return NextResponse.json(
+        { error: "Category not found" },
+        { status: 404 },
+      );
+    }
+
+    return NextResponse.json(category);
   } catch (error) {
-    console.error('Error fetching category:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error("Error fetching category:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }
 
 // PUT /api/categorias/[id] - Atualizar categoria
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: string } },
 ) {
   try {
-    const session = await auth()
+    const session = await auth();
 
-    if (!session || session.user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!session || session.user.role !== "ADMIN") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json()
-    const validation = categoryUpdateSchema.safeParse(body)
+    const body = await request.json();
+    const validation = categoryUpdateSchema.safeParse(body);
 
     if (!validation.success) {
       return NextResponse.json(
-        { error: 'Invalid data', details: validation.error.issues },
-        { status: 400 }
-      )
+        { error: "Invalid data", details: validation.error.issues },
+        { status: 400 },
+      );
+    }
+
+    const existingCategory = await prisma.category.findFirst({
+      where: { id: params.id, restaurant_id: session.user.restaurant_id },
+    });
+
+    if (!existingCategory) {
+      return NextResponse.json(
+        { error: "Category not found" },
+        { status: 404 },
+      );
     }
 
     const category = await prisma.category.update({
       where: { id: params.id },
       data: validation.data,
-    })
+    });
 
-    return NextResponse.json(category)
+    return NextResponse.json(category);
   } catch (error) {
-    console.error('Error updating category:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error("Error updating category:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }
 
 // DELETE /api/categorias/[id] - Excluir categoria
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: string } },
 ) {
   try {
-    const session = await auth()
+    const session = await auth();
 
-    if (!session || session.user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!session || session.user.role !== "ADMIN") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const existingCategory = await prisma.category.findFirst({
+      where: { id: params.id, restaurant_id: session.user.restaurant_id },
+    });
+
+    if (!existingCategory) {
+      return NextResponse.json(
+        { error: "Category not found" },
+        { status: 404 },
+      );
     }
 
     await prisma.category.delete({
       where: { id: params.id },
-    })
+    });
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error deleting category:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error("Error deleting category:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }

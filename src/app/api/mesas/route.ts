@@ -21,6 +21,7 @@ export async function GET() {
     }
 
     const tables = await prisma.table.findMany({
+      where: { restaurant_id: session.user.restaurant_id },
       orderBy: { created_at: "asc" },
       include: {
         _count: {
@@ -72,6 +73,7 @@ export async function POST(request: NextRequest) {
         label,
         qr_token: generateToken(32),
         active: true,
+        restaurant_id: session.user.restaurant_id,
       },
     });
 

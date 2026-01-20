@@ -47,6 +47,7 @@ export async function GET(request: NextRequest) {
               status: {
                 in: statusFilter,
               },
+              restaurant_id: session.user.restaurant_id,
             },
             orderBy: { created_at: "desc" },
             include: {

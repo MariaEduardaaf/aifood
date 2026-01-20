@@ -23,6 +23,7 @@ export async function GET(request: NextRequest) {
         status: {
           in: ["PENDING", "CONFIRMED", "PREPARING", "READY"],
         },
+        restaurant_id: session.user.restaurant_id,
       },
       select: {
         id: true,
@@ -57,6 +58,7 @@ export async function GET(request: NextRequest) {
     const chamadosAbertos = await prisma.call.count({
       where: {
         status: "OPEN",
+        restaurant_id: session.user.restaurant_id,
       },
     });
 

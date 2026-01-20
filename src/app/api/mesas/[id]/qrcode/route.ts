@@ -18,8 +18,8 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const table = await prisma.table.findUnique({
-      where: { id: params.id },
+    const table = await prisma.table.findFirst({
+      where: { id: params.id, restaurant_id: session.user.restaurant_id },
     });
 
     if (!table) {

@@ -22,8 +22,8 @@ export async function PATCH(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const call = await prisma.call.findUnique({
-      where: { id: params.id },
+    const call = await prisma.call.findFirst({
+      where: { id: params.id, restaurant_id: session.user.restaurant_id },
     });
 
     if (!call) {

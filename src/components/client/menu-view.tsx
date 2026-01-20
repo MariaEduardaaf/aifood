@@ -53,7 +53,7 @@ export function MenuView({ tableId, onBack, onOpenCart }: MenuViewProps) {
 
   const fetchMenu = async () => {
     try {
-      const res = await fetch("/api/cardapio");
+      const res = await fetch(`/api/cardapio?tableId=${tableId}`);
       if (res.ok) {
         const data = await res.json();
         setCategories(data);

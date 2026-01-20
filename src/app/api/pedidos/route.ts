@@ -45,6 +45,7 @@ export async function GET(request: NextRequest) {
 
       const orders = await prisma.order.findMany({
         where: {
+          restaurant_id: session.user.restaurant_id,
           status: { in: ["PENDING", "CONFIRMED", "READY"] },
         },
         include: {
@@ -76,6 +77,7 @@ export async function GET(request: NextRequest) {
     const orders = await prisma.order.findMany({
       where: {
         table_id: tableId,
+        restaurant_id: table.restaurant_id,
         created_at: { gte: twentyFourHoursAgo },
         status: { not: "CANCELLED" },
       },
@@ -161,6 +163,7 @@ export async function POST(request: NextRequest) {
       where: {
         id: { in: menuItemIds },
         active: true,
+        restaurant_id: table.restaurant_id,
       },
     });
 
@@ -196,6 +199,7 @@ export async function POST(request: NextRequest) {
     const order = await prisma.order.create({
       data: {
         table_id: tableId,
+        restaurant_id: table.restaurant_id,
         total,
         notes: notes || null,
         items: {

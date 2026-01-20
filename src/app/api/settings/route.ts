@@ -21,17 +21,17 @@ export async function GET() {
     }
 
     let settings = await prisma.settings.findUnique({
-      where: { id: "default" },
+      where: { restaurant_id: session.user.restaurant_id },
     });
 
     // Create default settings if not exists
     if (!settings) {
       settings = await prisma.settings.create({
         data: {
-          id: "default",
           google_reviews_url: null,
           google_reviews_enabled: true,
           min_stars_redirect: 4,
+          restaurant_id: session.user.restaurant_id,
         },
       });
     }
@@ -66,11 +66,11 @@ export async function PUT(request: NextRequest) {
     }
 
     const settings = await prisma.settings.upsert({
-      where: { id: "default" },
+      where: { restaurant_id: session.user.restaurant_id },
       update: validation.data,
       create: {
-        id: "default",
         ...validation.data,
+        restaurant_id: session.user.restaurant_id,
       },
     });
 

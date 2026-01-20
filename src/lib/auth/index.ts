@@ -9,6 +9,7 @@ declare module "next-auth" {
     email: string;
     name: string;
     role: Role;
+    restaurant_id: string;
   }
 
   interface Session {
@@ -17,6 +18,7 @@ declare module "next-auth" {
       email: string;
       name: string;
       role: Role;
+      restaurant_id: string;
     };
   }
 }
@@ -25,6 +27,7 @@ declare module "@auth/core/jwt" {
   interface JWT {
     id: string;
     role: Role;
+    restaurant_id: string;
   }
 }
 
@@ -66,6 +69,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           email: user.email,
           name: user.name,
           role: user.role,
+          restaurant_id: user.restaurant_id,
         };
       },
     }),
@@ -75,6 +79,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (user) {
         token.id = user.id;
         token.role = user.role;
+        token.restaurant_id = user.restaurant_id;
       }
       return token;
     },
@@ -82,6 +87,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (token) {
         session.user.id = token.id;
         session.user.role = token.role;
+        session.user.restaurant_id = token.restaurant_id;
       }
       return session;
     },

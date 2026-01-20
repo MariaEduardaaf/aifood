@@ -42,6 +42,7 @@ export async function GET(request: NextRequest) {
     const totalCalls = await prisma.call.count({
       where: {
         created_at: { gte: startDate },
+        restaurant_id: session.user.restaurant_id,
       },
     });
 
@@ -50,6 +51,7 @@ export async function GET(request: NextRequest) {
       by: ["type"],
       where: {
         created_at: { gte: startDate },
+        restaurant_id: session.user.restaurant_id,
       },
       _count: true,
     });
@@ -60,6 +62,7 @@ export async function GET(request: NextRequest) {
         created_at: { gte: startDate },
         status: "RESOLVED",
         resolved_at: { not: null },
+        restaurant_id: session.user.restaurant_id,
       },
       select: {
         created_at: true,
@@ -96,6 +99,7 @@ export async function GET(request: NextRequest) {
       const todayCalls = await prisma.call.findMany({
         where: {
           created_at: { gte: startDate },
+          restaurant_id: session.user.restaurant_id,
         },
         select: {
           created_at: true,
@@ -118,6 +122,7 @@ export async function GET(request: NextRequest) {
       by: ["table_id"],
       where: {
         created_at: { gte: startDate },
+        restaurant_id: session.user.restaurant_id,
       },
       _count: true,
       orderBy: {
@@ -131,7 +136,10 @@ export async function GET(request: NextRequest) {
     // Get table labels
     const tableIds = callsByTable.map((c) => c.table_id);
     const tables = await prisma.table.findMany({
-      where: { id: { in: tableIds } },
+      where: {
+        id: { in: tableIds },
+        restaurant_id: session.user.restaurant_id,
+      },
       select: { id: true, label: true },
     });
 
@@ -148,6 +156,7 @@ export async function GET(request: NextRequest) {
         created_at: { gte: startDate },
         status: "RESOLVED",
         resolved_by: { not: null },
+        restaurant_id: session.user.restaurant_id,
       },
       _count: true,
       orderBy: {
@@ -162,7 +171,10 @@ export async function GET(request: NextRequest) {
       .map((c) => c.resolved_by)
       .filter(Boolean) as string[];
     const waiters = await prisma.user.findMany({
-      where: { id: { in: waiterIds } },
+      where: {
+        id: { in: waiterIds },
+        restaurant_id: session.user.restaurant_id,
+      },
       select: { id: true, name: true },
     });
 
@@ -174,13 +186,14 @@ export async function GET(request: NextRequest) {
 
     // Open calls count
     const openCalls = await prisma.call.count({
-      where: { status: "OPEN" },
+      where: { status: "OPEN", restaurant_id: session.user.restaurant_id },
     });
 
     // Rating metrics
     const ratings = await prisma.rating.findMany({
       where: {
         created_at: { gte: startDate },
+        restaurant_id: session.user.restaurant_id,
       },
       select: {
         stars: true,

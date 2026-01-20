@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db";
 // PATCH /api/pedidos/[id]/preparar - Iniciar preparo do pedido (KITCHEN)
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: string } },
 ) {
   try {
     const session = await auth();
@@ -18,12 +18,12 @@ export async function PATCH(
     if (session.user.role !== "KITCHEN") {
       return NextResponse.json(
         { error: "Only kitchen staff can start preparing orders" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
-    const order = await prisma.order.findUnique({
-      where: { id: params.id },
+    const order = await prisma.order.findFirst({
+      where: { id: params.id, restaurant_id: session.user.restaurant_id },
     });
 
     if (!order) {
@@ -33,7 +33,7 @@ export async function PATCH(
     if (order.status !== "CONFIRMED") {
       return NextResponse.json(
         { error: "Order must be confirmed before preparing" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -77,7 +77,7 @@ export async function PATCH(
     console.error("Error starting order preparation:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

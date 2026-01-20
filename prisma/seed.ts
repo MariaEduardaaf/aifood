@@ -6,17 +6,29 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("Seeding database...");
 
+  const restaurant = await prisma.restaurant.upsert({
+    where: { slug: "aifood" },
+    update: {},
+    create: {
+      name: "aiFood",
+      slug: "aifood",
+      active: true,
+    },
+  });
+  console.log("Created restaurant:", restaurant.name);
+
   // Create admin user
   const adminPassword = await hash("admin123", 12);
   const admin = await prisma.user.upsert({
-    where: { email: "admin@visionary.com" },
-    update: {},
+    where: { email: "admin@aifood.com" },
+    update: { restaurant_id: restaurant.id },
     create: {
-      email: "admin@visionary.com",
+      email: "admin@aifood.com",
       password_hash: adminPassword,
       name: "Administrador",
       role: "ADMIN",
       active: true,
+      restaurant_id: restaurant.id,
     },
   });
   console.log("Created admin user:", admin.email);
@@ -24,14 +36,15 @@ async function main() {
   // Create waiter user
   const waiterPassword = await hash("garcom123", 12);
   const waiter = await prisma.user.upsert({
-    where: { email: "garcom@visionary.com" },
-    update: {},
+    where: { email: "garcom@aifood.com" },
+    update: { restaurant_id: restaurant.id },
     create: {
-      email: "garcom@visionary.com",
+      email: "garcom@aifood.com",
       password_hash: waiterPassword,
       name: "Garçom Demo",
       role: "WAITER",
       active: true,
+      restaurant_id: restaurant.id,
     },
   });
   console.log("Created waiter user:", waiter.email);
@@ -39,14 +52,15 @@ async function main() {
   // Create kitchen user
   const kitchenPassword = await hash("cozinha123", 12);
   const kitchen = await prisma.user.upsert({
-    where: { email: "cozinha@visionary.com" },
-    update: {},
+    where: { email: "cozinha@aifood.com" },
+    update: { restaurant_id: restaurant.id },
     create: {
-      email: "cozinha@visionary.com",
+      email: "cozinha@aifood.com",
       password_hash: kitchenPassword,
       name: "Cozinha",
       role: "KITCHEN",
       active: true,
+      restaurant_id: restaurant.id,
     },
   });
   console.log("Created kitchen user:", kitchen.email);
@@ -56,11 +70,12 @@ async function main() {
   for (let i = 1; i <= 10; i++) {
     const table = await prisma.table.upsert({
       where: { id: `table-${i}` },
-      update: {},
+      update: { restaurant_id: restaurant.id },
       create: {
         id: `table-${i}`,
         label: `Mesa ${i}`,
         active: true,
+        restaurant_id: restaurant.id,
       },
     });
     tables.push(table);
@@ -69,14 +84,14 @@ async function main() {
 
   // Create default settings with test restaurant (La Nieta, Madrid)
   const settings = await prisma.settings.upsert({
-    where: { id: "default" },
+    where: { restaurant_id: restaurant.id },
     update: {},
     create: {
-      id: "default",
       google_reviews_url:
         "https://search.google.com/local/writereview?placeid=ChIJmYSE24UoQg0R-6rgBEDufpU",
       google_reviews_enabled: true,
       min_stars_redirect: 4,
+      restaurant_id: restaurant.id,
     },
   });
   console.log("Created default settings with Google Reviews URL");
@@ -85,6 +100,7 @@ async function main() {
   const categories = [
     {
       id: "cat-entradas",
+      restaurant_id: restaurant.id,
       name_pt: "Entradas",
       name_es: "Entrantes",
       name_en: "Starters",
@@ -92,6 +108,7 @@ async function main() {
     },
     {
       id: "cat-pratos",
+      restaurant_id: restaurant.id,
       name_pt: "Pratos Principais",
       name_es: "Platos Principales",
       name_en: "Main Courses",
@@ -99,6 +116,7 @@ async function main() {
     },
     {
       id: "cat-bebidas",
+      restaurant_id: restaurant.id,
       name_pt: "Bebidas",
       name_es: "Bebidas",
       name_en: "Drinks",
@@ -106,6 +124,7 @@ async function main() {
     },
     {
       id: "cat-sobremesas",
+      restaurant_id: restaurant.id,
       name_pt: "Sobremesas",
       name_es: "Postres",
       name_en: "Desserts",
@@ -116,7 +135,7 @@ async function main() {
   for (const cat of categories) {
     await prisma.category.upsert({
       where: { id: cat.id },
-      update: {},
+      update: { restaurant_id: restaurant.id },
       create: cat,
     });
   }
@@ -127,6 +146,7 @@ async function main() {
     // Entradas
     {
       id: "item-bruschetta",
+      restaurant_id: restaurant.id,
       category_id: "cat-entradas",
       name_pt: "Bruschetta de Tomate",
       name_es: "Bruschetta de Tomate",
@@ -142,6 +162,7 @@ async function main() {
     },
     {
       id: "item-carpaccio",
+      restaurant_id: restaurant.id,
       category_id: "cat-entradas",
       name_pt: "Carpaccio de Carne",
       name_es: "Carpaccio de Res",
@@ -158,6 +179,7 @@ async function main() {
     // Pratos
     {
       id: "item-picanha",
+      restaurant_id: restaurant.id,
       category_id: "cat-pratos",
       name_pt: "Picanha Grelhada",
       name_es: "Picaña a la Parrilla",
@@ -173,6 +195,7 @@ async function main() {
     },
     {
       id: "item-salmao",
+      restaurant_id: restaurant.id,
       category_id: "cat-pratos",
       name_pt: "Salmão Grelhado",
       name_es: "Salmón a la Parrilla",
@@ -188,6 +211,7 @@ async function main() {
     },
     {
       id: "item-risoto",
+      restaurant_id: restaurant.id,
       category_id: "cat-pratos",
       name_pt: "Risoto de Funghi",
       name_es: "Risotto de Hongos",
@@ -201,6 +225,7 @@ async function main() {
     // Bebidas
     {
       id: "item-suco",
+      restaurant_id: restaurant.id,
       category_id: "cat-bebidas",
       name_pt: "Suco Natural",
       name_es: "Jugo Natural",
@@ -213,6 +238,7 @@ async function main() {
     },
     {
       id: "item-refrigerante",
+      restaurant_id: restaurant.id,
       category_id: "cat-bebidas",
       name_pt: "Refrigerante",
       name_es: "Refresco",
@@ -225,6 +251,7 @@ async function main() {
     },
     {
       id: "item-cerveja",
+      restaurant_id: restaurant.id,
       category_id: "cat-bebidas",
       name_pt: "Cerveja Artesanal",
       name_es: "Cerveza Artesanal",
@@ -238,6 +265,7 @@ async function main() {
     // Sobremesas
     {
       id: "item-pudim",
+      restaurant_id: restaurant.id,
       category_id: "cat-sobremesas",
       name_pt: "Pudim de Leite",
       name_es: "Flan de Leche",
@@ -250,6 +278,7 @@ async function main() {
     },
     {
       id: "item-petit",
+      restaurant_id: restaurant.id,
       category_id: "cat-sobremesas",
       name_pt: "Petit Gâteau",
       name_es: "Petit Gâteau",
@@ -268,7 +297,7 @@ async function main() {
   for (const item of menuItems) {
     await prisma.menuItem.upsert({
       where: { id: item.id },
-      update: {},
+      update: { restaurant_id: restaurant.id },
       create: item,
     });
   }
@@ -276,9 +305,9 @@ async function main() {
 
   console.log("Seeding completed!");
   console.log("\n--- Login Credentials ---");
-  console.log("Admin: admin@visionary.com / admin123");
-  console.log("Garçom: garcom@visionary.com / garcom123");
-  console.log("Cozinha: cozinha@visionary.com / cozinha123");
+  console.log("Admin: admin@aifood.com / admin123");
+  console.log("Garçom: garcom@aifood.com / garcom123");
+  console.log("Cozinha: cozinha@aifood.com / cozinha123");
 }
 
 main()

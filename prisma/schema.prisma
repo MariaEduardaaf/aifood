@@ -24,6 +24,25 @@ enum CallStatus {
   RESOLVED
 }
 
+model Restaurant {
+  id         String   @id @default(cuid())
+  name       String
+  slug       String   @unique
+  domain     String?  @unique
+  active     Boolean  @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  users      User[]
+  tables     Table[]
+  calls      Call[]
+  orders     Order[]
+  categories Category[]
+  menuItems  MenuItem[]
+  ratings    Rating[]
+  settings   Settings?
+}
+
 model User {
   id            String   @id @default(cuid())
   email         String   @unique
@@ -33,10 +52,14 @@ model User {
   active        Boolean  @default(true)
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
+  restaurant_id String
 
+  restaurant      Restaurant @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
   resolved_calls   Call[]  @relation("ResolvedBy")
   confirmed_orders Order[] @relation("ConfirmedBy")
   prepared_orders  Order[] @relation("PreparedBy")
+
+  @@index([restaurant_id])
 }
 
 model Table {
@@ -45,9 +68,13 @@ model Table {
   qr_token   String   @unique @default(cuid())
   active     Boolean  @default(true)
   created_at DateTime @default(now())
+  restaurant_id String
 
+  restaurant Restaurant @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
   calls  Call[]
   orders Order[]
+
+  @@index([restaurant_id])
 }
 
 model Call {
@@ -58,14 +85,17 @@ model Call {
   created_at  DateTime   @default(now())
   resolved_at DateTime?
   resolved_by String?
+  restaurant_id String
 
   table    Table  @relation(fields: [table_id], references: [id], onDelete: Cascade)
   resolver User?  @relation("ResolvedBy", fields: [resolved_by], references: [id])
   rating   Rating?
+  restaurant Restaurant @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
 
   @@index([status])
   @@index([table_id])
   @@index([created_at])
+  @@index([restaurant_id])
 }
 
 model Rating {
@@ -75,24 +105,31 @@ model Rating {
   feedback          String?  // comentário se nota baixa
   redirected_google Boolean  @default(false) // foi redirecionado pro Google?
   created_at        DateTime @default(now())
+  restaurant_id     String
 
   call Call @relation(fields: [call_id], references: [id], onDelete: Cascade)
+  restaurant Restaurant @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
 
   @@index([stars])
   @@index([created_at])
+  @@index([restaurant_id])
 }
 
 model Settings {
-  id                  String  @id @default("default")
+  id                  String  @id @default(cuid())
+  restaurant_id       String  @unique
   google_reviews_url  String? // URL do Google Reviews do restaurante
   google_reviews_enabled Boolean @default(true)
   min_stars_redirect  Int     @default(4) // nota mínima para redirecionar
+
+  restaurant Restaurant @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
 }
 
 // ============ FASE 2: CARDÁPIO DIGITAL ============
 
 model Category {
   id         String   @id @default(cuid())
+  restaurant_id String
   name_pt    String
   name_es    String
   name_en    String
@@ -100,14 +137,17 @@ model Category {
   active     Boolean  @default(true)
   created_at DateTime @default(now())
 
+  restaurant Restaurant @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
   items MenuItem[]
 
   @@index([order])
   @@index([active])
+  @@index([restaurant_id])
 }
 
 model MenuItem {
   id             String   @id @default(cuid())
+  restaurant_id  String
   category_id    String
   name_pt        String
   name_es        String
@@ -121,12 +161,14 @@ model MenuItem {
   order          Int      @default(0)
   created_at     DateTime @default(now())
 
+  restaurant Restaurant @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
   category   Category    @relation(fields: [category_id], references: [id], onDelete: Cascade)
   orderItems OrderItem[]
 
   @@index([category_id])
   @@index([active])
   @@index([order])
+  @@index([restaurant_id])
 }
 
 // ============ FASE 3: SISTEMA DE PEDIDOS ============
@@ -142,6 +184,7 @@ enum OrderStatus {
 
 model Order {
   id           String      @id @default(cuid())
+  restaurant_id String
   table_id     String
   status       OrderStatus @default(PENDING)
   total        Decimal     @db.Decimal(10, 2)
@@ -155,6 +198,7 @@ model Order {
   ready_at     DateTime?   // Quando ficou pronto
   prepared_by  String?     // ID do cozinheiro
 
+  restaurant Restaurant @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
   table     Table       @relation(fields: [table_id], references: [id], onDelete: Cascade)
   confirmer User?       @relation("ConfirmedBy", fields: [confirmed_by], references: [id])
   preparer  User?       @relation("PreparedBy", fields: [prepared_by], references: [id])
@@ -163,6 +207,7 @@ model Order {
   @@index([table_id])
   @@index([status])
   @@index([created_at])
+  @@index([restaurant_id])
 }
 
 model OrderItem {

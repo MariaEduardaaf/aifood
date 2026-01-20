@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db";
 // PATCH /api/pedidos/[id]/pronto - Marcar pedido como pronto (KITCHEN)
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: string } },
 ) {
   try {
     const session = await auth();
@@ -18,12 +18,12 @@ export async function PATCH(
     if (session.user.role !== "KITCHEN") {
       return NextResponse.json(
         { error: "Only kitchen staff can mark orders as ready" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
-    const order = await prisma.order.findUnique({
-      where: { id: params.id },
+    const order = await prisma.order.findFirst({
+      where: { id: params.id, restaurant_id: session.user.restaurant_id },
     });
 
     if (!order) {
@@ -33,7 +33,7 @@ export async function PATCH(
     if (order.status !== "PREPARING") {
       return NextResponse.json(
         { error: "Order must be preparing before marking as ready" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -76,7 +76,7 @@ export async function PATCH(
     console.error("Error marking order as ready:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

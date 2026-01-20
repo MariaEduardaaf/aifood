@@ -50,6 +50,7 @@ export async function GET(request: NextRequest) {
           gte: startDate,
           lte: endDate,
         },
+        restaurant_id: session.user.restaurant_id,
         status: {
           not: "CANCELLED",
         },

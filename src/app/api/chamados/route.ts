@@ -35,7 +35,12 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get("status");
 
     const calls = await prisma.call.findMany({
-      where: status ? { status: status as "OPEN" | "RESOLVED" } : undefined,
+      where: status
+        ? {
+            status: status as "OPEN" | "RESOLVED",
+            restaurant_id: session.user.restaurant_id,
+          }
+        : { restaurant_id: session.user.restaurant_id },
       orderBy: { created_at: "asc" },
       include: {
         table: {
@@ -117,6 +122,7 @@ export async function POST(request: NextRequest) {
         table_id: tableId,
         type,
         status: "OPEN",
+        restaurant_id: table.restaurant_id,
       },
     });
 
@@ -133,6 +139,7 @@ export async function POST(request: NextRequest) {
         table_id: tableId,
         type,
         status: "OPEN",
+        restaurant_id: table.restaurant_id,
       },
       include: {
         table: {
