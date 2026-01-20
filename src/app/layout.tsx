@@ -12,8 +12,8 @@ export const metadata: Metadata = {
   title: "aiFood - Atendimento Inteligente",
   description: "Plataforma de atendimento inteligente para restaurantes",
   icons: {
-    icon: "/logo.png",
-    apple: "/logo.png",
+    icon: "/logo.svg",
+    apple: "/logo.svg",
   },
 };
 

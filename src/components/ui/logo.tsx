@@ -25,7 +25,7 @@ export function Logo({
   const { width, height, text } = sizes[size];
 
   const logoSrc =
-    resolvedTheme === "dark" ? "/logo.png" : "/logo.png";
+    resolvedTheme === "dark" ? "/logo.svg" : "/logo.svg";
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
@@ -55,7 +55,7 @@ export function LogoWhite({
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       <Image
-        src="/logo.png"
+        src="/logo.svg"
         alt="aiFood Logo"
         width={width}
         height={height}

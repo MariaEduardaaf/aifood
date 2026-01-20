@@ -127,7 +127,7 @@ export function SuperAdminNav({ user }: SuperAdminNavProps) {
           <div className="flex items-center gap-4 sm:gap-6">
             <Link href="/superadmin" className="flex items-center gap-2 group">
               <Image
-                src="/logo.png"
+                src="/logo.svg"
                 alt="aiFood Logo"
                 width={36}
                 height={36}
