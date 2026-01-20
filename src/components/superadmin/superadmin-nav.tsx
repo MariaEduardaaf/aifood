@@ -7,7 +7,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import {
-  Building2,
+  Building,
   Users,
   TableProperties,
   ChefHat,
@@ -66,7 +66,7 @@ export function SuperAdminNav({ user }: SuperAdminNavProps) {
       {
         href: "/superadmin/restaurantes",
         label: "Restaurantes",
-        icon: Building2,
+        icon: Building,
       },
       {
         href: "/superadmin/usuarios",
