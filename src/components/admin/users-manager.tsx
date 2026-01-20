@@ -40,9 +40,13 @@ interface User {
 
 interface UsersManagerProps {
   currentUserId: string;
+  restaurantId?: string;
 }
 
-export function UsersManager({ currentUserId }: UsersManagerProps) {
+export function UsersManager({
+  currentUserId,
+  restaurantId,
+}: UsersManagerProps) {
   const t = useTranslations("admin");
   const tCommon = useTranslations("common");
   const tAuth = useTranslations("auth");
@@ -71,11 +75,12 @@ export function UsersManager({ currentUserId }: UsersManagerProps) {
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [restaurantId]);
 
   const fetchUsers = async () => {
     try {
-      const res = await fetch("/api/usuarios");
+      const query = restaurantId ? `?restaurantId=${restaurantId}` : "";
+      const res = await fetch(`/api/usuarios${query}`);
       if (res.ok) {
         const data = await res.json();
         setUsers(data);
@@ -142,6 +147,10 @@ export function UsersManager({ currentUserId }: UsersManagerProps) {
         email: formData.email.trim(),
         role: formData.role,
       };
+
+      if (restaurantId && !editingUser) {
+        payload.restaurantId = restaurantId;
+      }
 
       if (formData.password) {
         payload.password = formData.password;
@@ -257,6 +266,8 @@ export function UsersManager({ currentUserId }: UsersManagerProps) {
         return t("roleAdmin");
       case "MANAGER":
         return t("roleManager");
+      case "KITCHEN":
+        return t("roleKitchen");
       default:
         return role;
     }
@@ -268,6 +279,8 @@ export function UsersManager({ currentUserId }: UsersManagerProps) {
         return "destructive" as const;
       case "MANAGER":
         return "warning" as const;
+      case "KITCHEN":
+        return "secondary" as const;
       default:
         return "secondary" as const;
     }
@@ -513,6 +526,7 @@ export function UsersManager({ currentUserId }: UsersManagerProps) {
                     <option value="WAITER">{t("roleWaiter")}</option>
                     <option value="ADMIN">{t("roleAdmin")}</option>
                     <option value="MANAGER">{t("roleManager")}</option>
+                    <option value="KITCHEN">{t("roleKitchen")}</option>
                   </Select>
                 </div>
                 {error && <p className="text-sm text-destructive">{error}</p>}

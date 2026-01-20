@@ -13,9 +13,20 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    if (session.user.role !== "ADMIN" && session.user.role !== "MANAGER") {
+    if (
+      session.user.role !== "ADMIN" &&
+      session.user.role !== "MANAGER" &&
+      session.user.role !== "SUPER_ADMIN"
+    ) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
+
+    const { searchParams } = new URL(request.url);
+    const restaurantIdParam = searchParams.get("restaurantId");
+    const restaurantId =
+      session.user.role === "SUPER_ADMIN"
+        ? restaurantIdParam
+        : session.user.restaurant_id;
 
     // Buscar pedidos ativos
     const pedidosAtivos = await prisma.order.findMany({
@@ -23,7 +34,7 @@ export async function GET(request: NextRequest) {
         status: {
           in: ["PENDING", "CONFIRMED", "PREPARING", "READY"],
         },
-        restaurant_id: session.user.restaurant_id,
+        ...(restaurantId ? { restaurant_id: restaurantId } : {}),
       },
       select: {
         id: true,
@@ -58,7 +69,7 @@ export async function GET(request: NextRequest) {
     const chamadosAbertos = await prisma.call.count({
       where: {
         status: "OPEN",
-        restaurant_id: session.user.restaurant_id,
+        ...(restaurantId ? { restaurant_id: restaurantId } : {}),
       },
     });
 

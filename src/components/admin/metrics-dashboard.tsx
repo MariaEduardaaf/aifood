@@ -59,7 +59,11 @@ interface TopProduct {
   revenue: number;
 }
 
-export function MetricsDashboard() {
+interface MetricsDashboardProps {
+  restaurantId?: string;
+}
+
+export function MetricsDashboard({ restaurantId }: MetricsDashboardProps) {
   const t = useTranslations("admin");
 
   const [metrics, setMetrics] = useState<Metrics | null>(null);
@@ -70,14 +74,20 @@ export function MetricsDashboard() {
   useEffect(() => {
     fetchMetrics();
     fetchTopProducts();
-  }, [period]);
+  }, [period, restaurantId]);
 
   const fetchMetrics = async () => {
     setLoading(true);
     try {
       const periodMap = { today: "today", week: "week", month: "month" };
+      const params = new URLSearchParams({
+        periodo: periodMap[period],
+      });
+      if (restaurantId) {
+        params.set("restaurantId", restaurantId);
+      }
       const res = await fetch(
-        `/api/admin/metricas/resumo?periodo=${periodMap[period]}`,
+        `/api/admin/metricas/resumo?${params.toString()}`,
       );
       if (res.ok) {
         const data = await res.json();
@@ -93,8 +103,15 @@ export function MetricsDashboard() {
   const fetchTopProducts = async () => {
     try {
       const periodMap = { today: "today", week: "week", month: "month" };
+      const params = new URLSearchParams({
+        periodo: periodMap[period],
+        limite: "5",
+      });
+      if (restaurantId) {
+        params.set("restaurantId", restaurantId);
+      }
       const res = await fetch(
-        `/api/admin/metricas/produtos/top?periodo=${periodMap[period]}&limite=5`,
+        `/api/admin/metricas/produtos/top?${params.toString()}`,
       );
       if (res.ok) {
         const data = await res.json();

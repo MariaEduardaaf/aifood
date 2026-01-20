@@ -17,9 +17,19 @@ export async function GET(request: NextRequest) {
     userRole !== "WAITER" &&
     userRole !== "ADMIN" &&
     userRole !== "MANAGER" &&
-    userRole !== "KITCHEN"
+    userRole !== "KITCHEN" &&
+    userRole !== "SUPER_ADMIN"
   ) {
     return new Response("Forbidden", { status: 403 });
+  }
+
+  const { searchParams } = new URL(request.url);
+  const restaurantIdParam = searchParams.get("restaurantId");
+  const restaurantId =
+    userRole === "SUPER_ADMIN" ? restaurantIdParam : session.user.restaurant_id;
+
+  if (!restaurantId) {
+    return new Response("restaurantId is required", { status: 400 });
   }
 
   // Definir quais status cada role pode ver
@@ -47,7 +57,7 @@ export async function GET(request: NextRequest) {
               status: {
                 in: statusFilter,
               },
-              restaurant_id: session.user.restaurant_id,
+              restaurant_id: restaurantId,
             },
             orderBy: { created_at: "desc" },
             include: {

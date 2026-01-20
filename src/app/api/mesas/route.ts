@@ -6,22 +6,39 @@ import { generateToken } from "@/lib/utils";
 
 const createTableSchema = z.object({
   label: z.string().min(1).max(50),
+  restaurantId: z.string().optional(),
 });
 
 // GET /api/mesas - List all tables
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const session = await auth();
 
     if (
       !session ||
-      (session.user.role !== "ADMIN" && session.user.role !== "MANAGER")
+      (session.user.role !== "ADMIN" &&
+        session.user.role !== "MANAGER" &&
+        session.user.role !== "SUPER_ADMIN")
     ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { searchParams } = new URL(request.url);
+    const restaurantIdParam = searchParams.get("restaurantId");
+    const restaurantId =
+      session.user.role === "SUPER_ADMIN"
+        ? restaurantIdParam
+        : session.user.restaurant_id;
+
+    if (!restaurantId) {
+      return NextResponse.json(
+        { error: "restaurantId is required" },
+        { status: 400 },
+      );
+    }
+
     const tables = await prisma.table.findMany({
-      where: { restaurant_id: session.user.restaurant_id },
+      where: { restaurant_id: restaurantId },
       orderBy: { created_at: "asc" },
       include: {
         _count: {
@@ -51,7 +68,9 @@ export async function POST(request: NextRequest) {
 
     if (
       !session ||
-      (session.user.role !== "ADMIN" && session.user.role !== "MANAGER")
+      (session.user.role !== "ADMIN" &&
+        session.user.role !== "MANAGER" &&
+        session.user.role !== "SUPER_ADMIN")
     ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -66,14 +85,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { label } = validation.data;
+    const { label, restaurantId: restaurantIdInput } = validation.data;
+    const restaurantId =
+      session.user.role === "SUPER_ADMIN"
+        ? restaurantIdInput
+        : session.user.restaurant_id;
+
+    if (!restaurantId) {
+      return NextResponse.json(
+        { error: "restaurantId is required" },
+        { status: 400 },
+      );
+    }
 
     const table = await prisma.table.create({
       data: {
         label,
         qr_token: generateToken(32),
         active: true,
-        restaurant_id: session.user.restaurant_id,
+        restaurant_id: restaurantId,
       },
     });
 

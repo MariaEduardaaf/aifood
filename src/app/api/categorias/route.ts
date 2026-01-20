@@ -9,6 +9,7 @@ const categorySchema = z.object({
   name_en: z.string().min(1),
   order: z.number().optional(),
   active: z.boolean().optional(),
+  restaurantId: z.string().optional(),
 });
 
 // GET /api/categorias - Listar categorias
@@ -18,23 +19,37 @@ export async function GET(request: NextRequest) {
 
     if (
       !session ||
-      (session.user.role !== "ADMIN" && session.user.role !== "MANAGER")
+      (session.user.role !== "ADMIN" &&
+        session.user.role !== "MANAGER" &&
+        session.user.role !== "SUPER_ADMIN")
     ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
     const activeOnly = searchParams.get("active") === "true";
+    const restaurantIdParam = searchParams.get("restaurantId");
+    const restaurantId =
+      session.user.role === "SUPER_ADMIN"
+        ? restaurantIdParam
+        : session.user.restaurant_id;
+
+    if (!restaurantId) {
+      return NextResponse.json(
+        { error: "restaurantId is required" },
+        { status: 400 },
+      );
+    }
 
     const categories = await prisma.category.findMany({
       where: activeOnly
-        ? { active: true, restaurant_id: session.user.restaurant_id }
-        : { restaurant_id: session.user.restaurant_id },
+        ? { active: true, restaurant_id: restaurantId }
+        : { restaurant_id: restaurantId },
       include: {
         items: {
           where: activeOnly
-            ? { active: true, restaurant_id: session.user.restaurant_id }
-            : { restaurant_id: session.user.restaurant_id },
+            ? { active: true, restaurant_id: restaurantId }
+            : { restaurant_id: restaurantId },
           orderBy: { order: "asc" },
         },
       },
@@ -56,7 +71,10 @@ export async function POST(request: NextRequest) {
   try {
     const session = await auth();
 
-    if (!session || session.user.role !== "ADMIN") {
+    if (
+      !session ||
+      (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN")
+    ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -71,16 +89,28 @@ export async function POST(request: NextRequest) {
     }
 
     // Get max order
+    const restaurantId =
+      session.user.role === "SUPER_ADMIN"
+        ? validation.data.restaurantId
+        : session.user.restaurant_id;
+
+    if (!restaurantId) {
+      return NextResponse.json(
+        { error: "restaurantId is required" },
+        { status: 400 },
+      );
+    }
+
     const maxOrder = await prisma.category.aggregate({
       _max: { order: true },
-      where: { restaurant_id: session.user.restaurant_id },
+      where: { restaurant_id: restaurantId },
     });
 
     const category = await prisma.category.create({
       data: {
         ...validation.data,
         order: validation.data.order ?? (maxOrder._max.order ?? 0) + 1,
-        restaurant_id: session.user.restaurant_id,
+        restaurant_id: restaurantId,
       },
     });
 

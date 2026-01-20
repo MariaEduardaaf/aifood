@@ -153,6 +153,7 @@
     "roleWaiter": "Waiter",
     "roleAdmin": "Administrator",
     "roleManager": "Manager",
+    "roleKitchen": "Kitchen",
     "active": "Active",
     "inactive": "Inactive",
     "confirmDelete": "Are you sure you want to delete?",

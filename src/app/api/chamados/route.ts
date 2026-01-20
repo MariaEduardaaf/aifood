@@ -26,21 +26,34 @@ export async function GET(request: NextRequest) {
     if (
       session.user.role !== "WAITER" &&
       session.user.role !== "ADMIN" &&
-      session.user.role !== "MANAGER"
+      session.user.role !== "MANAGER" &&
+      session.user.role !== "SUPER_ADMIN"
     ) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status");
+    const restaurantIdParam = searchParams.get("restaurantId");
+    const restaurantId =
+      session.user.role === "SUPER_ADMIN"
+        ? restaurantIdParam
+        : session.user.restaurant_id;
+
+    if (!restaurantId) {
+      return NextResponse.json(
+        { error: "restaurantId is required" },
+        { status: 400 },
+      );
+    }
 
     const calls = await prisma.call.findMany({
       where: status
         ? {
             status: status as "OPEN" | "RESOLVED",
-            restaurant_id: session.user.restaurant_id,
+            restaurant_id: restaurantId,
           }
-        : { restaurant_id: session.user.restaurant_id },
+        : { restaurant_id: restaurantId },
       orderBy: { created_at: "asc" },
       include: {
         table: {

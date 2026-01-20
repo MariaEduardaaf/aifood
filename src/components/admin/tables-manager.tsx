@@ -37,7 +37,11 @@ interface QRCodeData {
   label: string;
 }
 
-export function TablesManager() {
+interface TablesManagerProps {
+  restaurantId?: string;
+}
+
+export function TablesManager({ restaurantId }: TablesManagerProps) {
   const t = useTranslations("admin");
   const tCommon = useTranslations("common");
 
@@ -53,11 +57,12 @@ export function TablesManager() {
 
   useEffect(() => {
     fetchTables();
-  }, []);
+  }, [restaurantId]);
 
   const fetchTables = async () => {
     try {
-      const res = await fetch("/api/mesas");
+      const query = restaurantId ? `?restaurantId=${restaurantId}` : "";
+      const res = await fetch(`/api/mesas${query}`);
       if (res.ok) {
         const data = await res.json();
         setTables(data);
@@ -104,10 +109,17 @@ export function TablesManager() {
       const url = editingTable ? `/api/mesas/${editingTable.id}` : "/api/mesas";
       const method = editingTable ? "PATCH" : "POST";
 
+      const payload = editingTable
+        ? { label: formLabel.trim() }
+        : {
+            label: formLabel.trim(),
+            ...(restaurantId ? { restaurantId } : {}),
+          };
+
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ label: formLabel.trim() }),
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {

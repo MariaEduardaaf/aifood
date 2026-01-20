@@ -31,7 +31,11 @@ interface Stats {
   distribution: Record<number, number>;
 }
 
-export function FeedbacksPage() {
+interface FeedbacksPageProps {
+  restaurantId?: string;
+}
+
+export function FeedbacksPage({ restaurantId }: FeedbacksPageProps) {
   const [ratings, setRatings] = useState<Rating[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -39,14 +43,22 @@ export function FeedbacksPage() {
 
   useEffect(() => {
     fetchFeedbacks();
-  }, [filter]);
+  }, [filter, restaurantId]);
 
   const fetchFeedbacks = async () => {
     setLoading(true);
     try {
-      const url = filter
-        ? `/api/admin/feedbacks?stars=${filter}`
-        : "/api/admin/feedbacks";
+      const params = new URLSearchParams();
+      if (filter) {
+        params.set("stars", String(filter));
+      }
+      if (restaurantId) {
+        params.set("restaurantId", restaurantId);
+      }
+      const url =
+        params.toString().length > 0
+          ? `/api/admin/feedbacks?${params.toString()}`
+          : "/api/admin/feedbacks";
       const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();

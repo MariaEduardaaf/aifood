@@ -14,7 +14,9 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    if (!["WAITER", "ADMIN", "MANAGER"].includes(session.user.role)) {
+    if (
+      !["WAITER", "ADMIN", "MANAGER", "SUPER_ADMIN"].includes(session.user.role)
+    ) {
       return NextResponse.json(
         { error: "Only waiter or admin can confirm orders" },
         { status: 403 },
@@ -22,7 +24,10 @@ export async function PATCH(
     }
 
     const order = await prisma.order.findFirst({
-      where: { id: params.id, restaurant_id: session.user.restaurant_id },
+      where:
+        session.user.role === "SUPER_ADMIN"
+          ? { id: params.id }
+          : { id: params.id, restaurant_id: session.user.restaurant_id },
     });
 
     if (!order) {

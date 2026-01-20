@@ -13,9 +13,21 @@ export async function GET(request: NextRequest) {
   if (
     session.user.role !== "WAITER" &&
     session.user.role !== "ADMIN" &&
-    session.user.role !== "MANAGER"
+    session.user.role !== "MANAGER" &&
+    session.user.role !== "SUPER_ADMIN"
   ) {
     return new Response("Forbidden", { status: 403 });
+  }
+
+  const { searchParams } = new URL(request.url);
+  const restaurantIdParam = searchParams.get("restaurantId");
+  const restaurantId =
+    session.user.role === "SUPER_ADMIN"
+      ? restaurantIdParam
+      : session.user.restaurant_id;
+
+  if (!restaurantId) {
+    return new Response("restaurantId is required", { status: 400 });
   }
 
   const encoder = new TextEncoder();
@@ -31,7 +43,7 @@ export async function GET(request: NextRequest) {
           const calls = await prisma.call.findMany({
             where: {
               status: "OPEN",
-              restaurant_id: session.user.restaurant_id,
+              restaurant_id: restaurantId,
             },
             orderBy: { created_at: "asc" },
             include: {

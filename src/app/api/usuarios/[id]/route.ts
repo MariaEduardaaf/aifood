@@ -8,7 +8,7 @@ const updateUserSchema = z.object({
   email: z.string().email().optional(),
   password: z.string().min(6).optional(),
   name: z.string().min(1).max(100).optional(),
-  role: z.enum(["WAITER", "ADMIN", "MANAGER"]).optional(),
+  role: z.enum(["WAITER", "ADMIN", "MANAGER", "KITCHEN"]).optional(),
   active: z.boolean().optional(),
 });
 
@@ -22,13 +22,18 @@ export async function GET(
 
     if (
       !session ||
-      (session.user.role !== "ADMIN" && session.user.role !== "MANAGER")
+      (session.user.role !== "ADMIN" &&
+        session.user.role !== "MANAGER" &&
+        session.user.role !== "SUPER_ADMIN")
     ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const user = await prisma.user.findFirst({
-      where: { id: params.id, restaurant_id: session.user.restaurant_id },
+      where:
+        session.user.role === "SUPER_ADMIN"
+          ? { id: params.id }
+          : { id: params.id, restaurant_id: session.user.restaurant_id },
       select: {
         id: true,
         email: true,
@@ -63,7 +68,9 @@ export async function PATCH(
 
     if (
       !session ||
-      (session.user.role !== "ADMIN" && session.user.role !== "MANAGER")
+      (session.user.role !== "ADMIN" &&
+        session.user.role !== "MANAGER" &&
+        session.user.role !== "SUPER_ADMIN")
     ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -104,7 +111,10 @@ export async function PATCH(
     }
 
     const existingUser = await prisma.user.findFirst({
-      where: { id: params.id, restaurant_id: session.user.restaurant_id },
+      where:
+        session.user.role === "SUPER_ADMIN"
+          ? { id: params.id }
+          : { id: params.id, restaurant_id: session.user.restaurant_id },
     });
 
     if (!existingUser) {
@@ -144,7 +154,9 @@ export async function DELETE(
 
     if (
       !session ||
-      (session.user.role !== "ADMIN" && session.user.role !== "MANAGER")
+      (session.user.role !== "ADMIN" &&
+        session.user.role !== "MANAGER" &&
+        session.user.role !== "SUPER_ADMIN")
     ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -158,7 +170,10 @@ export async function DELETE(
     }
 
     const existingUser = await prisma.user.findFirst({
-      where: { id: params.id, restaurant_id: session.user.restaurant_id },
+      where:
+        session.user.role === "SUPER_ADMIN"
+          ? { id: params.id }
+          : { id: params.id, restaurant_id: session.user.restaurant_id },
     });
 
     if (!existingUser) {

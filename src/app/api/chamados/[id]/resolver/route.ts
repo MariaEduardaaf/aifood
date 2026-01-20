@@ -17,13 +17,17 @@ export async function PATCH(
     if (
       session.user.role !== "WAITER" &&
       session.user.role !== "ADMIN" &&
-      session.user.role !== "MANAGER"
+      session.user.role !== "MANAGER" &&
+      session.user.role !== "SUPER_ADMIN"
     ) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const call = await prisma.call.findFirst({
-      where: { id: params.id, restaurant_id: session.user.restaurant_id },
+      where:
+        session.user.role === "SUPER_ADMIN"
+          ? { id: params.id }
+          : { id: params.id, restaurant_id: session.user.restaurant_id },
     });
 
     if (!call) {

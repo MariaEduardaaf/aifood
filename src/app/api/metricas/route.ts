@@ -11,13 +11,20 @@ export async function GET(request: NextRequest) {
 
     if (
       !session ||
-      (session.user.role !== "ADMIN" && session.user.role !== "MANAGER")
+      (session.user.role !== "ADMIN" &&
+        session.user.role !== "MANAGER" &&
+        session.user.role !== "SUPER_ADMIN")
     ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
     const period = searchParams.get("period") || "today";
+    const restaurantIdParam = searchParams.get("restaurantId");
+    const restaurantId =
+      session.user.role === "SUPER_ADMIN"
+        ? restaurantIdParam
+        : session.user.restaurant_id;
 
     // Calculate date range
     const now = new Date();
@@ -42,7 +49,7 @@ export async function GET(request: NextRequest) {
     const totalCalls = await prisma.call.count({
       where: {
         created_at: { gte: startDate },
-        restaurant_id: session.user.restaurant_id,
+        ...(restaurantId ? { restaurant_id: restaurantId } : {}),
       },
     });
 
@@ -51,7 +58,7 @@ export async function GET(request: NextRequest) {
       by: ["type"],
       where: {
         created_at: { gte: startDate },
-        restaurant_id: session.user.restaurant_id,
+        ...(restaurantId ? { restaurant_id: restaurantId } : {}),
       },
       _count: true,
     });
@@ -62,7 +69,7 @@ export async function GET(request: NextRequest) {
         created_at: { gte: startDate },
         status: "RESOLVED",
         resolved_at: { not: null },
-        restaurant_id: session.user.restaurant_id,
+        ...(restaurantId ? { restaurant_id: restaurantId } : {}),
       },
       select: {
         created_at: true,
@@ -99,7 +106,7 @@ export async function GET(request: NextRequest) {
       const todayCalls = await prisma.call.findMany({
         where: {
           created_at: { gte: startDate },
-          restaurant_id: session.user.restaurant_id,
+          ...(restaurantId ? { restaurant_id: restaurantId } : {}),
         },
         select: {
           created_at: true,
@@ -122,7 +129,7 @@ export async function GET(request: NextRequest) {
       by: ["table_id"],
       where: {
         created_at: { gte: startDate },
-        restaurant_id: session.user.restaurant_id,
+        ...(restaurantId ? { restaurant_id: restaurantId } : {}),
       },
       _count: true,
       orderBy: {
@@ -138,7 +145,7 @@ export async function GET(request: NextRequest) {
     const tables = await prisma.table.findMany({
       where: {
         id: { in: tableIds },
-        restaurant_id: session.user.restaurant_id,
+        ...(restaurantId ? { restaurant_id: restaurantId } : {}),
       },
       select: { id: true, label: true },
     });
@@ -156,7 +163,7 @@ export async function GET(request: NextRequest) {
         created_at: { gte: startDate },
         status: "RESOLVED",
         resolved_by: { not: null },
-        restaurant_id: session.user.restaurant_id,
+        ...(restaurantId ? { restaurant_id: restaurantId } : {}),
       },
       _count: true,
       orderBy: {
@@ -173,7 +180,7 @@ export async function GET(request: NextRequest) {
     const waiters = await prisma.user.findMany({
       where: {
         id: { in: waiterIds },
-        restaurant_id: session.user.restaurant_id,
+        ...(restaurantId ? { restaurant_id: restaurantId } : {}),
       },
       select: { id: true, name: true },
     });
@@ -186,14 +193,14 @@ export async function GET(request: NextRequest) {
 
     // Open calls count
     const openCalls = await prisma.call.count({
-      where: { status: "OPEN", restaurant_id: session.user.restaurant_id },
+      where: { status: "OPEN", ...(restaurantId ? { restaurant_id: restaurantId } : {}) },
     });
 
     // Rating metrics
     const ratings = await prisma.rating.findMany({
       where: {
         created_at: { gte: startDate },
-        restaurant_id: session.user.restaurant_id,
+        ...(restaurantId ? { restaurant_id: restaurantId } : {}),
       },
       select: {
         stars: true,

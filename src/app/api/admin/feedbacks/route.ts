@@ -10,7 +10,9 @@ export async function GET(request: NextRequest) {
 
   if (
     !session ||
-    (session.user.role !== "ADMIN" && session.user.role !== "MANAGER")
+    (session.user.role !== "ADMIN" &&
+      session.user.role !== "MANAGER" &&
+      session.user.role !== "SUPER_ADMIN")
   ) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -18,11 +20,16 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const stars = searchParams.get("stars");
   const limit = parseInt(searchParams.get("limit") || "50");
+  const restaurantIdParam = searchParams.get("restaurantId");
+  const restaurantId =
+    session.user.role === "SUPER_ADMIN"
+      ? restaurantIdParam
+      : session.user.restaurant_id;
 
   try {
-    const where: Record<string, unknown> = {
-      restaurant_id: session.user.restaurant_id,
-    };
+    const where: Record<string, unknown> = restaurantId
+      ? { restaurant_id: restaurantId }
+      : {};
 
     if (stars) {
       where.stars = parseInt(stars);
@@ -69,7 +76,7 @@ export async function GET(request: NextRequest) {
 
     const negativeFeedbacks = await prisma.rating.count({
       where: {
-        restaurant_id: session.user.restaurant_id,
+        ...(restaurantId ? { restaurant_id: restaurantId } : {}),
         stars: { lte: 3 },
         feedback: { not: null },
       },

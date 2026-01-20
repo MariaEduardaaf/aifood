@@ -21,13 +21,18 @@ export async function GET(
 
     if (
       !session ||
-      (session.user.role !== "ADMIN" && session.user.role !== "MANAGER")
+      (session.user.role !== "ADMIN" &&
+        session.user.role !== "MANAGER" &&
+        session.user.role !== "SUPER_ADMIN")
     ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const category = await prisma.category.findFirst({
-      where: { id: params.id, restaurant_id: session.user.restaurant_id },
+      where:
+        session.user.role === "SUPER_ADMIN"
+          ? { id: params.id }
+          : { id: params.id, restaurant_id: session.user.restaurant_id },
       include: {
         items: {
           orderBy: { order: "asc" },
@@ -60,7 +65,10 @@ export async function PUT(
   try {
     const session = await auth();
 
-    if (!session || session.user.role !== "ADMIN") {
+    if (
+      !session ||
+      (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN")
+    ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -75,7 +83,10 @@ export async function PUT(
     }
 
     const existingCategory = await prisma.category.findFirst({
-      where: { id: params.id, restaurant_id: session.user.restaurant_id },
+      where:
+        session.user.role === "SUPER_ADMIN"
+          ? { id: params.id }
+          : { id: params.id, restaurant_id: session.user.restaurant_id },
     });
 
     if (!existingCategory) {
@@ -108,12 +119,18 @@ export async function DELETE(
   try {
     const session = await auth();
 
-    if (!session || session.user.role !== "ADMIN") {
+    if (
+      !session ||
+      (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN")
+    ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const existingCategory = await prisma.category.findFirst({
-      where: { id: params.id, restaurant_id: session.user.restaurant_id },
+      where:
+        session.user.role === "SUPER_ADMIN"
+          ? { id: params.id }
+          : { id: params.id, restaurant_id: session.user.restaurant_id },
     });
 
     if (!existingCategory) {

@@ -33,6 +33,22 @@ async function main() {
   });
   console.log("Created admin user:", admin.email);
 
+  // Create super admin user
+  const superAdminPassword = await hash("superadmin123", 12);
+  const superAdmin = await prisma.user.upsert({
+    where: { email: "superadmin@aifood.com" },
+    update: { restaurant_id: restaurant.id, role: "SUPER_ADMIN" },
+    create: {
+      email: "superadmin@aifood.com",
+      password_hash: superAdminPassword,
+      name: "Super Admin",
+      role: "SUPER_ADMIN",
+      active: true,
+      restaurant_id: restaurant.id,
+    },
+  });
+  console.log("Created super admin user:", superAdmin.email);
+
   // Create waiter user
   const waiterPassword = await hash("garcom123", 12);
   const waiter = await prisma.user.upsert({
@@ -306,6 +322,7 @@ async function main() {
   console.log("Seeding completed!");
   console.log("\n--- Login Credentials ---");
   console.log("Admin: admin@aifood.com / admin123");
+  console.log("Super Admin: superadmin@aifood.com / superadmin123");
   console.log("Garçom: garcom@aifood.com / garcom123");
   console.log("Cozinha: cozinha@aifood.com / cozinha123");
 }

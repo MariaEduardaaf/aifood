@@ -15,7 +15,10 @@ export async function PATCH(
     }
 
     // Verificar se é usuário da cozinha
-    if (session.user.role !== "KITCHEN") {
+    if (
+      session.user.role !== "KITCHEN" &&
+      session.user.role !== "SUPER_ADMIN"
+    ) {
       return NextResponse.json(
         { error: "Only kitchen staff can start preparing orders" },
         { status: 403 },
@@ -23,7 +26,10 @@ export async function PATCH(
     }
 
     const order = await prisma.order.findFirst({
-      where: { id: params.id, restaurant_id: session.user.restaurant_id },
+      where:
+        session.user.role === "SUPER_ADMIN"
+          ? { id: params.id }
+          : { id: params.id, restaurant_id: session.user.restaurant_id },
     });
 
     if (!order) {

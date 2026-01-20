@@ -8,23 +8,33 @@ const createUserSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
   name: z.string().min(1).max(100),
-  role: z.enum(["WAITER", "ADMIN", "MANAGER"]),
+  role: z.enum(["WAITER", "ADMIN", "MANAGER", "KITCHEN"]),
+  restaurantId: z.string().optional(),
 });
 
 // GET /api/usuarios - List all users
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const session = await auth();
 
     if (
       !session ||
-      (session.user.role !== "ADMIN" && session.user.role !== "MANAGER")
+      (session.user.role !== "ADMIN" &&
+        session.user.role !== "MANAGER" &&
+        session.user.role !== "SUPER_ADMIN")
     ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { searchParams } = new URL(request.url);
+    const restaurantIdParam = searchParams.get("restaurantId");
+    const restaurantId =
+      session.user.role === "SUPER_ADMIN"
+        ? restaurantIdParam
+        : session.user.restaurant_id;
+
     const users = await prisma.user.findMany({
-      where: { restaurant_id: session.user.restaurant_id },
+      where: restaurantId ? { restaurant_id: restaurantId } : undefined,
       orderBy: { created_at: "desc" },
       select: {
         id: true,
@@ -58,7 +68,9 @@ export async function POST(request: NextRequest) {
 
     if (
       !session ||
-      (session.user.role !== "ADMIN" && session.user.role !== "MANAGER")
+      (session.user.role !== "ADMIN" &&
+        session.user.role !== "MANAGER" &&
+        session.user.role !== "SUPER_ADMIN")
     ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -73,7 +85,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { email, password, name, role } = validation.data;
+    const {
+      email,
+      password,
+      name,
+      role,
+      restaurantId: restaurantIdInput,
+    } = validation.data;
+
+    const restaurantId =
+      session.user.role === "SUPER_ADMIN"
+        ? restaurantIdInput
+        : session.user.restaurant_id;
+
+    if (!restaurantId) {
+      return NextResponse.json(
+        { error: "restaurantId is required" },
+        { status: 400 },
+      );
+    }
 
     // Check if email already exists
     const existingUser = await prisma.user.findUnique({
@@ -96,7 +126,7 @@ export async function POST(request: NextRequest) {
         name,
         role,
         active: true,
-        restaurant_id: session.user.restaurant_id,
+        restaurant_id: restaurantId,
       },
       select: {
         id: true,

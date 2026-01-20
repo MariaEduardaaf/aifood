@@ -40,8 +40,18 @@ export default auth((req) => {
     return NextResponse.redirect(loginUrl);
   }
 
+  // Super admin routes - only for SUPER_ADMIN
+  if (pathname.startsWith("/superadmin")) {
+    if (userRole !== "SUPER_ADMIN") {
+      return NextResponse.redirect(new URL("/garcom", req.nextUrl.origin));
+    }
+  }
+
   // Admin routes - only for ADMIN and MANAGER
   if (pathname.startsWith("/admin")) {
+    if (userRole === "SUPER_ADMIN") {
+      return NextResponse.redirect(new URL("/superadmin", req.nextUrl.origin));
+    }
     if (userRole !== "ADMIN" && userRole !== "MANAGER") {
       return NextResponse.redirect(new URL("/garcom", req.nextUrl.origin));
     }
@@ -51,6 +61,11 @@ export default auth((req) => {
   if (pathname.startsWith("/cozinha")) {
     if (userRole !== "KITCHEN") {
       // Redirect to appropriate dashboard based on role
+      if (userRole === "SUPER_ADMIN") {
+        return NextResponse.redirect(
+          new URL("/superadmin", req.nextUrl.origin),
+        );
+      }
       if (userRole === "ADMIN" || userRole === "MANAGER") {
         return NextResponse.redirect(new URL("/admin", req.nextUrl.origin));
       }
@@ -62,6 +77,9 @@ export default auth((req) => {
   if (pathname.startsWith("/garcom")) {
     if (userRole === "KITCHEN") {
       return NextResponse.redirect(new URL("/cozinha", req.nextUrl.origin));
+    }
+    if (userRole === "SUPER_ADMIN") {
+      return NextResponse.redirect(new URL("/superadmin", req.nextUrl.origin));
     }
     if (userRole === "ADMIN" || userRole === "MANAGER") {
       return NextResponse.redirect(new URL("/admin", req.nextUrl.origin));

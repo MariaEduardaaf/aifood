@@ -13,13 +13,22 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    if (session.user.role !== "ADMIN" && session.user.role !== "MANAGER") {
+    if (
+      session.user.role !== "ADMIN" &&
+      session.user.role !== "MANAGER" &&
+      session.user.role !== "SUPER_ADMIN"
+    ) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const { searchParams } = new URL(request.url);
     const periodo = searchParams.get("periodo") || "month";
     const limite = parseInt(searchParams.get("limite") || "10");
+    const restaurantIdParam = searchParams.get("restaurantId");
+    const restaurantId =
+      session.user.role === "SUPER_ADMIN"
+        ? restaurantIdParam
+        : session.user.restaurant_id;
 
     // Calcular datas baseado no período
     const now = new Date();
@@ -51,7 +60,7 @@ export async function GET(request: NextRequest) {
             gte: startDate,
             lte: now,
           },
-          restaurant_id: session.user.restaurant_id,
+          ...(restaurantId ? { restaurant_id: restaurantId } : {}),
           status: {
             not: "CANCELLED",
           },

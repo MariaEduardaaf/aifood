@@ -41,7 +41,11 @@ interface Category {
   items: MenuItem[];
 }
 
-export function MenuManager() {
+interface MenuManagerProps {
+  restaurantId?: string;
+}
+
+export function MenuManager({ restaurantId }: MenuManagerProps) {
   const t = useTranslations("admin");
 
   const [categories, setCategories] = useState<Category[]>([]);
@@ -76,11 +80,12 @@ export function MenuManager() {
 
   useEffect(() => {
     fetchCategories();
-  }, []);
+  }, [restaurantId]);
 
   const fetchCategories = async () => {
     try {
-      const res = await fetch("/api/categorias");
+      const query = restaurantId ? `?restaurantId=${restaurantId}` : "";
+      const res = await fetch(`/api/categorias${query}`);
       if (res.ok) {
         const data = await res.json();
         setCategories(data);
@@ -147,10 +152,14 @@ export function MenuManager() {
         : "/api/categorias";
       const method = editingCategory ? "PUT" : "POST";
 
+      const payload = editingCategory
+        ? categoryForm
+        : { ...categoryForm, ...(restaurantId ? { restaurantId } : {}) };
+
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(categoryForm),
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {
@@ -186,17 +195,20 @@ export function MenuManager() {
       const url = editingItem ? `/api/itens/${editingItem.id}` : "/api/itens";
       const method = editingItem ? "PUT" : "POST";
 
+      const payload = {
+        ...itemForm,
+        price: parseFloat(itemForm.price),
+        description_pt: itemForm.description_pt || null,
+        description_es: itemForm.description_es || null,
+        description_en: itemForm.description_en || null,
+        image_url: itemForm.image_url || null,
+        ...(restaurantId && !editingItem ? { restaurantId } : {}),
+      };
+
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...itemForm,
-          price: parseFloat(itemForm.price),
-          description_pt: itemForm.description_pt || null,
-          description_es: itemForm.description_es || null,
-          description_en: itemForm.description_en || null,
-          image_url: itemForm.image_url || null,
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {

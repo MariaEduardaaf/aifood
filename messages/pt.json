@@ -153,6 +153,7 @@
     "roleWaiter": "Garçom",
     "roleAdmin": "Administrador",
     "roleManager": "Gerente",
+    "roleKitchen": "Cozinha",
     "active": "Ativo",
     "inactive": "Inativo",
     "confirmDelete": "Tem certeza que deseja excluir?",

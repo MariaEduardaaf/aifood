@@ -185,6 +185,10 @@ export default function LoginPage() {
             <p className="mb-2">Credenciais de demonstração:</p>
             <div className="space-y-1 text-xs">
               <p>
+                <span className="text-foreground">Super Admin:</span>{" "}
+                superadmin@aifood.com / superadmin123
+              </p>
+              <p>
                 <span className="text-foreground">Admin:</span> admin@aifood.com
                 / admin123
               </p>
