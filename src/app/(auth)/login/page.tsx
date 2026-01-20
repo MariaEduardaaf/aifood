@@ -63,7 +63,7 @@ export default function LoginPage() {
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center mb-4">
             <Image
-              src="/logo.svg"
+              src="/logo-light.svg"
               alt="aiFood Logo"
               width={64}
               height={64}

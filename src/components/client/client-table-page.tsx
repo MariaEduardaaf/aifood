@@ -216,9 +216,7 @@ function ClientTablePageContent({ tableId, tableLabel }: ClientTablePageProps) {
         <div className="flex items-center justify-between max-w-md mx-auto">
           <div className="flex items-center gap-3">
             <Image
-              src={
-                resolvedTheme === "dark" ? "/logo.svg" : "/logo.svg"
-              }
+              src={resolvedTheme === "dark" ? "/logo-light.svg" : "/logo.svg"}
               alt="aiFood Logo"
               width={44}
               height={44}
