@@ -58,10 +58,13 @@ export default auth((req) => {
     }
   }
 
-  // Waiter routes - only for WAITER (redirect KITCHEN to their dashboard)
+  // Waiter routes - only for WAITER (redirect others to their dashboards)
   if (pathname.startsWith("/garcom")) {
     if (userRole === "KITCHEN") {
       return NextResponse.redirect(new URL("/cozinha", req.nextUrl.origin));
+    }
+    if (userRole === "ADMIN" || userRole === "MANAGER") {
+      return NextResponse.redirect(new URL("/admin", req.nextUrl.origin));
     }
   }
 
