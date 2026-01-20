@@ -10,6 +10,7 @@ declare module "lucide-react" {
   export type Icon = FC<IconProps>;
 
   // Icons used in the project
+  export const Activity: Icon;
   export const AlertCircle: Icon;
   export const AlertTriangle: Icon;
   export const ArrowLeft: Icon;
