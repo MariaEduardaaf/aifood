@@ -121,7 +121,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
             {/* Logo */}
             <Link href="/garcom" className="flex items-center gap-2 group">
               <Image
-                src="/darklogo.webp"
+                src="/logo.png"
                 alt="aiFood Logo"
                 width={36}
                 height={36}

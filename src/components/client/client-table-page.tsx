@@ -217,7 +217,7 @@ function ClientTablePageContent({ tableId, tableLabel }: ClientTablePageProps) {
           <div className="flex items-center gap-3">
             <Image
               src={
-                resolvedTheme === "dark" ? "/darklogo.webp" : "/lightlogo.webp"
+                resolvedTheme === "dark" ? "/logo.png" : "/logo.png"
               }
               alt="aiFood Logo"
               width={44}
