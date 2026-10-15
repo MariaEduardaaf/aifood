@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import {
   ShoppingBag,
   Check,
@@ -13,7 +13,7 @@ import {
   Truck,
   Image as ImageIcon,
 } from "lucide-react";
-import { cn, formatTime, getUrgencyClass } from "@/lib/utils";
+import { cn, formatTime, getUrgencyClass, localizedName } from "@/lib/utils";
 import { useSound } from "@/components/providers/sound-provider";
 
 interface OrderItem {
@@ -48,6 +48,7 @@ interface Order {
 
 export function OrdersPanel() {
   const t = useTranslations("waiter");
+  const locale = useLocale();
   const { playNotification } = useSound();
 
   const [orders, setOrders] = useState<Order[]>([]);
@@ -61,7 +62,7 @@ export function OrdersPanel() {
 
   // Fetch orders with SSE
   useEffect(() => {
-    const eventSource = new EventSource("/api/pedidos/stream");
+    const eventSource = new EventSource("/api/orders/stream");
 
     eventSource.onmessage = (event) => {
       try {
@@ -131,7 +132,7 @@ export function OrdersPanel() {
   const handleConfirm = async (orderId: string) => {
     setActionLoading(orderId);
     try {
-      const res = await fetch(`/api/pedidos/${orderId}/confirmar`, {
+      const res = await fetch(`/api/orders/${orderId}/confirm`, {
         method: "PATCH",
       });
       if (!res.ok) {
@@ -147,7 +148,7 @@ export function OrdersPanel() {
   const handleDeliver = async (orderId: string) => {
     setActionLoading(orderId);
     try {
-      const res = await fetch(`/api/pedidos/${orderId}/entregar`, {
+      const res = await fetch(`/api/orders/${orderId}/deliver`, {
         method: "PATCH",
       });
       if (res.ok) {
@@ -166,7 +167,7 @@ export function OrdersPanel() {
 
     setActionLoading(orderId);
     try {
-      const res = await fetch(`/api/pedidos/${orderId}/cancelar`, {
+      const res = await fetch(`/api/orders/${orderId}/cancel`, {
         method: "PATCH",
       });
       if (res.ok) {
@@ -273,7 +274,7 @@ export function OrdersPanel() {
                       <div>
                         <h3 className="font-bold text-lg">{order.table.label}</h3>
                         <p className="text-sm text-muted-foreground">
-                          {order.items.length} {order.items.length === 1 ? "item" : "itens"} • R$ {Number(order.total).toFixed(2)}
+                          {t("itemCount", { count: order.items.length })} • R$ {Number(order.total).toFixed(2)}
                         </p>
                       </div>
                     </div>
@@ -317,7 +318,7 @@ export function OrdersPanel() {
                             {item.menuItem.image_url ? (
                               <img
                                 src={item.menuItem.image_url}
-                                alt={item.menuItem.name_pt}
+                                alt={localizedName(item.menuItem, locale)}
                                 className="w-full h-full object-cover"
                               />
                             ) : (
@@ -328,7 +329,7 @@ export function OrdersPanel() {
                           </div>
                           <div className="flex-1">
                             <p className="font-medium text-sm">
-                              {item.quantity}x {item.menuItem.name_pt}
+                              {item.quantity}x {localizedName(item.menuItem, locale)}
                             </p>
                             {item.notes && (
                               <p className="text-xs text-muted-foreground">
@@ -345,7 +346,7 @@ export function OrdersPanel() {
                       {order.notes && (
                         <div className="pt-2 border-t border-border/30">
                           <p className="text-sm text-muted-foreground">
-                            <span className="font-medium">Obs:</span> {order.notes}
+                            <span className="font-medium">{t("notes")}:</span> {order.notes}
                           </p>
                         </div>
                       )}

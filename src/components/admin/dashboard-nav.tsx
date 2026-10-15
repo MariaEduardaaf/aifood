@@ -70,21 +70,21 @@ export function DashboardNav({ user }: DashboardNavProps) {
 
   const navItems = [
     {
-      href: "/admin/mesas",
+      href: "/admin/tables",
       label: t("tables"),
       icon: TableProperties,
       show: isAdmin,
       badge: 0,
     },
     {
-      href: "/admin/usuarios",
+      href: "/admin/users",
       label: t("users"),
       icon: Users,
       show: isAdmin,
       badge: 0,
     },
     {
-      href: "/admin/metricas",
+      href: "/admin/metrics",
       label: t("metricsPage"),
       icon: BarChart3,
       show: isAdmin,
@@ -92,20 +92,20 @@ export function DashboardNav({ user }: DashboardNavProps) {
     },
     {
       href: "/admin/feedbacks",
-      label: "Feedbacks",
+      label: t("feedbacks.title"),
       icon: MessageSquare,
       show: isAdmin,
       badge: counts.feedbacks,
     },
     {
-      href: "/admin/cardapio",
+      href: "/admin/menu",
       label: t("menu"),
       icon: ChefHat,
       show: isAdmin,
       badge: 0,
     },
     {
-      href: "/admin/configuracoes",
+      href: "/admin/settings",
       label: t("settings"),
       icon: Settings,
       show: isAdmin,
@@ -119,7 +119,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
         <div className="flex items-center justify-between h-14 sm:h-16">
           <div className="flex items-center gap-4 sm:gap-8">
             {/* Logo */}
-            <Link href="/garcom" className="flex items-center gap-2 group">
+            <Link href="/waiter" className="flex items-center gap-2 group">
               <Image
                 src="/logo-light.svg"
                 alt="aiFood Logo"
@@ -141,7 +141,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
                   const Icon = item.icon;
                   const isActive =
                     pathname === item.href ||
-                    (item.href !== "/garcom" &&
+                    (item.href !== "/waiter" &&
                       item.href !== "/admin" &&
                       pathname.startsWith(item.href));
 
@@ -185,12 +185,12 @@ export function DashboardNav({ user }: DashboardNavProps) {
                 </p>
                 <p className="text-xs text-white/70">
                   {user.role === "ADMIN"
-                    ? "Admin"
+                    ? t("roleAdmin")
                     : user.role === "MANAGER"
-                      ? "Gerente"
+                      ? t("roleManager")
                       : user.role === "KITCHEN"
-                        ? "Cozinha"
-                        : "Garçom"}
+                        ? t("roleKitchen")
+                        : t("roleWaiter")}
                 </p>
               </div>
             </div>
@@ -213,7 +213,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
               const Icon = item.icon;
               const isActive =
                 pathname === item.href ||
-                (item.href !== "/garcom" &&
+                (item.href !== "/waiter" &&
                   item.href !== "/admin" &&
                   pathname.startsWith(item.href));
 

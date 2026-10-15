@@ -49,7 +49,7 @@ export function WaiterDashboard({ userId }: WaiterDashboardProps) {
 
   // Fetch calls with SSE
   useEffect(() => {
-    const eventSource = new EventSource("/api/chamados/stream");
+    const eventSource = new EventSource("/api/calls/stream");
 
     eventSource.onmessage = (event) => {
       try {
@@ -103,7 +103,7 @@ export function WaiterDashboard({ userId }: WaiterDashboardProps) {
     setResolvingId(callId);
 
     try {
-      const res = await fetch(`/api/chamados/${callId}/resolver`, {
+      const res = await fetch(`/api/calls/${callId}/resolve`, {
         method: "PATCH",
       });
 
@@ -133,7 +133,7 @@ export function WaiterDashboard({ userId }: WaiterDashboardProps) {
           <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
-          <p className="text-muted-foreground">Carregando chamados...</p>
+          <p className="text-muted-foreground">{t("loadingCalls")}</p>
         </div>
       </div>
     );
@@ -151,16 +151,16 @@ export function WaiterDashboard({ userId }: WaiterDashboardProps) {
             {t("noCalls")}
           </h3>
           <p className="text-sm text-muted-foreground text-center max-w-xs">
-            Novos chamados aparecerão aqui em tempo real
+            {t("newCallsHint")}
           </p>
         </div>
       ) : (
         <>
-          {/* Counter badge quando tem chamados */}
+          {/* Counter badge when there are calls */}
           <div className="flex items-center gap-2 mb-2">
             <span className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-red-500/15 text-red-400 border border-red-500/20">
               <span className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />
-              {calls.length} {calls.length === 1 ? "chamado" : "chamados"}
+              {t("callsCount", { count: calls.length })}
             </span>
           </div>
           <div className="grid gap-4">

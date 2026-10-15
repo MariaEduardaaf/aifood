@@ -37,33 +37,33 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
   const successRef = useRef<HTMLAudioElement | null>(null);
   const errorRef = useRef<HTMLAudioElement | null>(null);
 
-  // Carregar configuracoes e inicializar audios
+  // Load settings and initialize audio
   useEffect(() => {
     setMounted(true);
 
-    // Carregar configuracoes salvas
+    // Load saved settings
     const saved = localStorage.getItem("visionary-sound-settings");
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
         setSettings({ ...DEFAULT_SETTINGS, ...parsed });
       } catch {
-        // Ignorar erro de parse
+        // Ignore parse error
       }
     }
 
-    // Inicializar audios
+    // Initialize audio
     notificationRef.current = new Audio("/sounds/notification.mp3");
     successRef.current = new Audio("/sounds/success.mp3");
     errorRef.current = new Audio("/sounds/error.mp3");
 
-    // Pre-load audios
+    // Pre-load audio
     notificationRef.current.load();
     successRef.current.load();
     errorRef.current.load();
   }, []);
 
-  // Atualizar volume dos audios quando mudar
+  // Update audio volume when it changes
   useEffect(() => {
     if (!mounted) return;
 
@@ -85,10 +85,10 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
     (audio: HTMLAudioElement | null) => {
       if (!settings.enabled || !audio) return;
 
-      // Reset e play
+      // Reset and play
       audio.currentTime = 0;
       audio.play().catch(() => {
-        // Ignorar erros de autoplay (browser pode bloquear)
+        // Ignore autoplay errors (browser may block)
       });
     },
     [settings.enabled],

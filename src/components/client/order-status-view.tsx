@@ -56,7 +56,7 @@ export function OrderStatusView({ tableId, onBack, onNewOrder }: OrderStatusView
   useEffect(() => {
     fetchOrders();
 
-    // Atualizar a cada 10 segundos
+    // Refresh every 10 seconds
     const interval = setInterval(fetchOrders, 10000);
     return () => clearInterval(interval);
   }, [tableId]);
@@ -65,7 +65,7 @@ export function OrderStatusView({ tableId, onBack, onNewOrder }: OrderStatusView
     if (showRefresh) setRefreshing(true);
 
     try {
-      const res = await fetch(`/api/pedidos?tableId=${tableId}`);
+      const res = await fetch(`/api/orders?tableId=${tableId}`);
       if (res.ok) {
         const data = await res.json();
         setOrders(data);
@@ -293,7 +293,7 @@ export function OrderStatusView({ tableId, onBack, onNewOrder }: OrderStatusView
 
                 {/* Order Footer */}
                 <div className="p-4 border-t border-border/50 flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Total</span>
+                  <span className="text-sm text-muted-foreground">{t("total")}</span>
                   <span className="text-lg font-bold text-primary">
                     R$ {Number(order.total).toFixed(2)}
                   </span>

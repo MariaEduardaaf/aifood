@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
 
     // Upload to Cloudinary
     const result = await cloudinary.uploader.upload(base64, {
-      folder: "visionary/cardapio",
+      folder: "visionary/menu",
       transformation: [
         { width: 800, height: 800, crop: "limit" },
         { quality: "auto" },

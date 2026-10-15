@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
 export default function SuperAdminPage() {
-  redirect("/superadmin/restaurantes");
+  redirect("/superadmin/restaurants");
 }

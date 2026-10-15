@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import Image from "next/image";
 import {
   Bell,
@@ -43,6 +43,7 @@ type View = "main" | "menu" | "cart" | "orders";
 
 function ClientTablePageContent({ tableId, tableLabel }: ClientTablePageProps) {
   const t = useTranslations("client");
+  const locale = useLocale();
   const { itemCount } = useCart();
   const { resolvedTheme } = useTheme();
 
@@ -71,7 +72,7 @@ function ClientTablePageContent({ tableId, tableLabel }: ClientTablePageProps) {
   useEffect(() => {
     const checkOpenCalls = async () => {
       try {
-        const res = await fetch(`/api/mesas/${tableId}/status`);
+        const res = await fetch(`/api/tables/${tableId}/status`);
         if (res.ok) {
           const data = await res.json();
           setOpenCalls(data.openCalls || []);
@@ -117,7 +118,7 @@ function ClientTablePageContent({ tableId, tableLabel }: ClientTablePageProps) {
     setLoading(loadingKey);
 
     try {
-      const res = await fetch("/api/chamados", {
+      const res = await fetch("/api/calls", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ tableId, type }),
@@ -157,7 +158,7 @@ function ClientTablePageContent({ tableId, tableLabel }: ClientTablePageProps) {
           onBack={() => setCurrentView("main")}
           onOpenCart={() => setShowCart(true)}
         />
-        {/* Cart Modal - também disponível na view do menu */}
+        {/* Cart Modal - also available in the menu view */}
         {showCart && (
           <CartModal
             tableId={tableId}
@@ -185,7 +186,7 @@ function ClientTablePageContent({ tableId, tableLabel }: ClientTablePageProps) {
 
   // Format time
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString("pt-BR", {
+    return date.toLocaleTimeString(locale, {
       hour: "2-digit",
       minute: "2-digit",
     });
@@ -255,7 +256,7 @@ function ClientTablePageContent({ tableId, tableLabel }: ClientTablePageProps) {
               <div className="text-left">
                 <h1 className="text-2xl font-bold text-gold">{tableLabel}</h1>
                 <p className="text-sm text-muted-foreground">
-                  {t("welcomeMessage") || "Bem-vindo! Como podemos ajudar?"}
+                  {t("welcomeMessage")}
                 </p>
               </div>
             </div>
@@ -277,8 +278,7 @@ function ClientTablePageContent({ tableId, tableLabel }: ClientTablePageProps) {
                   <Sparkles className="h-4 w-4 text-primary" />
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  {t("browseAndOrder") ||
-                    "Navegue pelo cardápio e faça seu pedido"}
+                  {t("browseAndOrder")}
                 </p>
               </div>
               {itemCount > 0 && (
@@ -303,7 +303,7 @@ function ClientTablePageContent({ tableId, tableLabel }: ClientTablePageProps) {
                   {t("myOrders")}
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  {t("trackYourOrders") || "Acompanhe seus pedidos"}
+                  {t("trackYourOrders")}
                 </p>
               </div>
             </div>
@@ -312,7 +312,7 @@ function ClientTablePageContent({ tableId, tableLabel }: ClientTablePageProps) {
           {/* Service Buttons Section */}
           <div className="card-premium rounded-2xl p-5 mt-auto">
             <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">
-              {t("needAssistance") || "Precisa de assistência?"}
+              {t("needAssistance")}
             </h3>
 
             <div className="grid grid-cols-2 gap-3">
@@ -430,7 +430,7 @@ function ClientTablePageContent({ tableId, tableLabel }: ClientTablePageProps) {
   );
 }
 
-// Wrapper com CartProvider
+// Wrapper with CartProvider
 export function ClientTablePage({ tableId, tableLabel }: ClientTablePageProps) {
   return (
     <CartProvider>

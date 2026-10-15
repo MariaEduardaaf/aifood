@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
-// GET /api/admin/feedbacks - Listar feedbacks/avaliações
+// GET /api/admin/feedbacks - List feedbacks/ratings
 export async function GET(request: NextRequest) {
   const session = await auth();
 
@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // Estatísticas gerais
+    // General statistics
     const stats = await prisma.rating.aggregate({
       where,
       _count: true,

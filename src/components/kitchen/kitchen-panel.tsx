@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import {
   ChefHat,
   Loader2,
@@ -9,7 +9,7 @@ import {
   Check,
   Image as ImageIcon,
 } from "lucide-react";
-import { cn, formatTime } from "@/lib/utils";
+import { cn, formatTime, localizedName } from "@/lib/utils";
 import { useSound } from "@/components/providers/sound-provider";
 
 interface OrderItem {
@@ -54,6 +54,7 @@ interface Order {
 
 export function KitchenPanel() {
   const t = useTranslations("kitchen");
+  const locale = useLocale();
   const { playNotification } = useSound();
 
   const [orders, setOrders] = useState<Order[]>([]);
@@ -65,7 +66,7 @@ export function KitchenPanel() {
 
   // Fetch orders with SSE
   useEffect(() => {
-    const eventSource = new EventSource("/api/pedidos/stream");
+    const eventSource = new EventSource("/api/orders/stream");
 
     eventSource.onmessage = (event) => {
       try {
@@ -129,7 +130,7 @@ export function KitchenPanel() {
   const handleStartPreparing = async (orderId: string) => {
     setActionLoading(orderId);
     try {
-      const res = await fetch(`/api/pedidos/${orderId}/preparar`, {
+      const res = await fetch(`/api/orders/${orderId}/prepare`, {
         method: "PATCH",
       });
       if (!res.ok) {
@@ -145,7 +146,7 @@ export function KitchenPanel() {
   const handleMarkReady = async (orderId: string) => {
     setActionLoading(orderId);
     try {
-      const res = await fetch(`/api/pedidos/${orderId}/pronto`, {
+      const res = await fetch(`/api/orders/${orderId}/ready`, {
         method: "PATCH",
       });
       if (!res.ok) {
@@ -222,7 +223,7 @@ export function KitchenPanel() {
                 {item.menuItem.image_url ? (
                   <img
                     src={item.menuItem.image_url}
-                    alt={item.menuItem.name_pt}
+                    alt={localizedName(item.menuItem, locale)}
                     className="w-full h-full object-cover"
                   />
                 ) : (
@@ -236,7 +237,7 @@ export function KitchenPanel() {
                   <span className="text-primary font-bold">
                     {item.quantity}x
                   </span>{" "}
-                  {item.menuItem.name_pt}
+                  {localizedName(item.menuItem, locale)}
                 </p>
                 {item.notes && (
                   <p className="text-xs text-yellow-500">{item.notes}</p>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import {
   Clock,
   AlertTriangle,
@@ -13,25 +13,27 @@ import {
 } from "lucide-react";
 
 interface RealTimeData {
-  pedidosAtivos: {
-    pendentes: number;
-    confirmados: number;
-    preparando: number;
-    prontos: number;
+  activeOrders: {
+    pending: number;
+    confirmed: number;
+    preparing: number;
+    ready: number;
   };
-  chamadosAbertos: number;
-  mesasOcupadas: number;
-  ultimosPedidos: Array<{
+  openCalls: number;
+  occupiedTables: number;
+  recentOrders: Array<{
     id: string;
-    mesa: number;
+    table: string;
     status: string;
     total: number;
-    criadoEm: string;
+    createdAt: string;
   }>;
-  alertas: Array<{
-    tipo: string;
-    mensagem: string;
-    pedidoId?: string;
+  alerts: Array<{
+    severity: "WARNING" | "DELAY";
+    kind: "ORDER_WAITING" | "MANY_OPEN_CALLS";
+    table?: string;
+    minutes?: number;
+    count?: number;
   }>;
 }
 
@@ -45,6 +47,7 @@ export function RealTimePanel({
   restaurantId,
 }: RealTimePanelProps) {
   const t = useTranslations("admin.metrics");
+  const locale = useLocale();
   const [data, setData] = useState<RealTimeData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -57,16 +60,16 @@ export function RealTimePanel({
         params.set("restaurantId", restaurantId);
       }
       const url = params.toString()
-        ? `/api/admin/metricas/tempo-real?${params.toString()}`
-        : "/api/admin/metricas/tempo-real";
+        ? `/api/admin/metrics/real-time?${params.toString()}`
+        : "/api/admin/metrics/real-time";
       const response = await fetch(url);
-      if (!response.ok) throw new Error("Erro ao carregar dados");
+      if (!response.ok) throw new Error("Failed to load data");
       const result = await response.json();
       setData(result);
       setLastUpdate(new Date());
       setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro desconhecido");
+    } catch {
+      setError(t("loadError"));
     } finally {
       setLoading(false);
     }
@@ -79,7 +82,7 @@ export function RealTimePanel({
   }, [refreshInterval, restaurantId]);
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
+    return new Intl.NumberFormat(locale, {
       style: "currency",
       currency: "BRL",
     }).format(value);
@@ -87,7 +90,7 @@ export function RealTimePanel({
 
   const formatTime = (dateStr: string) => {
     const date = new Date(dateStr);
-    return date.toLocaleTimeString("pt-BR", {
+    return date.toLocaleTimeString(locale, {
       hour: "2-digit",
       minute: "2-digit",
     });
@@ -158,11 +161,11 @@ export function RealTimePanel({
         </div>
       </div>
 
-      {/* Status dos Pedidos */}
+      {/* Order status */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4 text-center">
           <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
-            {data.pedidosAtivos.pendentes}
+            {data.activeOrders.pending}
           </p>
           <p className="text-sm text-yellow-700 dark:text-yellow-300">
             {t("pending")}
@@ -170,7 +173,7 @@ export function RealTimePanel({
         </div>
         <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 text-center">
           <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-            {data.pedidosAtivos.confirmados}
+            {data.activeOrders.confirmed}
           </p>
           <p className="text-sm text-blue-700 dark:text-blue-300">
             {t("confirmed")}
@@ -178,7 +181,7 @@ export function RealTimePanel({
         </div>
         <div className="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-4 text-center">
           <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
-            {data.pedidosAtivos.preparando}
+            {data.activeOrders.preparing}
           </p>
           <p className="text-sm text-orange-700 dark:text-orange-300">
             {t("preparing")}
@@ -186,7 +189,7 @@ export function RealTimePanel({
         </div>
         <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 text-center">
           <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-            {data.pedidosAtivos.prontos}
+            {data.activeOrders.ready}
           </p>
           <p className="text-sm text-green-700 dark:text-green-300">
             {t("ready")}
@@ -194,7 +197,7 @@ export function RealTimePanel({
         </div>
       </div>
 
-      {/* Indicadores Rápidos */}
+      {/* Quick indicators */}
       <div className="grid grid-cols-2 gap-4 mb-6">
         <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
           <Bell className="w-5 h-5 text-yellow-500" />
@@ -203,7 +206,7 @@ export function RealTimePanel({
               {t("openCalls")}
             </p>
             <p className="text-lg font-semibold text-gray-900 dark:text-white">
-              {data.chamadosAbertos}
+              {data.openCalls}
             </p>
           </div>
         </div>
@@ -214,28 +217,33 @@ export function RealTimePanel({
               {t("occupiedTables")}
             </p>
             <p className="text-lg font-semibold text-gray-900 dark:text-white">
-              {data.mesasOcupadas}
+              {data.occupiedTables}
             </p>
           </div>
         </div>
       </div>
 
-      {/* Alertas */}
-      {data.alertas.length > 0 && (
+      {/* Alerts */}
+      {data.alerts.length > 0 && (
         <div className="mb-6">
           <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3 flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 text-red-500" />
             {t("alerts")}
           </h4>
           <div className="space-y-2">
-            {data.alertas.map((alerta, index) => (
+            {data.alerts.map((alert, index) => (
               <div
                 key={index}
                 className="flex items-center gap-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg"
               >
                 <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0" />
                 <p className="text-sm text-red-700 dark:text-red-300">
-                  {alerta.mensagem}
+                  {alert.kind === "ORDER_WAITING"
+                    ? t("alertOrderWaiting", {
+                        table: alert.table ?? "",
+                        minutes: alert.minutes ?? 0,
+                      })
+                    : t("alertManyCalls", { count: alert.count ?? 0 })}
                 </p>
               </div>
             ))}
@@ -243,41 +251,41 @@ export function RealTimePanel({
         </div>
       )}
 
-      {/* Últimos Pedidos */}
+      {/* Recent orders */}
       <div>
         <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3 flex items-center gap-2">
           <Utensils className="w-4 h-4" />
           {t("recentOrders")}
         </h4>
         <div className="space-y-2">
-          {data.ultimosPedidos.map((pedido) => (
+          {data.recentOrders.map((order) => (
             <div
-              key={pedido.id}
+              key={order.id}
               className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
                   <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {pedido.mesa}
+                    {order.table}
                   </span>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-900 dark:text-white">
-                    {t("table")} {pedido.mesa}
+                    {t("table")} {order.table}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {formatTime(pedido.criadoEm)}
+                    {formatTime(order.createdAt)}
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
                 <span
-                  className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(pedido.status)}`}
+                  className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(order.status)}`}
                 >
-                  {getStatusLabel(pedido.status)}
+                  {getStatusLabel(order.status)}
                 </span>
                 <span className="text-sm font-medium text-gray-900 dark:text-white">
-                  {formatCurrency(pedido.total)}
+                  {formatCurrency(order.total)}
                 </span>
               </div>
             </div>

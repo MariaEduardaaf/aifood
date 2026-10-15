@@ -103,8 +103,8 @@ model Rating {
   id                String   @id @default(cuid())
   call_id           String   @unique
   stars             Int      // 1-5
-  feedback          String?  // comentário se nota baixa
-  redirected_google Boolean  @default(false) // foi redirecionado pro Google?
+  feedback          String?  // comment when the rating is low
+  redirected_google Boolean  @default(false) // was redirected to Google?
   created_at        DateTime @default(now())
   restaurant_id     String
 
@@ -119,14 +119,14 @@ model Rating {
 model Settings {
   id                  String  @id @default(cuid())
   restaurant_id       String  @unique
-  google_reviews_url  String? // URL do Google Reviews do restaurante
+  google_reviews_url  String? // Restaurant's Google Reviews URL
   google_reviews_enabled Boolean @default(true)
-  min_stars_redirect  Int     @default(4) // nota mínima para redirecionar
+  min_stars_redirect  Int     @default(4) // minimum stars to redirect
 
   restaurant Restaurant @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
 }
 
-// ============ FASE 2: CARDÁPIO DIGITAL ============
+// ============ PHASE 2: DIGITAL MENU ============
 
 model Category {
   id         String   @id @default(cuid())
@@ -172,15 +172,15 @@ model MenuItem {
   @@index([restaurant_id])
 }
 
-// ============ FASE 3: SISTEMA DE PEDIDOS ============
+// ============ PHASE 3: ORDER SYSTEM ============
 
 enum OrderStatus {
-  PENDING    // Aguardando confirmacao do garcom
-  CONFIRMED  // Garcom confirmou, enviado para preparo
-  PREPARING  // Cozinha preparando (Fase 4)
-  READY      // Pronto para entrega (Fase 4)
-  DELIVERED  // Entregue ao cliente
-  CANCELLED  // Cancelado
+  PENDING    // Waiting for waiter confirmation
+  CONFIRMED  // Waiter confirmed, sent to preparation
+  PREPARING  // Kitchen preparing (Phase 4)
+  READY      // Ready for delivery (Phase 4)
+  DELIVERED  // Delivered to the customer
+  CANCELLED  // Cancelled
 }
 
 model Order {
@@ -189,15 +189,15 @@ model Order {
   table_id     String
   status       OrderStatus @default(PENDING)
   total        Decimal     @db.Decimal(10, 2)
-  notes        String?     // Observacoes gerais do pedido
+  notes        String?     // General order notes
   created_at   DateTime    @default(now())
   updated_at   DateTime    @updatedAt
-  confirmed_at DateTime?   // Quando garcom confirmou
-  delivered_at DateTime?   // Quando foi entregue
-  confirmed_by String?     // ID do garcom que confirmou
-  preparing_at DateTime?   // Quando cozinha iniciou preparo
-  ready_at     DateTime?   // Quando ficou pronto
-  prepared_by  String?     // ID do cozinheiro
+  confirmed_at DateTime?   // When the waiter confirmed
+  delivered_at DateTime?   // When it was delivered
+  confirmed_by String?     // ID of the waiter who confirmed
+  preparing_at DateTime?   // When the kitchen started preparing
+  ready_at     DateTime?   // When it became ready
+  prepared_by  String?     // ID of the cook
 
   restaurant Restaurant @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
   table     Table       @relation(fields: [table_id], references: [id], onDelete: Cascade)
@@ -216,8 +216,8 @@ model OrderItem {
   order_id     String
   menu_item_id String
   quantity     Int
-  unit_price   Decimal @db.Decimal(10, 2) // Preco no momento do pedido
-  notes        String? // Ex: "sem cebola", "bem passado"
+  unit_price   Decimal @db.Decimal(10, 2) // Price at the time of the order
+  notes        String? // E.g.: "no onions", "well done"
 
   order    Order    @relation(fields: [order_id], references: [id], onDelete: Cascade)
   menuItem MenuItem @relation(fields: [menu_item_id], references: [id])

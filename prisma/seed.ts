@@ -25,7 +25,7 @@ async function main() {
     create: {
       email: "admin@aifood.com",
       password_hash: adminPassword,
-      name: "Administrador",
+      name: "Administrator",
       role: "ADMIN",
       active: true,
       restaurant_id: restaurant.id,
@@ -50,14 +50,14 @@ async function main() {
   console.log("Created super admin user:", superAdmin.email);
 
   // Create waiter user
-  const waiterPassword = await hash("garcom123", 12);
+  const waiterPassword = await hash("waiter123", 12);
   const waiter = await prisma.user.upsert({
-    where: { email: "garcom@aifood.com" },
+    where: { email: "waiter@aifood.com" },
     update: { restaurant_id: restaurant.id },
     create: {
-      email: "garcom@aifood.com",
+      email: "waiter@aifood.com",
       password_hash: waiterPassword,
-      name: "Garçom Demo",
+      name: "Demo Waiter",
       role: "WAITER",
       active: true,
       restaurant_id: restaurant.id,
@@ -66,14 +66,14 @@ async function main() {
   console.log("Created waiter user:", waiter.email);
 
   // Create kitchen user
-  const kitchenPassword = await hash("cozinha123", 12);
+  const kitchenPassword = await hash("kitchen123", 12);
   const kitchen = await prisma.user.upsert({
-    where: { email: "cozinha@aifood.com" },
+    where: { email: "kitchen@aifood.com" },
     update: { restaurant_id: restaurant.id },
     create: {
-      email: "cozinha@aifood.com",
+      email: "kitchen@aifood.com",
       password_hash: kitchenPassword,
-      name: "Cozinha",
+      name: "Kitchen",
       role: "KITCHEN",
       active: true,
       restaurant_id: restaurant.id,
@@ -89,7 +89,7 @@ async function main() {
       update: { restaurant_id: restaurant.id },
       create: {
         id: `table-${i}`,
-        label: `Mesa ${i}`,
+        label: `Table ${i}`,
         active: true,
         restaurant_id: restaurant.id,
       },
@@ -115,7 +115,7 @@ async function main() {
   // Create menu categories
   const categories = [
     {
-      id: "cat-entradas",
+      id: "cat-starters",
       restaurant_id: restaurant.id,
       name_pt: "Entradas",
       name_es: "Entrantes",
@@ -123,7 +123,7 @@ async function main() {
       order: 1,
     },
     {
-      id: "cat-pratos",
+      id: "cat-mains",
       restaurant_id: restaurant.id,
       name_pt: "Pratos Principais",
       name_es: "Platos Principales",
@@ -131,7 +131,7 @@ async function main() {
       order: 2,
     },
     {
-      id: "cat-bebidas",
+      id: "cat-drinks",
       restaurant_id: restaurant.id,
       name_pt: "Bebidas",
       name_es: "Bebidas",
@@ -139,7 +139,7 @@ async function main() {
       order: 3,
     },
     {
-      id: "cat-sobremesas",
+      id: "cat-desserts",
       restaurant_id: restaurant.id,
       name_pt: "Sobremesas",
       name_es: "Postres",
@@ -159,11 +159,11 @@ async function main() {
 
   // Create menu items
   const menuItems = [
-    // Entradas
+    // Starters
     {
       id: "item-bruschetta",
       restaurant_id: restaurant.id,
-      category_id: "cat-entradas",
+      category_id: "cat-starters",
       name_pt: "Bruschetta de Tomate",
       name_es: "Bruschetta de Tomate",
       name_en: "Tomato Bruschetta",
@@ -179,7 +179,7 @@ async function main() {
     {
       id: "item-carpaccio",
       restaurant_id: restaurant.id,
-      category_id: "cat-entradas",
+      category_id: "cat-starters",
       name_pt: "Carpaccio de Carne",
       name_es: "Carpaccio de Res",
       name_en: "Beef Carpaccio",
@@ -192,11 +192,11 @@ async function main() {
       price: 38.9,
       order: 2,
     },
-    // Pratos
+    // Main courses
     {
       id: "item-picanha",
       restaurant_id: restaurant.id,
-      category_id: "cat-pratos",
+      category_id: "cat-mains",
       name_pt: "Picanha Grelhada",
       name_es: "Picaña a la Parrilla",
       name_en: "Grilled Picanha",
@@ -210,9 +210,9 @@ async function main() {
       order: 1,
     },
     {
-      id: "item-salmao",
+      id: "item-salmon",
       restaurant_id: restaurant.id,
-      category_id: "cat-pratos",
+      category_id: "cat-mains",
       name_pt: "Salmão Grelhado",
       name_es: "Salmón a la Parrilla",
       name_en: "Grilled Salmon",
@@ -226,9 +226,9 @@ async function main() {
       order: 2,
     },
     {
-      id: "item-risoto",
+      id: "item-risotto",
       restaurant_id: restaurant.id,
-      category_id: "cat-pratos",
+      category_id: "cat-mains",
       name_pt: "Risoto de Funghi",
       name_es: "Risotto de Hongos",
       name_en: "Mushroom Risotto",
@@ -238,11 +238,11 @@ async function main() {
       price: 59.9,
       order: 3,
     },
-    // Bebidas
+    // Drinks
     {
-      id: "item-suco",
+      id: "item-juice",
       restaurant_id: restaurant.id,
-      category_id: "cat-bebidas",
+      category_id: "cat-drinks",
       name_pt: "Suco Natural",
       name_es: "Jugo Natural",
       name_en: "Fresh Juice",
@@ -253,9 +253,9 @@ async function main() {
       order: 1,
     },
     {
-      id: "item-refrigerante",
+      id: "item-soda",
       restaurant_id: restaurant.id,
-      category_id: "cat-bebidas",
+      category_id: "cat-drinks",
       name_pt: "Refrigerante",
       name_es: "Refresco",
       name_en: "Soft Drink",
@@ -266,9 +266,9 @@ async function main() {
       order: 2,
     },
     {
-      id: "item-cerveja",
+      id: "item-beer",
       restaurant_id: restaurant.id,
-      category_id: "cat-bebidas",
+      category_id: "cat-drinks",
       name_pt: "Cerveja Artesanal",
       name_es: "Cerveza Artesanal",
       name_en: "Craft Beer",
@@ -278,11 +278,11 @@ async function main() {
       price: 18.9,
       order: 3,
     },
-    // Sobremesas
+    // Desserts
     {
-      id: "item-pudim",
+      id: "item-pudding",
       restaurant_id: restaurant.id,
-      category_id: "cat-sobremesas",
+      category_id: "cat-desserts",
       name_pt: "Pudim de Leite",
       name_es: "Flan de Leche",
       name_en: "Milk Pudding",
@@ -293,9 +293,9 @@ async function main() {
       order: 1,
     },
     {
-      id: "item-petit",
+      id: "item-petit-gateau",
       restaurant_id: restaurant.id,
-      category_id: "cat-sobremesas",
+      category_id: "cat-desserts",
       name_pt: "Petit Gâteau",
       name_es: "Petit Gâteau",
       name_en: "Chocolate Lava Cake",
@@ -323,8 +323,8 @@ async function main() {
   console.log("\n--- Login Credentials ---");
   console.log("Admin: admin@aifood.com / admin123");
   console.log("Super Admin: superadmin@aifood.com / superadmin123");
-  console.log("Garçom: garcom@aifood.com / garcom123");
-  console.log("Cozinha: cozinha@aifood.com / cozinha123");
+  console.log("Waiter: waiter@aifood.com / waiter123");
+  console.log("Kitchen: kitchen@aifood.com / kitchen123");
 }
 
 main()

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import {
   DndContext,
   DragEndEvent,
@@ -23,7 +23,7 @@ import {
   Image as ImageIcon,
   GripVertical,
 } from "lucide-react";
-import { cn, formatTime } from "@/lib/utils";
+import { cn, formatTime, localizedName } from "@/lib/utils";
 import { useSound } from "@/components/providers/sound-provider";
 
 interface OrderItem {
@@ -129,6 +129,7 @@ function DraggableOrderCard({
   type,
 }: DraggableOrderCardProps) {
   const t = useTranslations("kitchen");
+  const locale = useLocale();
   const canDrag = type !== "ready";
 
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -201,7 +202,7 @@ function DraggableOrderCard({
               {item.menuItem.image_url ? (
                 <img
                   src={item.menuItem.image_url}
-                  alt={item.menuItem.name_pt}
+                  alt={localizedName(item.menuItem, locale)}
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -213,7 +214,7 @@ function DraggableOrderCard({
             <div className="flex-1">
               <p className="font-medium text-sm">
                 <span className="text-primary font-bold">{item.quantity}x</span>{" "}
-                {item.menuItem.name_pt}
+                {localizedName(item.menuItem, locale)}
               </p>
               {item.notes && (
                 <p className="text-xs text-yellow-500">{item.notes}</p>
@@ -308,7 +309,7 @@ export function KitchenKanban() {
 
   // Fetch orders with SSE
   useEffect(() => {
-    const eventSource = new EventSource("/api/pedidos/stream");
+    const eventSource = new EventSource("/api/orders/stream");
 
     eventSource.onmessage = (event) => {
       try {
@@ -370,7 +371,7 @@ export function KitchenKanban() {
   const handleStartPreparing = async (orderId: string) => {
     setActionLoading(orderId);
     try {
-      const res = await fetch(`/api/pedidos/${orderId}/preparar`, {
+      const res = await fetch(`/api/orders/${orderId}/prepare`, {
         method: "PATCH",
       });
       if (res.ok) {
@@ -386,7 +387,7 @@ export function KitchenKanban() {
   const handleMarkReady = async (orderId: string) => {
     setActionLoading(orderId);
     try {
-      const res = await fetch(`/api/pedidos/${orderId}/pronto`, {
+      const res = await fetch(`/api/orders/${orderId}/ready`, {
         method: "PATCH",
       });
       if (res.ok) {
@@ -547,7 +548,7 @@ export function KitchenKanban() {
             <div className="card-premium rounded-xl p-4 shadow-2xl opacity-90">
               <h3 className="font-bold text-lg">{activeOrder.table.label}</h3>
               <p className="text-sm text-muted-foreground">
-                {activeOrder.items.length} itens
+                {t("itemCount", { count: activeOrder.items.length })}
               </p>
             </div>
           )}

@@ -25,3 +25,13 @@ export function generateToken(length: number = 32): string {
   }
   return result
 }
+
+// Pick the menu item/category name for the active locale (falls back to pt)
+export function localizedName(
+  item: { name_pt: string; name_es?: string; name_en?: string },
+  locale: string,
+): string {
+  if (locale === 'es') return item.name_es || item.name_pt
+  if (locale === 'en') return item.name_en || item.name_pt
+  return item.name_pt
+}

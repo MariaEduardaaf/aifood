@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import {
   BarChart,
   Bar,
@@ -14,22 +14,23 @@ import {
 } from "recharts";
 
 interface DayData {
-  dia: number;
-  nome: string;
-  quantidade: number;
-  receita: number;
+  day: number;
+  key: string;
+  quantity: number;
+  revenue: number;
 }
 
 interface OrdersByDayChartProps {
-  periodo?: string;
+  period?: string;
   restaurantId?: string;
 }
 
 export function OrdersByDayChart({
-  periodo = "semana",
+  period = "week",
   restaurantId,
 }: OrdersByDayChartProps) {
   const t = useTranslations("admin.metrics");
+  const locale = useLocale();
   const [data, setData] = useState<DayData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -38,25 +39,25 @@ export function OrdersByDayChart({
     async function fetchData() {
       try {
         setLoading(true);
-        const params = new URLSearchParams({ periodo });
+        const params = new URLSearchParams({ period });
         if (restaurantId) {
           params.set("restaurantId", restaurantId);
         }
         const response = await fetch(
-          `/api/admin/metricas/pedidos/dia-semana?${params.toString()}`,
+          `/api/admin/metrics/orders/weekday?${params.toString()}`,
         );
-        if (!response.ok) throw new Error("Erro ao carregar dados");
+        if (!response.ok) throw new Error("Failed to load data");
         const result = await response.json();
-        setData(result);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Erro desconhecido");
+        setData(result.data);
+      } catch {
+        setError(t("loadError"));
       } finally {
         setLoading(false);
       }
     }
 
     fetchData();
-  }, [periodo, restaurantId]);
+  }, [period, restaurantId, t]);
 
   if (loading) {
     return (
@@ -76,7 +77,7 @@ export function OrdersByDayChart({
   }
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
+    return new Intl.NumberFormat(locale, {
       style: "currency",
       currency: "BRL",
       minimumFractionDigits: 0,
@@ -84,18 +85,18 @@ export function OrdersByDayChart({
   };
 
   const dayNames: Record<string, string> = {
-    Domingo: t("sunday"),
-    Segunda: t("monday"),
-    Terça: t("tuesday"),
-    Quarta: t("wednesday"),
-    Quinta: t("thursday"),
-    Sexta: t("friday"),
-    Sábado: t("saturday"),
+    sunday: t("sunday"),
+    monday: t("monday"),
+    tuesday: t("tuesday"),
+    wednesday: t("wednesday"),
+    thursday: t("thursday"),
+    friday: t("friday"),
+    saturday: t("saturday"),
   };
 
   const translatedData = data.map((item) => ({
     ...item,
-    nomeExibicao: dayNames[item.nome] || item.nome,
+    displayName: dayNames[item.key] || item.key,
   }));
 
   return (
@@ -114,7 +115,7 @@ export function OrdersByDayChart({
               className="stroke-gray-200 dark:stroke-gray-700"
             />
             <XAxis
-              dataKey="nomeExibicao"
+              dataKey="displayName"
               className="text-gray-600 dark:text-gray-400"
               tick={{ fill: "currentColor" }}
             />
@@ -137,29 +138,29 @@ export function OrdersByDayChart({
                 borderRadius: "8px",
               }}
               formatter={(value, name) => {
-                if (name === "receita")
+                if (name === "revenue")
                   return [formatCurrency(value as number), t("revenue")];
                 return [value as number, t("orders")];
               }}
             />
             <Legend
               formatter={(value) =>
-                value === "quantidade" ? t("orders") : t("revenue")
+                value === "quantity" ? t("orders") : t("revenue")
               }
             />
             <Bar
               yAxisId="left"
-              dataKey="quantidade"
+              dataKey="quantity"
               fill="#8b5cf6"
               radius={[4, 4, 0, 0]}
-              name="quantidade"
+              name="quantity"
             />
             <Bar
               yAxisId="right"
-              dataKey="receita"
+              dataKey="revenue"
               fill="#f59e0b"
               radius={[4, 4, 0, 0]}
-              name="receita"
+              name="revenue"
             />
           </BarChart>
         </ResponsiveContainer>

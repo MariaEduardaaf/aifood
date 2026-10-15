@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import {
   BarChart,
   Bar,
@@ -15,15 +15,15 @@ import {
 
 interface ProductData {
   id: string;
-  nome: string;
-  categoria: string;
-  quantidade: number;
-  receita: number;
-  percentual: number;
+  name: string;
+  category: string;
+  quantity: number;
+  revenue: number;
+  percentage: number;
 }
 
 interface TopProductsChartProps {
-  periodo?: string;
+  period?: string;
   limit?: number;
   restaurantId?: string;
 }
@@ -42,11 +42,12 @@ const COLORS = [
 ];
 
 export function TopProductsChart({
-  periodo = "hoje",
+  period = "today",
   limit = 10,
   restaurantId,
 }: TopProductsChartProps) {
   const t = useTranslations("admin.metrics");
+  const locale = useLocale();
   const [data, setData] = useState<ProductData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -55,25 +56,25 @@ export function TopProductsChart({
     async function fetchData() {
       try {
         setLoading(true);
-        const params = new URLSearchParams({ periodo, limite: String(limit) });
+        const params = new URLSearchParams({ period, limit: String(limit) });
         if (restaurantId) {
           params.set("restaurantId", restaurantId);
         }
         const response = await fetch(
-          `/api/admin/metricas/produtos/top?${params.toString()}`,
+          `/api/admin/metrics/products/top?${params.toString()}`,
         );
-        if (!response.ok) throw new Error("Erro ao carregar dados");
+        if (!response.ok) throw new Error("Failed to load data");
         const result = await response.json();
-        setData(result.dados || result);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Erro desconhecido");
+        setData(result.data);
+      } catch {
+        setError(t("loadError"));
       } finally {
         setLoading(false);
       }
     }
 
     fetchData();
-  }, [periodo, limit, restaurantId]);
+  }, [period, limit, restaurantId, t]);
 
   if (loading) {
     return (
@@ -93,7 +94,7 @@ export function TopProductsChart({
   }
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
+    return new Intl.NumberFormat(locale, {
       style: "currency",
       currency: "BRL",
       minimumFractionDigits: 0,
@@ -123,7 +124,7 @@ export function TopProductsChart({
             />
             <YAxis
               type="category"
-              dataKey="nome"
+              dataKey="name"
               width={90}
               className="text-gray-600 dark:text-gray-400"
               tick={{ fill: "currentColor", fontSize: 12 }}
@@ -138,13 +139,13 @@ export function TopProductsChart({
                 const item = props?.payload as ProductData | undefined;
                 if (!item) return [value, ""];
                 return [
-                  `${t("quantity")}: ${item.quantidade} | ${t("revenue")}: ${formatCurrency(item.receita)} | ${t("category")}: ${item.categoria}`,
+                  `${t("quantity")}: ${item.quantity} | ${t("revenue")}: ${formatCurrency(item.revenue)} | ${t("category")}: ${item.category}`,
                   "",
                 ];
               }}
               labelFormatter={(name) => name}
             />
-            <Bar dataKey="quantidade" radius={[0, 4, 4, 0]}>
+            <Bar dataKey="quantity" radius={[0, 4, 4, 0]}>
               {data.map((_, index) => (
                 <Cell
                   key={`cell-${index}`}
@@ -156,7 +157,7 @@ export function TopProductsChart({
         </ResponsiveContainer>
       </div>
 
-      {/* Lista com detalhes */}
+      {/* Detail list */}
       <div className="mt-6 space-y-2">
         {data.slice(0, 5).map((product, index) => (
           <div
@@ -170,19 +171,19 @@ export function TopProductsChart({
               />
               <div>
                 <p className="text-sm font-medium text-gray-900 dark:text-white">
-                  {product.nome}
+                  {product.name}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {product.categoria}
+                  {product.category}
                 </p>
               </div>
             </div>
             <div className="text-right">
               <p className="text-sm font-medium text-gray-900 dark:text-white">
-                {product.quantidade} {t("units")}
+                {product.quantity} {t("units")}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                {formatCurrency(product.receita)}
+                {formatCurrency(product.revenue)}
               </p>
             </div>
           </div>

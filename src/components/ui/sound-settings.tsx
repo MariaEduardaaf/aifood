@@ -91,6 +91,7 @@ export function SoundSettings() {
 }
 
 export function SoundToggleCompact({ className }: { className?: string }) {
+  const t = useTranslations("settings");
   const { settings, updateSettings } = useSound();
 
   return (
@@ -103,7 +104,7 @@ export function SoundToggleCompact({ className }: { className?: string }) {
             ? "bg-secondary/50 border border-border/50 text-foreground"
             : "bg-secondary/30 border border-border/50 text-muted-foreground"),
       )}
-      title={settings.enabled ? "Som ativado" : "Som desativado"}
+      title={settings.enabled ? t("sound.on") : t("sound.off")}
     >
       {settings.enabled ? (
         <Volume2 className="h-5 w-5" />

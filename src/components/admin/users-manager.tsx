@@ -80,7 +80,7 @@ export function UsersManager({
   const fetchUsers = async () => {
     try {
       const query = restaurantId ? `?restaurantId=${restaurantId}` : "";
-      const res = await fetch(`/api/usuarios${query}`);
+      const res = await fetch(`/api/users${query}`);
       if (res.ok) {
         const data = await res.json();
         setUsers(data);
@@ -124,12 +124,12 @@ export function UsersManager({
     e.preventDefault();
 
     if (!formData.name.trim() || !formData.email.trim()) {
-      setError("Nome e email são obrigatórios");
+      setError(t("usersPage.nameEmailRequired"));
       return;
     }
 
     if (!editingUser && !formData.password) {
-      setError("Senha é obrigatória para novos usuários");
+      setError(t("usersPage.passwordRequired"));
       return;
     }
 
@@ -138,8 +138,8 @@ export function UsersManager({
 
     try {
       const url = editingUser
-        ? `/api/usuarios/${editingUser.id}`
-        : "/api/usuarios";
+        ? `/api/users/${editingUser.id}`
+        : "/api/users";
       const method = editingUser ? "PATCH" : "POST";
 
       const payload: Record<string, string> = {
@@ -167,10 +167,10 @@ export function UsersManager({
         closeModal();
       } else {
         const data = await res.json();
-        setError(data.error || "Erro ao salvar");
+        setError(data.error || t("usersPage.saveError"));
       }
     } catch (err) {
-      setError("Erro ao salvar usuário");
+      setError(t("usersPage.saveUserError"));
     } finally {
       setSaving(false);
     }
@@ -178,19 +178,19 @@ export function UsersManager({
 
   const handleDelete = async (user: User) => {
     if (user.id === currentUserId) {
-      alert("Não é possível excluir o próprio usuário");
+      alert(t("usersPage.cannotDeleteSelf"));
       return;
     }
 
     if (!confirm(t("confirmDelete"))) return;
 
     try {
-      const res = await fetch(`/api/usuarios/${user.id}`, { method: "DELETE" });
+      const res = await fetch(`/api/users/${user.id}`, { method: "DELETE" });
       if (res.ok) {
         await fetchUsers();
       } else {
         const data = await res.json();
-        alert(data.error || "Erro ao excluir");
+        alert(data.error || t("usersPage.deleteError"));
       }
     } catch (err) {
       console.error("Error deleting user:", err);
@@ -199,7 +199,7 @@ export function UsersManager({
 
   const toggleActive = async (user: User) => {
     try {
-      const res = await fetch(`/api/usuarios/${user.id}`, {
+      const res = await fetch(`/api/users/${user.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ active: !user.active }),
@@ -229,7 +229,7 @@ export function UsersManager({
     setResettingPasswordId(user.id);
 
     try {
-      const res = await fetch(`/api/usuarios/${user.id}`, {
+      const res = await fetch(`/api/users/${user.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password: newPassword }),
@@ -239,11 +239,11 @@ export function UsersManager({
         setGeneratedPassword(newPassword);
         setCopiedPassword(false);
       } else {
-        alert("Erro ao resetar senha");
+        alert(t("usersPage.resetPasswordError"));
       }
     } catch (err) {
       console.error("Error resetting password:", err);
-      alert("Erro ao resetar senha");
+      alert(t("usersPage.resetPasswordError"));
     } finally {
       setResettingPasswordId(null);
     }
@@ -322,7 +322,7 @@ export function UsersManager({
                         {user.name}
                         {user.id === currentUserId && (
                           <span className="text-xs text-muted-foreground">
-                            (você)
+                            ({t("usersPage.you")})
                           </span>
                         )}
                       </h3>
@@ -345,7 +345,7 @@ export function UsersManager({
                       </Badge>
                       {user._count && user._count.resolved_calls > 0 && (
                         <span className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">
-                          {user._count.resolved_calls} chamado(s)
+                          {t("usersPage.calls", { count: user._count.resolved_calls })}
                         </span>
                       )}
                     </div>
@@ -355,7 +355,7 @@ export function UsersManager({
                       variant="outline"
                       size="sm"
                       onClick={() => openEditModal(user)}
-                      title="Editar"
+                      title={tCommon("edit")}
                       className="min-w-[44px] min-h-[44px]"
                     >
                       <Pencil className="h-4 w-4" />
@@ -365,7 +365,7 @@ export function UsersManager({
                       size="sm"
                       onClick={() => handleResetPassword(user)}
                       disabled={resettingPasswordId === user.id}
-                      title="Gerar Nova Senha"
+                      title={t("usersPage.generateNewPassword")}
                       className="min-w-[44px] min-h-[44px]"
                     >
                       {resettingPasswordId === user.id ? (
@@ -392,7 +392,7 @@ export function UsersManager({
         </div>
       )}
 
-      {/* Modal Senha Gerada */}
+      {/* Generated password modal */}
       {generatedPassword && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <Card className="w-full max-w-sm mx-4">
@@ -402,10 +402,10 @@ export function UsersManager({
                   <Check className="h-6 w-6 text-green-500" />
                 </div>
                 <h2 className="text-lg font-semibold mb-2">
-                  Nova Senha Gerada!
+                  {t("usersPage.newPasswordGenerated")}
                 </h2>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Copie a senha abaixo e passe para o usuário:
+                  {t("usersPage.copyPasswordHint")}
                 </p>
                 <div className="flex items-center gap-2 p-3 bg-secondary rounded-lg mb-4">
                   <code className="flex-1 text-lg font-mono font-bold text-primary">
@@ -425,13 +425,13 @@ export function UsersManager({
                   </Button>
                 </div>
                 {copiedPassword && (
-                  <p className="text-sm text-green-500 mb-4">Copiado!</p>
+                  <p className="text-sm text-green-500 mb-4">{t("usersPage.copied")}</p>
                 )}
                 <Button
                   onClick={() => setGeneratedPassword(null)}
                   className="w-full"
                 >
-                  Fechar
+                  {tCommon("close")}
                 </Button>
               </div>
             </CardContent>
@@ -439,7 +439,7 @@ export function UsersManager({
         </div>
       )}
 
-      {/* Modal Criar/Editar */}
+      {/* Create/Edit modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <Card className="w-full max-w-md mx-4">
@@ -458,7 +458,7 @@ export function UsersManager({
                   <Label htmlFor="name">{t("userName")}</Label>
                   <Input
                     id="name"
-                    placeholder="Nome completo"
+                    placeholder={t("usersPage.fullNamePlaceholder")}
                     value={formData.name}
                     onChange={(e) =>
                       setFormData({ ...formData, name: e.target.value })
@@ -471,7 +471,7 @@ export function UsersManager({
                   <Input
                     id="email"
                     type="email"
-                    placeholder="email@exemplo.com"
+                    placeholder={t("usersPage.emailPlaceholder")}
                     value={formData.email}
                     onChange={(e) =>
                       setFormData({ ...formData, email: e.target.value })
@@ -484,7 +484,7 @@ export function UsersManager({
                     {t("userPassword")}
                     {editingUser && (
                       <span className="text-muted-foreground text-xs ml-2">
-                        (deixe vazio para manter)
+                        ({t("usersPage.keepPasswordHint")})
                       </span>
                     )}
                   </Label>
@@ -503,6 +503,7 @@ export function UsersManager({
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
+                      aria-label={showPassword ? t("usersPage.hidePassword") : t("usersPage.showPassword")}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                     >
                       {showPassword ? (

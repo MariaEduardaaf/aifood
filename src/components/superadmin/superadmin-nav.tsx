@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { signOut } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import {
   Building,
@@ -35,6 +36,10 @@ interface Restaurant {
 }
 
 export function SuperAdminNav({ user }: SuperAdminNavProps) {
+  const t = useTranslations("superadmin");
+  const tAdmin = useTranslations("admin");
+  const tAuth = useTranslations("auth");
+  const tCommon = useTranslations("common");
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -46,7 +51,7 @@ export function SuperAdminNav({ user }: SuperAdminNavProps) {
   useEffect(() => {
     const fetchRestaurants = async () => {
       try {
-        const res = await fetch("/api/restaurantes");
+        const res = await fetch("/api/restaurants");
         if (res.ok) {
           const data = await res.json();
           setRestaurants(data);
@@ -64,42 +69,42 @@ export function SuperAdminNav({ user }: SuperAdminNavProps) {
   const navItems = useMemo(
     () => [
       {
-        href: "/superadmin/restaurantes",
-        label: "Restaurantes",
+        href: "/superadmin/restaurants",
+        label: t("nav.restaurants"),
         icon: Building,
       },
       {
-        href: "/superadmin/usuarios",
-        label: "Usuarios",
+        href: "/superadmin/users",
+        label: t("nav.users"),
         icon: Users,
       },
       {
-        href: "/superadmin/mesas",
-        label: "Mesas",
+        href: "/superadmin/tables",
+        label: t("nav.tables"),
         icon: TableProperties,
       },
       {
-        href: "/superadmin/cardapio",
-        label: "Cardapio",
+        href: "/superadmin/menu",
+        label: t("nav.menu"),
         icon: ChefHat,
       },
       {
-        href: "/superadmin/operacao",
-        label: "Operacao",
+        href: "/superadmin/operations",
+        label: t("nav.operations"),
         icon: Activity,
       },
       {
-        href: "/superadmin/metricas",
-        label: "Metricas",
+        href: "/superadmin/metrics",
+        label: t("nav.metrics"),
         icon: BarChart3,
       },
       {
         href: "/superadmin/feedbacks",
-        label: "Feedbacks",
+        label: t("nav.feedbacks"),
         icon: MessageSquare,
       },
     ],
-    [],
+    [t],
   );
 
   const buildHref = (href: string) => {
@@ -139,7 +144,7 @@ export function SuperAdminNav({ user }: SuperAdminNavProps) {
                   aiFood
                 </p>
                 <p className="text-[10px] text-white/70 uppercase tracking-wide">
-                  Super Admin
+                  {t("superAdmin")}
                 </p>
               </div>
             </Link>
@@ -153,15 +158,15 @@ export function SuperAdminNav({ user }: SuperAdminNavProps) {
               >
                 <option value="">
                   {loadingRestaurants
-                    ? "Carregando..."
+                    ? tCommon("loading")
                     : restaurants.length === 0
-                      ? "Sem restaurantes"
-                      : "Selecionar restaurante"}
+                      ? t("noRestaurants")
+                      : t("selectRestaurant")}
                 </option>
                 {restaurants.map((restaurant) => (
                   <option key={restaurant.id} value={restaurant.id}>
                     {restaurant.name}
-                    {restaurant.active ? "" : " (Inativo)"}
+                    {restaurant.active ? "" : ` (${tAdmin("inactive")})`}
                   </option>
                 ))}
               </Select>
@@ -207,7 +212,7 @@ export function SuperAdminNav({ user }: SuperAdminNavProps) {
                 <p className="text-sm font-medium text-white truncate max-w-[120px]">
                   {user.name}
                 </p>
-                <p className="text-xs text-white/70">Super Admin</p>
+                <p className="text-xs text-white/70">{t("superAdmin")}</p>
               </div>
             </div>
 
@@ -216,7 +221,7 @@ export function SuperAdminNav({ user }: SuperAdminNavProps) {
               className="flex items-center justify-center gap-2 p-2 sm:px-4 sm:py-2 rounded-xl text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200 min-w-[44px] min-h-[44px]"
             >
               <LogOut className="h-4 w-4" />
-              <span className="hidden sm:inline">Sair</span>
+              <span className="hidden sm:inline">{tAuth("logout")}</span>
             </button>
           </div>
         </div>
@@ -255,15 +260,15 @@ export function SuperAdminNav({ user }: SuperAdminNavProps) {
           >
             <option value="">
               {loadingRestaurants
-                ? "Carregando..."
+                ? tCommon("loading")
                 : restaurants.length === 0
-                  ? "Sem restaurantes"
-                  : "Selecionar restaurante"}
+                  ? t("noRestaurants")
+                  : t("selectRestaurant")}
             </option>
             {restaurants.map((restaurant) => (
               <option key={restaurant.id} value={restaurant.id}>
                 {restaurant.name}
-                {restaurant.active ? "" : " (Inativo)"}
+                {restaurant.active ? "" : ` (${tAdmin("inactive")})`}
               </option>
             ))}
           </Select>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import {
   Plus,
   Pencil,
@@ -47,6 +47,11 @@ interface MenuManagerProps {
 
 export function MenuManager({ restaurantId }: MenuManagerProps) {
   const t = useTranslations("admin");
+  const tCommon = useTranslations("common");
+  const locale = useLocale() as "pt" | "es" | "en";
+  const itemName = (i: MenuItem) => i[`name_${locale}`] || i.name_pt;
+  const itemDescription = (i: MenuItem) => i[`description_${locale}`] || i.description_pt;
+  const categoryName = (c: Category) => c[`name_${locale}`] || c.name_pt;
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -85,7 +90,7 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
   const fetchCategories = async () => {
     try {
       const query = restaurantId ? `?restaurantId=${restaurantId}` : "";
-      const res = await fetch(`/api/categorias${query}`);
+      const res = await fetch(`/api/categories${query}`);
       if (res.ok) {
         const data = await res.json();
         setCategories(data);
@@ -148,8 +153,8 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
     setSaving(true);
     try {
       const url = editingCategory
-        ? `/api/categorias/${editingCategory.id}`
-        : "/api/categorias";
+        ? `/api/categories/${editingCategory.id}`
+        : "/api/categories";
       const method = editingCategory ? "PUT" : "POST";
 
       const payload = editingCategory
@@ -174,13 +179,10 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
   };
 
   const deleteCategory = async (id: string) => {
-    if (
-      !confirm("Tem certeza? Todos os itens desta categoria serão excluídos.")
-    )
-      return;
+    if (!confirm(t("menuPage.confirmDeleteCategory"))) return;
 
     try {
-      const res = await fetch(`/api/categorias/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/categories/${id}`, { method: "DELETE" });
       if (res.ok) {
         await fetchCategories();
       }
@@ -192,7 +194,7 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
   const saveItem = async () => {
     setSaving(true);
     try {
-      const url = editingItem ? `/api/itens/${editingItem.id}` : "/api/itens";
+      const url = editingItem ? `/api/items/${editingItem.id}` : "/api/items";
       const method = editingItem ? "PUT" : "POST";
 
       const payload = {
@@ -223,10 +225,10 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
   };
 
   const deleteItem = async (id: string) => {
-    if (!confirm("Tem certeza que deseja excluir este item?")) return;
+    if (!confirm(t("menuPage.confirmDeleteItem"))) return;
 
     try {
-      const res = await fetch(`/api/itens/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/items/${id}`, { method: "DELETE" });
       if (res.ok) {
         await fetchCategories();
       }
@@ -237,7 +239,7 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
 
   const toggleItemActive = async (item: MenuItem) => {
     try {
-      await fetch(`/api/itens/${item.id}`, {
+      await fetch(`/api/items/${item.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ active: !item.active }),
@@ -250,7 +252,7 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
 
   const toggleCategoryActive = async (category: Category) => {
     try {
-      await fetch(`/api/categorias/${category.id}`, {
+      await fetch(`/api/categories/${category.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ active: !category.active }),
@@ -288,17 +290,17 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
         <div className="card-premium rounded-2xl p-12 text-center">
           <FolderOpen className="h-16 w-16 mx-auto text-muted-foreground/50 mb-4" />
           <h3 className="text-lg font-semibold text-foreground mb-2">
-            Nenhuma categoria criada
+            {t("menuPage.noCategories")}
           </h3>
           <p className="text-muted-foreground mb-6">
-            Comece criando uma categoria para organizar seu cardápio
+            {t("menuPage.noCategoriesHint")}
           </p>
           <button
             onClick={() => openCategoryModal()}
             className="btn-gold px-6 py-3 rounded-xl font-medium inline-flex items-center gap-2"
           >
             <Plus className="h-5 w-5" />
-            Criar primeira categoria
+            {t("menuPage.createFirstCategory")}
           </button>
         </div>
       ) : (
@@ -316,11 +318,11 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
                   <GripVertical className="h-5 w-5 text-muted-foreground cursor-move flex-shrink-0 hidden sm:block" />
                   <div className="min-w-0">
                     <h3 className="font-semibold text-foreground truncate">
-                      {category.name_pt}
+                      {categoryName(category)}
                     </h3>
                     <p className="text-xs text-muted-foreground">
-                      {category.items.length} item(s) •{" "}
-                      {category.active ? "Ativo" : "Inativo"}
+                      {t("menuPage.itemsCount", { count: category.items.length })} •{" "}
+                      {category.active ? t("active") : t("inactive")}
                     </p>
                   </div>
                 </div>
@@ -328,7 +330,7 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
                   <button
                     onClick={() => openItemModal(category.id)}
                     className="p-2 rounded-lg hover:bg-secondary transition-colors text-primary min-w-[40px] min-h-[40px] flex items-center justify-center"
-                    title="Adicionar item"
+                    title={t("menuPage.addItem")}
                   >
                     <Plus className="h-5 w-5" />
                   </button>
@@ -339,21 +341,21 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
                         ? "text-green-500 hover:bg-green-500/10"
                         : "text-muted-foreground hover:bg-secondary"
                     }`}
-                    title={category.active ? "Desativar" : "Ativar"}
+                    title={category.active ? t("menuPage.deactivate") : t("menuPage.activate")}
                   >
                     <Check className="h-5 w-5" />
                   </button>
                   <button
                     onClick={() => openCategoryModal(category)}
                     className="p-2 rounded-lg hover:bg-secondary transition-colors text-muted-foreground min-w-[40px] min-h-[40px] flex items-center justify-center"
-                    title="Editar"
+                    title={tCommon("edit")}
                   >
                     <Pencil className="h-5 w-5" />
                   </button>
                   <button
                     onClick={() => deleteCategory(category.id)}
                     className="p-2 rounded-lg hover:bg-red-500/10 transition-colors text-red-500 min-w-[40px] min-h-[40px] flex items-center justify-center"
-                    title="Excluir"
+                    title={tCommon("delete")}
                   >
                     <Trash2 className="h-5 w-5" />
                   </button>
@@ -364,7 +366,7 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
               <div className="p-4">
                 {category.items.length === 0 ? (
                   <p className="text-center text-muted-foreground py-4">
-                    Nenhum item nesta categoria
+                    {t("menuPage.noItems")}
                   </p>
                 ) : (
                   <div className="grid gap-3">
@@ -381,7 +383,7 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
                             {item.image_url ? (
                               <img
                                 src={item.image_url}
-                                alt={item.name_pt}
+                                alt={itemName(item)}
                                 className="w-full h-full object-cover"
                               />
                             ) : (
@@ -392,11 +394,11 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
                           {/* Info */}
                           <div className="flex-1 min-w-0">
                             <h4 className="font-medium text-foreground truncate text-sm sm:text-base">
-                              {item.name_pt}
+                              {itemName(item)}
                             </h4>
-                            {item.description_pt && (
+                            {itemDescription(item) && (
                               <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                                {item.description_pt}
+                                {itemDescription(item)}
                               </p>
                             )}
                             {/* Price - mobile */}
@@ -456,7 +458,7 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
           <div className="card-premium rounded-2xl p-6 w-full max-w-md">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-foreground">
-                {editingCategory ? "Editar Categoria" : "Nova Categoria"}
+                {editingCategory ? t("menuPage.editCategory") : t("newCategory")}
               </h3>
               <button
                 onClick={() => setShowCategoryModal(false)}
@@ -469,7 +471,7 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Nome (Português)
+                  {t("menuPage.namePt")}
                 </label>
                 <input
                   type="text"
@@ -481,12 +483,12 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
                     })
                   }
                   className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border/50 focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  placeholder="Ex: Entradas"
+                  placeholder={t("menuPage.categoryPlaceholderPt")}
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Nome (Espanhol)
+                  {t("menuPage.nameEs")}
                 </label>
                 <input
                   type="text"
@@ -498,12 +500,12 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
                     })
                   }
                   className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border/50 focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  placeholder="Ex: Entrantes"
+                  placeholder={t("menuPage.categoryPlaceholderEs")}
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Nome (Inglês)
+                  {t("menuPage.nameEn")}
                 </label>
                 <input
                   type="text"
@@ -515,7 +517,7 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
                     })
                   }
                   className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border/50 focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  placeholder="Ex: Starters"
+                  placeholder={t("menuPage.categoryPlaceholderEn")}
                 />
               </div>
             </div>
@@ -525,7 +527,7 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
                 onClick={() => setShowCategoryModal(false)}
                 className="flex-1 btn-secondary-premium py-3 rounded-xl font-medium"
               >
-                Cancelar
+                {tCommon("cancel")}
               </button>
               <button
                 onClick={saveCategory}
@@ -533,7 +535,7 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
                 className="flex-1 btn-gold py-3 rounded-xl font-medium disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {saving && <Loader2 className="h-5 w-5 animate-spin" />}
-                Salvar
+                {tCommon("save")}
               </button>
             </div>
           </div>
@@ -546,7 +548,7 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
           <div className="card-premium rounded-2xl p-6 w-full max-w-lg my-8">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-foreground">
-                {editingItem ? "Editar Item" : "Novo Item"}
+                {editingItem ? t("menuPage.editItem") : t("newItem")}
               </h3>
               <button
                 onClick={() => setShowItemModal(false)}
@@ -561,7 +563,7 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
               <div className="grid grid-cols-1 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    Nome (Português) *
+                    {t("menuPage.namePt")} *
                   </label>
                   <input
                     type="text"
@@ -574,7 +576,7 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    Nome (Espanhol) *
+                    {t("menuPage.nameEs")} *
                   </label>
                   <input
                     type="text"
@@ -587,7 +589,7 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    Nome (Inglês) *
+                    {t("menuPage.nameEn")} *
                   </label>
                   <input
                     type="text"
@@ -603,7 +605,7 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
               {/* Descriptions */}
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Descrição (Português)
+                  {t("menuPage.descPt")}
                 </label>
                 <textarea
                   value={itemForm.description_pt}
@@ -616,7 +618,7 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
               </div>
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Descrição (Espanhol)
+                  {t("menuPage.descEs")}
                 </label>
                 <textarea
                   value={itemForm.description_es}
@@ -629,7 +631,7 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
               </div>
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Descrição (Inglês)
+                  {t("menuPage.descEn")}
                 </label>
                 <textarea
                   value={itemForm.description_en}
@@ -644,7 +646,7 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
               {/* Price */}
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Preço (R$) *
+                  {t("menuPage.priceLabel")}
                 </label>
                 <input
                   type="number"
@@ -662,7 +664,7 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
               {/* Image Upload */}
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Imagem do Prato
+                  {t("menuPage.dishImage")}
                 </label>
                 <ImageUpload
                   value={itemForm.image_url}
@@ -679,7 +681,7 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
                 onClick={() => setShowItemModal(false)}
                 className="flex-1 btn-secondary-premium py-3 rounded-xl font-medium"
               >
-                Cancelar
+                {tCommon("cancel")}
               </button>
               <button
                 onClick={saveItem}
@@ -693,7 +695,7 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
                 className="flex-1 btn-gold py-3 rounded-xl font-medium disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {saving && <Loader2 className="h-5 w-5 animate-spin" />}
-                Salvar
+                {tCommon("save")}
               </button>
             </div>
           </div>

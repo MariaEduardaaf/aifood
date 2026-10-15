@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Plus, Pencil, Trash2, Loader2, X } from "lucide-react";
 import { Button, Card, CardContent, Input, Label, Badge } from "@/components/ui";
 
@@ -14,6 +15,9 @@ interface Restaurant {
 }
 
 export function RestaurantsManager() {
+  const t = useTranslations("superadmin.restaurants");
+  const tAdmin = useTranslations("admin");
+  const tCommon = useTranslations("common");
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -35,7 +39,7 @@ export function RestaurantsManager() {
 
   const fetchRestaurants = async () => {
     try {
-      const res = await fetch("/api/restaurantes");
+      const res = await fetch("/api/restaurants");
       if (res.ok) {
         const data = await res.json();
         setRestaurants(data);
@@ -76,7 +80,7 @@ export function RestaurantsManager() {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!formData.name.trim() || !formData.slug.trim()) {
-      setError("Nome e slug sao obrigatorios");
+      setError(t("nameSlugRequired"));
       return;
     }
 
@@ -85,8 +89,8 @@ export function RestaurantsManager() {
 
     try {
       const url = editingRestaurant
-        ? `/api/restaurantes/${editingRestaurant.id}`
-        : "/api/restaurantes";
+        ? `/api/restaurants/${editingRestaurant.id}`
+        : "/api/restaurants";
       const method = editingRestaurant ? "PATCH" : "POST";
 
       const res = await fetch(url, {
@@ -105,27 +109,27 @@ export function RestaurantsManager() {
         closeModal();
       } else {
         const data = await res.json();
-        setError(data.error || "Erro ao salvar");
+        setError(data.error || t("saveError"));
       }
     } catch (err) {
-      setError("Erro ao salvar restaurante");
+      setError(t("saveError"));
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (restaurant: Restaurant) => {
-    if (!confirm("Tem certeza? Isso remove todos os dados vinculados.")) return;
+    if (!confirm(t("confirmDelete"))) return;
 
     try {
-      const res = await fetch(`/api/restaurantes/${restaurant.id}`, {
+      const res = await fetch(`/api/restaurants/${restaurant.id}`, {
         method: "DELETE",
       });
       if (res.ok) {
         await fetchRestaurants();
       } else {
         const data = await res.json();
-        alert(data.error || "Erro ao excluir");
+        alert(data.error || t("deleteError"));
       }
     } catch (err) {
       console.error("Error deleting restaurant:", err);
@@ -134,7 +138,7 @@ export function RestaurantsManager() {
 
   const toggleActive = async (restaurant: Restaurant) => {
     try {
-      const res = await fetch(`/api/restaurantes/${restaurant.id}`, {
+      const res = await fetch(`/api/restaurants/${restaurant.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ active: !restaurant.active }),
@@ -159,21 +163,21 @@ export function RestaurantsManager() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Restaurantes</h1>
+          <h1 className="text-2xl font-bold">{t("title")}</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Controle a base de restaurantes do sistema.
+            {t("subtitle")}
           </p>
         </div>
         <Button onClick={openCreateModal}>
           <Plus className="h-4 w-4 mr-2" />
-          Novo restaurante
+          {t("newRestaurant")}
         </Button>
       </div>
 
       {restaurants.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
-            Nenhum restaurante cadastrado.
+            {t("empty")}
           </CardContent>
         </Card>
       ) : (
@@ -186,14 +190,14 @@ export function RestaurantsManager() {
                     <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="font-semibold">{restaurant.name}</h3>
                       <Badge variant={restaurant.active ? "default" : "secondary"}>
-                        {restaurant.active ? "Ativo" : "Inativo"}
+                        {restaurant.active ? tAdmin("active") : tAdmin("inactive")}
                       </Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      Slug: {restaurant.slug}
+                      {t("slugValue", { slug: restaurant.slug })}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      Dominio: {restaurant.domain || "-"}
+                      {t("domainValue", { domain: restaurant.domain || "-" })}
                     </p>
                   </div>
 
@@ -203,7 +207,7 @@ export function RestaurantsManager() {
                       size="sm"
                       onClick={() => toggleActive(restaurant)}
                     >
-                      {restaurant.active ? "Desativar" : "Ativar"}
+                      {restaurant.active ? t("deactivate") : t("activate")}
                     </Button>
                     <Button
                       variant="outline"
@@ -211,7 +215,7 @@ export function RestaurantsManager() {
                       onClick={() => openEditModal(restaurant)}
                     >
                       <Pencil className="h-4 w-4 mr-2" />
-                      Editar
+                      {tCommon("edit")}
                     </Button>
                     <Button
                       variant="destructive"
@@ -219,7 +223,7 @@ export function RestaurantsManager() {
                       onClick={() => handleDelete(restaurant)}
                     >
                       <Trash2 className="h-4 w-4 mr-2" />
-                      Excluir
+                      {tCommon("delete")}
                     </Button>
                   </div>
                 </div>
@@ -234,7 +238,7 @@ export function RestaurantsManager() {
           <div className="bg-background rounded-xl shadow-xl w-full max-w-lg">
             <div className="flex items-center justify-between p-6 border-b">
               <h2 className="text-xl font-semibold">
-                {editingRestaurant ? "Editar restaurante" : "Novo restaurante"}
+                {editingRestaurant ? t("editRestaurant") : t("newRestaurant")}
               </h2>
               <button
                 onClick={closeModal}
@@ -245,14 +249,14 @@ export function RestaurantsManager() {
             </div>
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Nome</Label>
+                <Label htmlFor="name">{tAdmin("userName")}</Label>
                 <Input
                   id="name"
                   value={formData.name}
                   onChange={(event) =>
                     setFormData({ ...formData, name: event.target.value })
                   }
-                  placeholder="Ex: Bistro Central"
+                  placeholder={t("namePlaceholder")}
                 />
               </div>
               <div className="space-y-2">
@@ -263,11 +267,11 @@ export function RestaurantsManager() {
                   onChange={(event) =>
                     setFormData({ ...formData, slug: event.target.value })
                   }
-                  placeholder="ex: bistro-central"
+                  placeholder={t("slugPlaceholder")}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="domain">Dominio (opcional)</Label>
+                <Label htmlFor="domain">{t("domainOptional")}</Label>
                 <Input
                   id="domain"
                   value={formData.domain}
@@ -286,7 +290,7 @@ export function RestaurantsManager() {
                     setFormData({ ...formData, active: event.target.checked })
                   }
                 />
-                <Label htmlFor="active">Ativo</Label>
+                <Label htmlFor="active">{tAdmin("active")}</Label>
               </div>
 
               {error && (
@@ -295,10 +299,10 @@ export function RestaurantsManager() {
 
               <div className="flex justify-end gap-2 pt-2">
                 <Button type="button" variant="outline" onClick={closeModal}>
-                  Cancelar
+                  {tCommon("cancel")}
                 </Button>
                 <Button type="submit" disabled={saving}>
-                  {saving ? "Salvando..." : "Salvar"}
+                  {saving ? t("saving") : tCommon("save")}
                 </Button>
               </div>
             </form>

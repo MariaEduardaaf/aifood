@@ -11,11 +11,11 @@ export function PeriodSelector({ value, onChange }: PeriodSelectorProps) {
   const t = useTranslations('admin.metrics')
 
   const periods = [
-    { value: 'hoje', label: t('today') },
-    { value: 'ontem', label: t('yesterday') },
-    { value: 'semana', label: t('thisWeek') },
-    { value: 'mes', label: t('thisMonth') },
-    { value: '30dias', label: t('last30Days') },
+    { value: 'today', label: t('today') },
+    { value: 'yesterday', label: t('yesterday') },
+    { value: 'week', label: t('thisWeek') },
+    { value: 'month', label: t('thisMonth') },
+    { value: '30days', label: t('last30Days') },
   ]
 
   return (
