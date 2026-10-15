@@ -108,8 +108,8 @@ export function RestaurantsManager() {
         await fetchRestaurants();
         closeModal();
       } else {
-        const data = await res.json();
-        setError(data.error || t("saveError"));
+        const data = await res.json().catch(() => ({}));
+        setError(typeof data.error === "string" ? data.error : t("saveError"));
       }
     } catch (err) {
       setError(t("saveError"));
@@ -128,8 +128,8 @@ export function RestaurantsManager() {
       if (res.ok) {
         await fetchRestaurants();
       } else {
-        const data = await res.json();
-        alert(data.error || t("deleteError"));
+        const data = await res.json().catch(() => ({}));
+        alert(typeof data.error === "string" ? data.error : t("deleteError"));
       }
     } catch (err) {
       console.error("Error deleting restaurant:", err);
@@ -242,6 +242,7 @@ export function RestaurantsManager() {
               </h2>
               <button
                 onClick={closeModal}
+                aria-label={tCommon("close")}
                 className="p-1 rounded-lg hover:bg-muted transition-colors"
               >
                 <X className="h-5 w-5" />

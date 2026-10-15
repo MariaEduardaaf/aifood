@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { z } from "zod";
+import { validationError } from "@/lib/api";
 
 const menuItemSchema = z.object({
   category_id: z.string(),
@@ -11,9 +12,9 @@ const menuItemSchema = z.object({
   description_pt: z.string().optional().nullable(),
   description_es: z.string().optional().nullable(),
   description_en: z.string().optional().nullable(),
-  price: z.number().positive(),
+  price: z.number().min(0).max(99999.99),
   image_url: z.string().url().optional().nullable(),
-  order: z.number().optional(),
+  order: z.number().int().min(0).optional(),
   active: z.boolean().optional(),
   restaurantId: z.string().optional(),
 });
@@ -82,14 +83,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
+    const body = await request.json().catch(() => null);
     const validation = menuItemSchema.safeParse(body);
 
     if (!validation.success) {
-      return NextResponse.json(
-        { error: "Invalid data", details: validation.error.issues },
-        { status: 400 },
-      );
+      return validationError(validation.error);
     }
 
     // Verify category exists
@@ -128,10 +126,13 @@ export async function POST(request: NextRequest) {
       _max: { order: true },
     });
 
+    // restaurantId is input-only; the column is restaurant_id
+    const { restaurantId: _restaurantId, ...data } = validation.data;
+
     const item = await prisma.menuItem.create({
       data: {
-        ...validation.data,
-        order: validation.data.order ?? (maxOrder._max.order ?? 0) + 1,
+        ...data,
+        order: data.order ?? (maxOrder._max.order ?? 0) + 1,
         restaurant_id: restaurantId,
       },
     });

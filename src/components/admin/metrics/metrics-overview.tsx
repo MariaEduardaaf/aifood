@@ -12,6 +12,7 @@ import {
   Bell,
   Star,
 } from "lucide-react";
+import { useCurrency } from "@/components/providers/currency";
 
 interface MetricsSummary {
   orders: {
@@ -94,10 +95,10 @@ function KPICard({ title, value, subtitle, icon, trend, color }: KPICardProps) {
   );
 }
 
-function formatCurrency(value: number, locale: string): string {
+function formatCurrency(value: number, locale: string, currency: string): string {
   return new Intl.NumberFormat(locale, {
     style: "currency",
-    currency: "BRL",
+    currency,
   }).format(value);
 }
 
@@ -118,6 +119,7 @@ export function MetricsOverview({
 }: MetricsOverviewProps) {
   const t = useTranslations("admin.metrics");
   const locale = useLocale();
+  const currency = useCurrency(restaurantId);
   const [data, setData] = useState<MetricsSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -207,8 +209,8 @@ export function MetricsOverview({
           />
           <KPICard
             title={t("averageTicket")}
-            value={formatCurrency(data.orders.averageTicket, locale)}
-            subtitle={`${t("totalRevenue")}: ${formatCurrency(data.orders.totalRevenue, locale)}`}
+            value={formatCurrency(data.orders.averageTicket, locale, currency)}
+            subtitle={`${t("totalRevenue")}: ${formatCurrency(data.orders.totalRevenue, locale, currency)}`}
             icon={<DollarSign className="w-6 h-6" />}
             color="green"
           />

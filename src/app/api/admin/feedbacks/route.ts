@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { z } from "zod";
+import { validationError } from "@/lib/api";
+
+const querySchema = z.object({
+  stars: z.coerce.number().int().min(1).max(5).optional(),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+});
 
 export const dynamic = "force-dynamic";
 
@@ -18,8 +25,16 @@ export async function GET(request: NextRequest) {
   }
 
   const { searchParams } = new URL(request.url);
-  const stars = searchParams.get("stars");
-  const limit = parseInt(searchParams.get("limit") || "50");
+  const query = querySchema.safeParse({
+    stars: searchParams.get("stars") || undefined,
+    limit: searchParams.get("limit") || undefined,
+  });
+
+  if (!query.success) {
+    return validationError(query.error);
+  }
+
+  const { stars, limit } = query.data;
   const restaurantIdParam = searchParams.get("restaurantId");
   const restaurantId =
     session.user.role === "SUPER_ADMIN"
@@ -32,7 +47,7 @@ export async function GET(request: NextRequest) {
       : {};
 
     if (stars) {
-      where.stars = parseInt(stars);
+      where.stars = stars;
     }
 
     const ratings = await prisma.rating.findMany({

@@ -2,12 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
-import { Bell, ShoppingBag, LogOut, Utensils } from "lucide-react";
-import { signOut } from "next-auth/react";
+import { Bell, ShoppingBag, Utensils } from "lucide-react";
 import { WaiterDashboard } from "./waiter-dashboard";
 import { OrdersKanban } from "./orders-kanban";
-import { ThemeToggleCompact } from "@/components/ui/theme-toggle";
-import { SoundToggleCompact } from "@/components/ui/sound-settings";
 import { cn } from "@/lib/utils";
 
 interface WaiterPageProps {
@@ -19,7 +16,6 @@ type Tab = "calls" | "orders";
 
 export function WaiterPage({ userId, userName = "Waiter" }: WaiterPageProps) {
   const t = useTranslations("waiter");
-  const tAuth = useTranslations("auth");
   const [activeTab, setActiveTab] = useState<Tab>("calls");
   const [callsCount, setCallsCount] = useState(0);
   const [ordersCount, setOrdersCount] = useState(0);
@@ -57,10 +53,6 @@ export function WaiterPage({ userId, userName = "Waiter" }: WaiterPageProps) {
     return () => clearInterval(interval);
   }, []);
 
-  const handleLogout = async () => {
-    await signOut({ callbackUrl: "/login" });
-  };
-
   return (
     <div className="min-h-screen">
       {/* Header */}
@@ -74,19 +66,6 @@ export function WaiterPage({ userId, userName = "Waiter" }: WaiterPageProps) {
               <h1 className="font-bold text-lg">{t("roleTitle")}</h1>
               <p className="text-sm text-muted-foreground">{userName}</p>
             </div>
-          </div>
-
-          {/* Controls */}
-          <div className="flex items-center gap-1 p-1 rounded-xl bg-secondary/50 border border-border/50">
-            <SoundToggleCompact />
-            <ThemeToggleCompact />
-            <button
-              onClick={handleLogout}
-              className="p-2 rounded-lg hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground"
-              title={tAuth("logout")}
-            >
-              <LogOut className="h-4 w-4" />
-            </button>
           </div>
         </div>
       </div>

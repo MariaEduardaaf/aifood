@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { z } from "zod";
+import { validationError } from "@/lib/api";
 
 const menuItemUpdateSchema = z.object({
   category_id: z.string().optional(),
@@ -11,9 +12,9 @@ const menuItemUpdateSchema = z.object({
   description_pt: z.string().optional().nullable(),
   description_es: z.string().optional().nullable(),
   description_en: z.string().optional().nullable(),
-  price: z.number().positive().optional(),
+  price: z.number().min(0).max(99999.99).optional(),
   image_url: z.string().url().optional().nullable(),
-  order: z.number().optional(),
+  order: z.number().int().min(0).optional(),
   active: z.boolean().optional(),
 });
 
@@ -71,14 +72,11 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
+    const body = await request.json().catch(() => null);
     const validation = menuItemUpdateSchema.safeParse(body);
 
     if (!validation.success) {
-      return NextResponse.json(
-        { error: "Invalid data", details: validation.error.issues },
-        { status: 400 },
-      );
+      return validationError(validation.error);
     }
 
     // If changing category, verify it exists

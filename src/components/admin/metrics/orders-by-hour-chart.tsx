@@ -12,6 +12,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
+import { useCurrency } from "@/components/providers/currency";
 
 interface HourData {
   hour: number;
@@ -75,10 +76,11 @@ export function OrdersByHourChart({
     );
   }
 
+  const currency = useCurrency(restaurantId);
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat(locale, {
       style: "currency",
-      currency: "BRL",
+      currency,
       minimumFractionDigits: 0,
     }).format(value);
   };

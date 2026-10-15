@@ -40,14 +40,17 @@
     "welcomeMessage": "¡Bienvenido! ¿Cómo podemos ayudar?",
     "browseAndOrder": "Navega por el menú y haz tu pedido",
     "trackYourOrders": "Sigue el estado de tus pedidos",
-    "needAssistance": "¿Necesitas asistencia?"
+    "needAssistance": "¿Necesitas asistencia?",
+    "googleReviewPrompt": "¿Quieres compartir tu experiencia también en Google? Nos ayuda mucho.",
+    "leaveGoogleReview": "Dejar una reseña en Google"
   },
   "menu": {
     "title": "Menú",
     "empty": "Menú no disponible en este momento",
     "noItems": "No hay artículos en esta categoría",
     "add": "Añadir",
-    "viewCart": "Ver Carrito"
+    "viewCart": "Ver Carrito",
+    "back": "Volver"
   },
   "cart": {
     "title": "Mi Pedido",
@@ -60,7 +63,8 @@
     "orderSuccess": "¡Pedido Enviado!",
     "orderSuccessMessage": "Tu pedido ha sido recibido y será preparado pronto.",
     "orderError": "Error al enviar pedido. Inténtalo de nuevo.",
-    "rateLimitError": "Espera unos segundos antes de hacer otro pedido."
+    "rateLimitError": "Espera unos segundos antes de hacer otro pedido.",
+    "remove": "Quitar artículo"
   },
   "orders": {
     "title": "Mis Pedidos",
@@ -80,7 +84,9 @@
     "minutesAgo": "Hace {minutes} minutos",
     "oneHourAgo": "Hace 1 hora",
     "hoursAgo": "Hace {hours} horas",
-    "total": "Total"
+    "total": "Total",
+    "back": "Volver",
+    "refresh": "Actualizar"
   },
   "waiter": {
     "calls": "Llamadas",
@@ -306,7 +312,7 @@
       "categoryPlaceholderPt": "Ej: Entradas",
       "categoryPlaceholderEs": "Ej: Entrantes",
       "categoryPlaceholderEn": "Ej: Starters",
-      "priceLabel": "Precio (R$) *",
+      "priceLabel": "Precio ({currency}) *",
       "dishImage": "Imagen del plato"
     },
     "metricsDashboard": {
@@ -341,7 +347,9 @@
       "step1": "1. Cuando se resuelve una llamada, el cliente ve una pantalla de valoración",
       "step2": "2. Si la nota es de {count}+ estrellas, se invita al cliente a valorar en Google",
       "step3": "3. Las notas bajas se quedan solo en el sistema interno con comentarios privados",
-      "step4": "4. Esto ayuda a aumentar las valoraciones positivas en Google"
+      "step4": "4. Esto ayuda a aumentar las valoraciones positivas en Google",
+      "currency": "Moneda",
+      "currencyHint": "Se usa en todos los precios que ven clientes y personal."
     }
   },
   "auth": {
@@ -368,7 +376,8 @@
     "notFound": "No encontrado",
     "unauthorized": "No autorizado",
     "forbidden": "Acceso denegado",
-    "rateLimit": "Demasiadas solicitudes. Inténtelo de nuevo en unos segundos."
+    "rateLimit": "Demasiadas solicitudes. Inténtelo de nuevo en unos segundos.",
+    "reconnecting": "Conexión perdida. Reconectando..."
   },
   "settings": {
     "title": "Configuraciones",

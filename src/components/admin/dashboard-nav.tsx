@@ -51,7 +51,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
           const now = new Date();
           const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
           const newFeedbacks =
-            data.feedbacks?.filter(
+            data.ratings?.filter(
               (f: any) => new Date(f.created_at) > oneDayAgo,
             ).length || 0;
           setCounts((prev) => ({ ...prev, feedbacks: newFeedbacks }));
@@ -119,12 +119,13 @@ export function DashboardNav({ user }: DashboardNavProps) {
         <div className="flex items-center justify-between h-14 sm:h-16">
           <div className="flex items-center gap-4 sm:gap-8">
             {/* Logo */}
-            <Link href="/waiter" className="flex items-center gap-2 group">
+            <Link href="/waiter" aria-label="aiFood" className="flex items-center gap-2 group">
               <Image
                 src="/logo-light.svg"
                 alt="aiFood Logo"
                 width={36}
                 height={36}
+                style={{ width: 36, height: 36 }}
                 className="object-contain"
                 priority
               />
@@ -197,6 +198,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
 
             <button
               onClick={() => signOut({ callbackUrl: "/login" })}
+              aria-label={tAuth("logout")}
               className="flex items-center justify-center gap-2 p-2 sm:px-4 sm:py-2 rounded-xl text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200 min-w-[44px] min-h-[44px]"
             >
               <LogOut className="h-4 w-4" />

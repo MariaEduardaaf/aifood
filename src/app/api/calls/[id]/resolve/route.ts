@@ -37,17 +37,33 @@ export async function PATCH(
     if (call.status === "RESOLVED") {
       return NextResponse.json(
         { error: "Call already resolved" },
-        { status: 400 },
+        { status: 409 },
       );
     }
 
-    const updatedCall = await prisma.call.update({
-      where: { id: params.id },
+    // Atomic transition: applies only if the call is still open
+    const { count } = await prisma.call.updateMany({
+      where: {
+        id: params.id,
+        restaurant_id: call.restaurant_id,
+        status: "OPEN",
+      },
       data: {
         status: "RESOLVED",
         resolved_at: new Date(),
         resolved_by: session.user.id,
       },
+    });
+
+    if (count === 0) {
+      return NextResponse.json(
+        { error: "Call already resolved" },
+        { status: 409 },
+      );
+    }
+
+    const updatedCall = await prisma.call.findUnique({
+      where: { id: params.id },
       include: {
         table: {
           select: {

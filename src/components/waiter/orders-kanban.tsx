@@ -13,8 +13,10 @@ import {
   AlertCircle,
   ChefHat,
 } from "lucide-react";
-import { cn, formatTime, localizedName } from "@/lib/utils";
+import { cn, formatMoney, formatTime, localizedName } from "@/lib/utils";
 import { useSound } from "@/components/providers/sound-provider";
+import { useCurrency } from "@/components/providers/currency";
+import { useEventStream, ReconnectBanner } from "@/components/providers/use-event-stream";
 
 interface OrderItem {
   id: string;
@@ -69,6 +71,7 @@ function OrderCard({
 }: OrderCardProps) {
   const t = useTranslations("waiter");
   const locale = useLocale();
+  const currency = useCurrency();
   const [expanded, setExpanded] = useState(false);
 
   const getUrgencyColor = (secs: number) => {
@@ -105,7 +108,7 @@ function OrderCard({
           <div>
             <h3 className="font-bold text-lg">{order.table.label}</h3>
             <p className="text-sm text-muted-foreground">
-              {t("itemCount", { count: order.items.length })} • R$ {Number(order.total).toFixed(2)}
+              {t("itemCount", { count: order.items.length })} • {formatMoney(order.total, currency, locale)}
             </p>
           </div>
           <div className="text-right">
@@ -165,14 +168,14 @@ function OrderCard({
       {/* Actions */}
       <div className="p-3 border-t border-border/30">
         {type === "pending" && (
-          <div className="flex gap-2">
+          <div className="flex gap-4">
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 onCancel?.();
               }}
               disabled={isLoading}
-              className="flex-1 py-2.5 px-3 rounded-xl font-medium bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors flex items-center justify-center gap-2 text-sm"
+              className="py-2.5 px-3 min-h-[44px] rounded-xl font-medium text-muted-foreground hover:text-red-600 hover:bg-red-500/10 transition-colors flex items-center justify-center gap-1 text-sm"
             >
               <X className="h-4 w-4" />
               {t("cancel")}
@@ -183,7 +186,7 @@ function OrderCard({
                 onConfirm?.();
               }}
               disabled={isLoading}
-              className="flex-1 py-2.5 px-3 rounded-xl font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 text-sm"
+              className="flex-1 py-2.5 px-3 min-h-[44px] rounded-xl font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 text-sm"
             >
               {isLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -237,14 +240,12 @@ export function OrdersKanban() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [timers, setTimers] = useState<Record<string, number>>({});
 
+  const initializedRef = useRef(false);
   const previousOrdersRef = useRef<string[]>([]);
   const previousReadyRef = useRef<string[]>([]);
 
   // Fetch orders with SSE
-  useEffect(() => {
-    const eventSource = new EventSource("/api/orders/stream");
-
-    eventSource.onmessage = (event) => {
+  const { lost } = useEventStream("/api/orders/stream", (event) => {
       try {
         const newOrders: Order[] = JSON.parse(event.data);
 
@@ -258,27 +259,19 @@ export function OrdersKanban() {
         const previousReadyIds = previousReadyRef.current;
         const hasNewReady = readyIds.some((id) => !previousReadyIds.includes(id));
 
-        if ((hasNewOrder || hasNewReady) && previousIds.length > 0) {
+        if ((hasNewOrder || hasNewReady) && initializedRef.current) {
           playNotification();
         }
 
         previousOrdersRef.current = currentIds;
         previousReadyRef.current = readyIds;
         setOrders(newOrders);
+        initializedRef.current = true;
         setLoading(false);
       } catch (err) {
         console.error("Error parsing SSE data:", err);
       }
-    };
-
-    eventSource.onerror = () => {
-      console.error("SSE connection error");
-    };
-
-    return () => {
-      eventSource.close();
-    };
-  }, [playNotification]);
+  });
 
   // Update timers
   useEffect(() => {
@@ -376,6 +369,7 @@ export function OrdersKanban() {
 
   return (
     <div className="space-y-6">
+      <ReconnectBanner show={lost} />
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
         <div className={cn(

@@ -11,6 +11,7 @@ import {
   Bell,
   RefreshCw,
 } from "lucide-react";
+import { useCurrency } from "@/components/providers/currency";
 
 interface RealTimeData {
   activeOrders: {
@@ -81,10 +82,11 @@ export function RealTimePanel({
     return () => clearInterval(interval);
   }, [refreshInterval, restaurantId]);
 
+  const currency = useCurrency(restaurantId);
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat(locale, {
       style: "currency",
-      currency: "BRL",
+      currency,
     }).format(value);
   };
 

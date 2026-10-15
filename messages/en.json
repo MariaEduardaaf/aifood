@@ -40,14 +40,17 @@
     "welcomeMessage": "Welcome! How can we help?",
     "browseAndOrder": "Browse the menu and place your order",
     "trackYourOrders": "Track your order status",
-    "needAssistance": "Need assistance?"
+    "needAssistance": "Need assistance?",
+    "googleReviewPrompt": "Would you also share your experience on Google? It helps us a lot.",
+    "leaveGoogleReview": "Leave a Google review"
   },
   "menu": {
     "title": "Menu",
     "empty": "Menu not available at the moment",
     "noItems": "No items in this category",
     "add": "Add",
-    "viewCart": "View Cart"
+    "viewCart": "View Cart",
+    "back": "Back"
   },
   "cart": {
     "title": "My Order",
@@ -60,7 +63,8 @@
     "orderSuccess": "Order Sent!",
     "orderSuccessMessage": "Your order has been received and will be prepared soon.",
     "orderError": "Error submitting order. Please try again.",
-    "rateLimitError": "Please wait a few seconds before placing another order."
+    "rateLimitError": "Please wait a few seconds before placing another order.",
+    "remove": "Remove item"
   },
   "orders": {
     "title": "My Orders",
@@ -80,7 +84,9 @@
     "minutesAgo": "{minutes} minutes ago",
     "oneHourAgo": "1 hour ago",
     "hoursAgo": "{hours} hours ago",
-    "total": "Total"
+    "total": "Total",
+    "back": "Back",
+    "refresh": "Refresh"
   },
   "waiter": {
     "calls": "Calls",
@@ -306,7 +312,7 @@
       "categoryPlaceholderPt": "e.g. Entradas",
       "categoryPlaceholderEs": "e.g. Entrantes",
       "categoryPlaceholderEn": "e.g. Starters",
-      "priceLabel": "Price (R$) *",
+      "priceLabel": "Price ({currency}) *",
       "dishImage": "Dish Image"
     },
     "metricsDashboard": {
@@ -341,7 +347,9 @@
       "step1": "1. When a call is resolved, the customer sees a rating screen",
       "step2": "2. If the rating is {count}+ stars, the customer is invited to review on Google",
       "step3": "3. Low ratings stay in the internal system with private feedback",
-      "step4": "4. This helps increase positive reviews on Google"
+      "step4": "4. This helps increase positive reviews on Google",
+      "currency": "Currency",
+      "currencyHint": "Used for all prices shown to customers and staff."
     }
   },
   "auth": {
@@ -368,7 +376,8 @@
     "notFound": "Not found",
     "unauthorized": "Unauthorized",
     "forbidden": "Access denied",
-    "rateLimit": "Too many requests. Please try again in a few seconds."
+    "rateLimit": "Too many requests. Please try again in a few seconds.",
+    "reconnecting": "Connection lost. Reconnecting..."
   },
   "settings": {
     "title": "Settings",

@@ -14,11 +14,22 @@ export async function GET(request: NextRequest) {
     if (tableId) {
       const table = await prisma.table.findUnique({
         where: { id: tableId },
-        select: { restaurant_id: true, active: true },
+        select: {
+          restaurant_id: true,
+          active: true,
+          restaurant: { select: { active: true } },
+        },
       });
 
       if (!table || !table.active) {
         return NextResponse.json({ error: "Table not found" }, { status: 404 });
+      }
+
+      if (!table.restaurant.active) {
+        return NextResponse.json(
+          { error: "Restaurant is inactive" },
+          { status: 403 },
+        );
       }
 
       restaurantId = table.restaurant_id;
@@ -58,7 +69,15 @@ export async function GET(request: NextRequest) {
     // Filter out empty categories
     const nonEmptyCategories = categories.filter((cat) => cat.items.length > 0);
 
-    return NextResponse.json(nonEmptyCategories);
+    const settings = await prisma.settings.findUnique({
+      where: { restaurant_id: restaurantId },
+      select: { currency: true },
+    });
+
+    return NextResponse.json({
+      categories: nonEmptyCategories,
+      currency: settings?.currency ?? "EUR",
+    });
   } catch (error) {
     console.error("Error fetching menu:", error);
     return NextResponse.json(

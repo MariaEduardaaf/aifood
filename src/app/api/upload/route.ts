@@ -12,12 +12,15 @@ export async function POST(request: NextRequest) {
   try {
     const session = await auth();
 
-    if (!session || session.user.role !== "ADMIN") {
+    if (
+      !session ||
+      !["ADMIN", "MANAGER", "SUPER_ADMIN"].includes(session.user.role)
+    ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const formData = await request.formData();
-    const file = formData.get("file") as File | null;
+    const formData = await request.formData().catch(() => null);
+    const file = formData?.get("file") as File | null;
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });

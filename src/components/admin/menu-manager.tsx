@@ -15,6 +15,8 @@ import {
   FolderOpen,
 } from "lucide-react";
 import { ImageUpload } from "@/components/ui/image-upload";
+import { formatMoney } from "@/lib/utils";
+import { useCurrency } from "@/components/providers/currency";
 
 interface MenuItem {
   id: string;
@@ -48,7 +50,9 @@ interface MenuManagerProps {
 export function MenuManager({ restaurantId }: MenuManagerProps) {
   const t = useTranslations("admin");
   const tCommon = useTranslations("common");
+  const tErr = useTranslations("errors");
   const locale = useLocale() as "pt" | "es" | "en";
+  const currency = useCurrency(restaurantId);
   const itemName = (i: MenuItem) => i[`name_${locale}`] || i.name_pt;
   const itemDescription = (i: MenuItem) => i[`description_${locale}`] || i.description_pt;
   const categoryName = (c: Category) => c[`name_${locale}`] || c.name_pt;
@@ -63,6 +67,7 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
     null,
   );
   const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   // Form states
   const [categoryForm, setCategoryForm] = useState({
@@ -114,6 +119,7 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
       setEditingCategory(null);
       setCategoryForm({ name_pt: "", name_es: "", name_en: "" });
     }
+    setFormError(null);
     setShowCategoryModal(true);
   };
 
@@ -146,11 +152,19 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
       });
     }
     setSelectedCategoryId(categoryId);
+    setFormError(null);
     setShowItemModal(true);
+  };
+
+
+  const apiError = async (res: Response) => {
+    const data = await res.json().catch(() => ({}));
+    return typeof data.error === "string" ? data.error : tErr("generic");
   };
 
   const saveCategory = async () => {
     setSaving(true);
+    setFormError(null);
     try {
       const url = editingCategory
         ? `/api/categories/${editingCategory.id}`
@@ -170,9 +184,12 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
       if (res.ok) {
         await fetchCategories();
         setShowCategoryModal(false);
+      } else {
+        setFormError(await apiError(res));
       }
     } catch (err) {
       console.error("Error saving category:", err);
+      setFormError(tErr("generic"));
     } finally {
       setSaving(false);
     }
@@ -193,6 +210,7 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
 
   const saveItem = async () => {
     setSaving(true);
+    setFormError(null);
     try {
       const url = editingItem ? `/api/items/${editingItem.id}` : "/api/items";
       const method = editingItem ? "PUT" : "POST";
@@ -216,9 +234,12 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
       if (res.ok) {
         await fetchCategories();
         setShowItemModal(false);
+      } else {
+        setFormError(await apiError(res));
       }
     } catch (err) {
       console.error("Error saving item:", err);
+      setFormError(tErr("generic"));
     } finally {
       setSaving(false);
     }
@@ -331,6 +352,7 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
                     onClick={() => openItemModal(category.id)}
                     className="p-2 rounded-lg hover:bg-secondary transition-colors text-primary min-w-[40px] min-h-[40px] flex items-center justify-center"
                     title={t("menuPage.addItem")}
+                    aria-label={t("menuPage.addItem")}
                   >
                     <Plus className="h-5 w-5" />
                   </button>
@@ -342,6 +364,7 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
                         : "text-muted-foreground hover:bg-secondary"
                     }`}
                     title={category.active ? t("menuPage.deactivate") : t("menuPage.activate")}
+                    aria-label={category.active ? t("menuPage.deactivate") : t("menuPage.activate")}
                   >
                     <Check className="h-5 w-5" />
                   </button>
@@ -349,6 +372,7 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
                     onClick={() => openCategoryModal(category)}
                     className="p-2 rounded-lg hover:bg-secondary transition-colors text-muted-foreground min-w-[40px] min-h-[40px] flex items-center justify-center"
                     title={tCommon("edit")}
+                    aria-label={tCommon("edit")}
                   >
                     <Pencil className="h-5 w-5" />
                   </button>
@@ -356,6 +380,7 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
                     onClick={() => deleteCategory(category.id)}
                     className="p-2 rounded-lg hover:bg-red-500/10 transition-colors text-red-500 min-w-[40px] min-h-[40px] flex items-center justify-center"
                     title={tCommon("delete")}
+                    aria-label={tCommon("delete")}
                   >
                     <Trash2 className="h-5 w-5" />
                   </button>
@@ -402,8 +427,8 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
                               </p>
                             )}
                             {/* Price - mobile */}
-                            <p className="font-bold text-primary text-sm mt-1 sm:hidden">
-                              R$ {Number(item.price).toFixed(2)}
+                            <p className="font-bold text-price text-sm mt-1 sm:hidden">
+                              {formatMoney(item.price, currency, locale)}
                             </p>
                           </div>
                         </div>
@@ -411,8 +436,8 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
                         <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4">
                           {/* Price - desktop */}
                           <div className="text-right hidden sm:block">
-                            <p className="font-bold text-primary">
-                              R$ {Number(item.price).toFixed(2)}
+                            <p className="font-bold text-price">
+                              {formatMoney(item.price, currency, locale)}
                             </p>
                           </div>
 
@@ -420,6 +445,8 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
                           <div className="flex items-center gap-1">
                             <button
                               onClick={() => toggleItemActive(item)}
+                              aria-label={item.active ? t("menuPage.deactivate") : t("menuPage.activate")}
+                              aria-pressed={item.active}
                               className={`p-2 rounded-lg transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center ${
                                 item.active
                                   ? "text-green-500 hover:bg-green-500/10"
@@ -430,12 +457,14 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
                             </button>
                             <button
                               onClick={() => openItemModal(category.id, item)}
+                              aria-label={tCommon("edit")}
                               className="p-2 rounded-lg hover:bg-secondary transition-colors text-muted-foreground min-w-[40px] min-h-[40px] flex items-center justify-center"
                             >
                               <Pencil className="h-4 w-4" />
                             </button>
                             <button
                               onClick={() => deleteItem(item.id)}
+                              aria-label={tCommon("delete")}
                               className="p-2 rounded-lg hover:bg-red-500/10 transition-colors text-red-500 min-w-[40px] min-h-[40px] flex items-center justify-center"
                             >
                               <Trash2 className="h-4 w-4" />
@@ -522,6 +551,12 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
               </div>
             </div>
 
+            {formError && (
+              <p role="alert" className="mt-4 text-sm text-red-600">
+                {formError}
+              </p>
+            )}
+
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => setShowCategoryModal(false)}
@@ -552,6 +587,7 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
               </h3>
               <button
                 onClick={() => setShowItemModal(false)}
+                aria-label={tCommon("close")}
                 className="p-2 rounded-lg hover:bg-secondary transition-colors"
               >
                 <X className="h-5 w-5" />
@@ -646,7 +682,7 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
               {/* Price */}
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  {t("menuPage.priceLabel")}
+                  {t("menuPage.priceLabel", { currency })}
                 </label>
                 <input
                   type="number"
@@ -675,6 +711,12 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
                 />
               </div>
             </div>
+
+            {formError && (
+              <p role="alert" className="mt-4 text-sm text-red-600">
+                {formError}
+              </p>
+            )}
 
             <div className="flex gap-3 mt-6">
               <button

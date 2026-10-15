@@ -1,11 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
+import { safeCallbackUrl } from "@/lib/safe-redirect";
 
 export default async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+  // Over HTTPS Auth.js uses the "__Secure-" prefixed cookie; behind a proxy
+  // the original protocol comes in x-forwarded-proto (first hop if a list).
+  const secureCookie =
+    (
+      req.headers.get("x-forwarded-proto")?.split(",")[0].trim() ??
+      req.nextUrl.protocol.replace(":", "")
+    ) === "https";
   const token = await getToken({
     req,
     secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
+    secureCookie,
   });
   const isLoggedIn = !!token;
   const userRole = token?.role;
@@ -37,10 +46,15 @@ export default async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
+  // Protected API routes - JSON 401 instead of a redirect to the login page
+  if (!isLoggedIn && pathname.startsWith("/api/")) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   // Protected routes - redirect to login if not authenticated
   if (!isLoggedIn) {
     const loginUrl = new URL("/login", req.nextUrl.origin);
-    loginUrl.searchParams.set("callbackUrl", pathname);
+    loginUrl.searchParams.set("callbackUrl", safeCallbackUrl(pathname, "/"));
     return NextResponse.redirect(loginUrl);
   }
 

@@ -2,18 +2,23 @@
 
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
-import { Settings, Star, ExternalLink, Loader2, Check } from "lucide-react";
+import { ExternalLink, Loader2, Check } from "lucide-react";
+import { isHttpUrl } from "@/lib/utils";
 
 interface SettingsData {
   id: string;
   google_reviews_url: string | null;
   google_reviews_enabled: boolean;
   min_stars_redirect: number;
+  currency?: string;
 }
+
+const CURRENCIES = ["EUR", "BRL", "USD", "GBP"];
 
 export default function SettingsPage() {
   const t = useTranslations("admin");
   const tCommon = useTranslations("common");
+  const tErr = useTranslations("errors");
 
   const [settings, setSettings] = useState<SettingsData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -22,7 +27,8 @@ export default function SettingsPage() {
 
   const [googleUrl, setGoogleUrl] = useState("");
   const [enabled, setEnabled] = useState(true);
-  const [minStars, setMinStars] = useState(4);
+  const [currency, setCurrency] = useState("EUR");
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -33,7 +39,7 @@ export default function SettingsPage() {
           setSettings(data);
           setGoogleUrl(data.google_reviews_url || "");
           setEnabled(data.google_reviews_enabled);
-          setMinStars(data.min_stars_redirect);
+          setCurrency(data.currency || "EUR");
         }
       } catch (err) {
         console.error("Error fetching settings:", err);
@@ -47,6 +53,7 @@ export default function SettingsPage() {
   const handleSave = async () => {
     setSaving(true);
     setSaved(false);
+    setError(null);
 
     try {
       const res = await fetch("/api/settings", {
@@ -55,7 +62,7 @@ export default function SettingsPage() {
         body: JSON.stringify({
           google_reviews_url: googleUrl || null,
           google_reviews_enabled: enabled,
-          min_stars_redirect: minStars,
+          currency,
         }),
       });
 
@@ -64,9 +71,13 @@ export default function SettingsPage() {
         setSettings(data);
         setSaved(true);
         setTimeout(() => setSaved(false), 3000);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setError(typeof data.error === "string" ? data.error : tErr("generic"));
       }
     } catch (err) {
       console.error("Error saving settings:", err);
+      setError(tErr("generic"));
     } finally {
       setSaving(false);
     }
@@ -106,10 +117,14 @@ export default function SettingsPage() {
         <div className="space-y-6">
           {/* URL Input */}
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
+            <label
+              htmlFor="google-url"
+              className="block text-sm font-medium text-foreground mb-2"
+            >
               {t("googleReviewsUrl")}
             </label>
             <input
+              id="google-url"
               type="url"
               value={googleUrl}
               onChange={(e) => setGoogleUrl(e.target.value)}
@@ -133,6 +148,9 @@ export default function SettingsPage() {
             </div>
             <button
               onClick={() => setEnabled(!enabled)}
+              role="switch"
+              aria-checked={enabled}
+              aria-label={t("googleReviewsEnabled")}
               className={`relative w-14 h-7 rounded-full transition-colors ${
                 enabled ? "bg-primary" : "bg-secondary"
               }`}
@@ -145,38 +163,37 @@ export default function SettingsPage() {
             </button>
           </div>
 
-          {/* Minimum Stars */}
+          {/* Currency */}
           <div>
-            <label className="block text-sm font-medium text-foreground mb-3">
-              {t("minStarsRedirect")}
+            <label
+              htmlFor="currency"
+              className="block text-sm font-medium text-foreground mb-2"
+            >
+              {t("settingsPage.currency")}
             </label>
-            <div className="flex items-center gap-4">
-              <div className="flex gap-1">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    onClick={() => setMinStars(star)}
-                    className="p-1 transition-transform hover:scale-110"
-                  >
-                    <Star
-                      className={`h-8 w-8 transition-colors ${
-                        star <= minStars
-                          ? "fill-primary text-primary"
-                          : "text-muted-foreground/30"
-                      }`}
-                    />
-                  </button>
-                ))}
-              </div>
-              <span className="text-sm text-muted-foreground">
-                {t("settingsPage.starsPlus", { count: minStars })}
-              </span>
-            </div>
+            <select
+              id="currency"
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border/50 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+            >
+              {CURRENCIES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
             <p className="mt-2 text-xs text-muted-foreground">
-              {t("settingsPage.redirectHint", { count: minStars })}
+              {t("settingsPage.currencyHint")}
             </p>
           </div>
         </div>
+
+        {error && (
+          <p role="alert" className="mt-6 text-sm text-red-600">
+            {error}
+          </p>
+        )}
 
         {/* Save Button */}
         <div className="mt-8 flex items-center gap-4">
@@ -193,7 +210,7 @@ export default function SettingsPage() {
             {saved ? t("settingsSaved") : tCommon("save")}
           </button>
 
-          {googleUrl && (
+          {isHttpUrl(googleUrl) && (
             <a
               href={googleUrl}
               target="_blank"
@@ -213,12 +230,6 @@ export default function SettingsPage() {
         <ul className="space-y-2 text-sm text-muted-foreground">
           <li>
             {t("settingsPage.step1")}
-          </li>
-          <li>
-            {t("settingsPage.step2", { count: minStars })}
-          </li>
-          <li>
-            {t("settingsPage.step3")}
           </li>
           <li>{t("settingsPage.step4")}</li>
         </ul>

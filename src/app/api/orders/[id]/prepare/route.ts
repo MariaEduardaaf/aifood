@@ -39,17 +39,33 @@ export async function PATCH(
     if (order.status !== "CONFIRMED") {
       return NextResponse.json(
         { error: "Order must be confirmed before preparing" },
-        { status: 400 },
+        { status: 409 },
       );
     }
 
-    const updatedOrder = await prisma.order.update({
-      where: { id: params.id },
+    // Atomic transition: applies only if the status is still the expected one
+    const { count } = await prisma.order.updateMany({
+      where: {
+        id: params.id,
+        restaurant_id: order.restaurant_id,
+        status: "CONFIRMED",
+      },
       data: {
         status: "PREPARING",
         preparing_at: new Date(),
         prepared_by: session.user.id,
       },
+    });
+
+    if (count === 0) {
+      return NextResponse.json(
+        { error: "Order status changed, refresh and try again" },
+        { status: 409 },
+      );
+    }
+
+    const updatedOrder = await prisma.order.findUnique({
+      where: { id: params.id },
       include: {
         table: {
           select: {

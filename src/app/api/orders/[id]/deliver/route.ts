@@ -38,16 +38,32 @@ export async function PATCH(
     if (order.status !== "READY") {
       return NextResponse.json(
         { error: "Order must be ready before delivery" },
-        { status: 400 },
+        { status: 409 },
       );
     }
 
-    const updatedOrder = await prisma.order.update({
-      where: { id: params.id },
+    // Atomic transition: applies only if the status is still the expected one
+    const { count } = await prisma.order.updateMany({
+      where: {
+        id: params.id,
+        restaurant_id: order.restaurant_id,
+        status: "READY",
+      },
       data: {
         status: "DELIVERED",
         delivered_at: new Date(),
       },
+    });
+
+    if (count === 0) {
+      return NextResponse.json(
+        { error: "Order status changed, refresh and try again" },
+        { status: 409 },
+      );
+    }
+
+    const updatedOrder = await prisma.order.findUnique({
+      where: { id: params.id },
       include: {
         table: {
           select: {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { getPeriodRange, SALE_EXCLUDED_STATUSES } from "@/lib/metrics";
 import { getLocale } from "next-intl/server";
 import { localizedName } from "@/lib/utils";
 
@@ -32,28 +33,7 @@ export async function GET(request: NextRequest) {
         ? restaurantIdParam
         : session.user.restaurant_id;
 
-    // Calculate dates based on the period
-    const now = new Date();
-    let startDate: Date;
-
-    switch (period) {
-      case "today":
-        startDate = new Date(now);
-        startDate.setHours(0, 0, 0, 0);
-        break;
-      case "week":
-        startDate = new Date(now);
-        startDate.setDate(startDate.getDate() - 7);
-        startDate.setHours(0, 0, 0, 0);
-        break;
-      case "30days":
-      case "month":
-      default:
-        startDate = new Date(now);
-        startDate.setMonth(startDate.getMonth() - 1);
-        startDate.setHours(0, 0, 0, 0);
-        break;
-    }
+    const { start: startDate, end: now } = getPeriodRange(period);
 
     // Fetch order items for the period with aggregation
     const locale = await getLocale();
@@ -66,9 +46,7 @@ export async function GET(request: NextRequest) {
             lte: now,
           },
           ...(restaurantId ? { restaurant_id: restaurantId } : {}),
-          status: {
-            not: "CANCELLED",
-          },
+          status: { notIn: SALE_EXCLUDED_STATUSES },
         },
       },
       include: {

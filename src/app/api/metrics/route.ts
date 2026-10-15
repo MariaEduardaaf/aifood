@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { getPeriodRange } from "@/lib/metrics";
 
 export const dynamic = "force-dynamic";
 
@@ -26,24 +27,7 @@ export async function GET(request: NextRequest) {
         ? restaurantIdParam
         : session.user.restaurant_id;
 
-    // Calculate date range
-    const now = new Date();
-    let startDate: Date;
-
-    switch (period) {
-      case "week":
-        startDate = new Date(now);
-        startDate.setDate(startDate.getDate() - 7);
-        break;
-      case "month":
-        startDate = new Date(now);
-        startDate.setMonth(startDate.getMonth() - 1);
-        break;
-      case "today":
-      default:
-        startDate = new Date(now);
-        startDate.setHours(0, 0, 0, 0);
-    }
+    const { start: startDate } = getPeriodRange(period);
 
     // Total calls in period
     const totalCalls = await prisma.call.count({

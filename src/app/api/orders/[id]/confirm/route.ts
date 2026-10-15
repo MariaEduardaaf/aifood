@@ -37,17 +37,33 @@ export async function PATCH(
     if (order.status !== "PENDING") {
       return NextResponse.json(
         { error: "Order is not pending" },
-        { status: 400 },
+        { status: 409 },
       );
     }
 
-    const updatedOrder = await prisma.order.update({
-      where: { id: params.id },
+    // Atomic transition: applies only if the status is still the expected one
+    const { count } = await prisma.order.updateMany({
+      where: {
+        id: params.id,
+        restaurant_id: order.restaurant_id,
+        status: "PENDING",
+      },
       data: {
         status: "CONFIRMED",
         confirmed_at: new Date(),
         confirmed_by: session.user.id,
       },
+    });
+
+    if (count === 0) {
+      return NextResponse.json(
+        { error: "Order status changed, refresh and try again" },
+        { status: 409 },
+      );
+    }
+
+    const updatedOrder = await prisma.order.findUnique({
+      where: { id: params.id },
       include: {
         table: {
           select: {

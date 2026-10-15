@@ -97,6 +97,7 @@ model Call {
   @@index([table_id])
   @@index([created_at])
   @@index([restaurant_id])
+  @@index([restaurant_id, status])
 }
 
 model Rating {
@@ -122,6 +123,7 @@ model Settings {
   google_reviews_url  String? // Restaurant's Google Reviews URL
   google_reviews_enabled Boolean @default(true)
   min_stars_redirect  Int     @default(4) // minimum stars to redirect
+  currency            String  @default("EUR") // ISO 4217 code used for prices
 
   restaurant Restaurant @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
 }
@@ -209,6 +211,8 @@ model Order {
   @@index([status])
   @@index([created_at])
   @@index([restaurant_id])
+  @@index([restaurant_id, status])
+  @@index([restaurant_id, created_at])
 }
 
 model OrderItem {

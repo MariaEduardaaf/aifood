@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import Image from "next/image";
 import {
@@ -44,7 +44,7 @@ type View = "main" | "menu" | "cart" | "orders";
 function ClientTablePageContent({ tableId, tableLabel }: ClientTablePageProps) {
   const t = useTranslations("client");
   const locale = useLocale();
-  const { itemCount } = useCart();
+  const { itemCount, setCurrency } = useCart();
   const { resolvedTheme } = useTheme();
 
   const [openCalls, setOpenCalls] = useState<OpenCall[]>([]);
@@ -60,35 +60,74 @@ function ClientTablePageContent({ tableId, tableLabel }: ClientTablePageProps) {
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [currentView, setCurrentView] = useState<View>("main");
   const [showCart, setShowCart] = useState(false);
-  const [currentTime, setCurrentTime] = useState(new Date());
+  const [currentTime, setCurrentTime] = useState<Date | null>(null);
 
-  // Update time every minute
+  // Render the clock only after mount (avoids SSR/client hydration mismatch)
   useEffect(() => {
+    setCurrentTime(new Date());
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
     return () => clearInterval(timer);
   }, []);
 
-  // Check for existing open calls and pending ratings
-  useEffect(() => {
-    const checkOpenCalls = async () => {
-      try {
-        const res = await fetch(`/api/tables/${tableId}/status`);
-        if (res.ok) {
-          const data = await res.json();
-          setOpenCalls(data.openCalls || []);
+  // Calls the guest already rated or skipped (so the prompt does not come back on reload)
+  const ratedKey = `aifood-rated-${tableId}`;
+  const getRated = (): string[] => {
+    try {
+      return JSON.parse(localStorage.getItem(ratedKey) || "[]");
+    } catch {
+      return [];
+    }
+  };
+  const markRated = (id: string) => {
+    try {
+      localStorage.setItem(ratedKey, JSON.stringify([...getRated(), id].slice(-50)));
+    } catch {
+      // storage unavailable: prompt may reappear, harmless
+    }
+  };
 
-          // Check for pending rating
-          if (data.pendingRating) {
-            setPendingRating(data.pendingRating);
-            setShowRatingModal(true);
-          }
+  // Currency comes with the public menu response
+  useEffect(() => {
+    fetch(`/api/menu?tableId=${tableId}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d && !Array.isArray(d) && d.currency) setCurrency(d.currency);
+      })
+      .catch(() => {});
+  }, [tableId, setCurrency]);
+
+  // Check open calls and pending ratings
+  const checkOpenCalls = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/tables/${tableId}/status`);
+      if (res.ok) {
+        const data = await res.json();
+        setOpenCalls(data.openCalls || []);
+
+        // Only bill requests are rated, and only once
+        const pr = data.pendingRating;
+        if (pr && pr.type === "REQUEST_BILL" && !getRated().includes(pr.id)) {
+          setPendingRating(pr);
+          setShowRatingModal(true);
         }
-      } catch (err) {
-        console.error("Error checking open calls:", err);
       }
-    };
-    checkOpenCalls();
+    } catch (err) {
+      console.error("Error checking open calls:", err);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tableId]);
+
+  useEffect(() => {
+    checkOpenCalls();
+  }, [checkOpenCalls]);
+
+  // Poll every 10s while a call is pending (waiter may resolve it)
+  const hasPending = openCalls.length > 0;
+  useEffect(() => {
+    if (!hasPending) return;
+    const timer = setInterval(checkOpenCalls, 10000);
+    return () => clearInterval(timer);
+  }, [hasPending, checkOpenCalls]);
 
   // Cooldown timer
   useEffect(() => {
@@ -230,7 +269,7 @@ function ClientTablePageContent({ tableId, tableLabel }: ClientTablePageProps) {
               </span>
               <span className="text-xs text-muted-foreground flex items-center gap-1">
                 <Clock className="h-3 w-3" />
-                {formatTime(currentTime)}
+                {currentTime ? formatTime(currentTime) : "--:--"}
               </span>
             </div>
           </div>
@@ -265,24 +304,25 @@ function ClientTablePageContent({ tableId, tableLabel }: ClientTablePageProps) {
           {/* Primary Action - View Menu */}
           <button
             onClick={() => setCurrentView("menu")}
-            className="relative overflow-hidden card-premium rounded-2xl p-6 text-left group hover:scale-[1.02] transition-all duration-300"
+            aria-label={`${t("viewMenuOrder")}. ${t("browseAndOrder")}`}
+            className="relative overflow-hidden w-full rounded-2xl p-6 text-left group bg-primary text-primary-foreground shadow-lg shadow-primary/30 hover:scale-[1.02] transition-all duration-300"
           >
             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-2xl -mr-10 -mt-10 group-hover:bg-primary/20 transition-colors" />
             <div className="relative flex items-center gap-4">
-              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/30 group-hover:shadow-primary/50 transition-shadow">
+              <div className="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center">
                 <BookOpen className="h-7 w-7 text-primary-foreground" />
               </div>
               <div className="flex-1">
-                <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+                <h2 className="text-xl font-bold flex items-center gap-2">
                   {t("viewMenuOrder")}
-                  <Sparkles className="h-4 w-4 text-primary" />
+                  <Sparkles className="h-4 w-4" />
                 </h2>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm opacity-90">
                   {t("browseAndOrder")}
                 </p>
               </div>
               {itemCount > 0 && (
-                <div className="absolute top-4 right-4 w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center animate-bounce">
+                <div className="absolute top-0 right-0 w-6 h-6 rounded-full bg-white text-primary text-xs font-bold flex items-center justify-center animate-bounce">
                   {itemCount}
                 </div>
               )}
@@ -292,6 +332,7 @@ function ClientTablePageContent({ tableId, tableLabel }: ClientTablePageProps) {
           {/* My Orders Button */}
           <button
             onClick={() => setCurrentView("orders")}
+            aria-label={`${t("myOrders")}. ${t("trackYourOrders")}`}
             className="card-premium rounded-2xl p-5 text-left group hover:scale-[1.01] transition-all duration-300"
           >
             <div className="flex items-center gap-4">
@@ -417,10 +458,12 @@ function ClientTablePageContent({ tableId, tableLabel }: ClientTablePageProps) {
         <RatingModal
           callId={pendingRating.id}
           onClose={() => {
+            markRated(pendingRating.id);
             setShowRatingModal(false);
             setPendingRating(null);
           }}
           onSuccess={() => {
+            markRated(pendingRating.id);
             setShowRatingModal(false);
             setPendingRating(null);
           }}

@@ -12,8 +12,10 @@
         --card-foreground: 0 0% 12%;
         --popover: 0 0% 100%;
         --popover-foreground: 0 0% 12%;
-        --primary: 28 88% 59%;
+        --primary: 24 90% 38%;
         --primary-foreground: 0 0% 100%;
+        /* Orange for text/prices: AA on cream and white */
+        --price: 24 90% 35%;
         --secondary: 156 25% 92%;
         --secondary-foreground: 0 0% 12%;
         --muted: 38 36% 90%;
@@ -28,7 +30,7 @@
         --warning-foreground: 0 0% 12%;
         --border: 35 31% 85%;
         --input: 38 36% 90%;
-        --ring: 28 88% 59%;
+        --ring: 24 90% 38%;
         --radius: 0.75rem;
     }
 
@@ -42,6 +44,7 @@
         --popover-foreground: 37 44% 93%;
         --primary: 28 88% 59%;
         --primary-foreground: 36 14% 7%;
+        --price: 28 88% 59%;
         --secondary: 164 33% 18%;
         --secondary-foreground: 37 44% 93%;
         --muted: 45 8% 9%;
@@ -113,15 +116,25 @@
         @apply relative overflow-hidden font-semibold py-4 px-8 rounded-xl text-lg;
         background: linear-gradient(
             135deg,
-            hsl(28 88% 59%),
-            hsl(42 86% 63%),
-            hsl(28 88% 59%)
+            hsl(24 90% 38%),
+            hsl(26 90% 36%),
+            hsl(24 90% 38%)
         );
         color: hsl(0 0% 100%);
         box-shadow:
             0 4px 15px rgba(242, 143, 59, 0.4),
             inset 0 1px 0 rgba(255, 255, 255, 0.2);
         transition: all 0.3s ease;
+    }
+
+    .dark .btn-gold {
+        background: linear-gradient(
+            135deg,
+            hsl(28 88% 59%),
+            hsl(42 86% 63%),
+            hsl(28 88% 59%)
+        );
+        color: hsl(36 14% 7%);
     }
 
     .btn-gold:hover {
@@ -201,13 +214,28 @@
     .text-gold {
         background: linear-gradient(
             135deg,
+            hsl(24 90% 32%),
+            hsl(26 90% 32%),
+            hsl(24 90% 32%)
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .dark .text-gold {
+        background: linear-gradient(
+            135deg,
             hsl(28 88% 60%),
             hsl(42 86% 63%),
             hsl(28 88% 52%)
         );
         -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
         background-clip: text;
+    }
+
+    .text-price {
+        color: hsl(var(--price));
     }
 
     /* Premium badge - Amber */

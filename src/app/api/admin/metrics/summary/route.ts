@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { getPeriodRange, SALE_EXCLUDED_STATUSES } from "@/lib/metrics";
 
 export const dynamic = "force-dynamic";
 
@@ -29,36 +30,7 @@ export async function GET(request: NextRequest) {
         ? restaurantIdParam
         : session.user.restaurant_id;
 
-    // Calculate dates based on the period
-    const now = new Date();
-    let startDate: Date;
-    let endDate: Date = now;
-
-    switch (period) {
-      case "yesterday":
-        startDate = new Date(now);
-        startDate.setDate(startDate.getDate() - 1);
-        startDate.setHours(0, 0, 0, 0);
-        endDate = new Date(startDate);
-        endDate.setHours(23, 59, 59, 999);
-        break;
-      case "week":
-        startDate = new Date(now);
-        startDate.setDate(startDate.getDate() - 7);
-        startDate.setHours(0, 0, 0, 0);
-        break;
-      case "30days":
-      case "month":
-        startDate = new Date(now);
-        startDate.setMonth(startDate.getMonth() - 1);
-        startDate.setHours(0, 0, 0, 0);
-        break;
-      case "today":
-      default:
-        startDate = new Date(now);
-        startDate.setHours(0, 0, 0, 0);
-        break;
-    }
+    const { start: startDate, end: endDate } = getPeriodRange(period);
 
     const restaurantFilter = restaurantId
       ? { restaurant_id: restaurantId }
@@ -96,8 +68,9 @@ export async function GET(request: NextRequest) {
     const cancellationRate =
       totalOrders > 0 ? (cancelledOrders / totalOrders) * 100 : 0;
 
+    // Revenue only counts accepted orders (not PENDING, not CANCELLED)
     const totalRevenue = orders
-      .filter((o) => o.status !== "CANCELLED")
+      .filter((o) => !SALE_EXCLUDED_STATUSES.includes(o.status))
       .reduce((sum, o) => sum + Number(o.total), 0);
 
     const averageTicket =
@@ -222,8 +195,15 @@ export async function GET(request: NextRequest) {
       totalReviews > 0
         ? ratings.reduce((sum, r) => sum + r.stars, 0) / totalReviews
         : 0;
+    // Customers are only prompted to rate after a resolved bill request,
+    // so that is the denominator (not orders, which can be many per bill)
+    const resolvedBillCalls = calls.filter(
+      (c) => c.type === "REQUEST_BILL" && c.status === "RESOLVED",
+    ).length;
     const reviewRate =
-      totalOrders > 0 ? (totalReviews / totalOrders) * 100 : 0;
+      resolvedBillCalls > 0
+        ? Math.min(100, (totalReviews / resolvedBillCalls) * 100)
+        : 0;
 
     return NextResponse.json({
       orders: {

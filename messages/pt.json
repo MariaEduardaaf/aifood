@@ -40,14 +40,17 @@
     "welcomeMessage": "Bem-vindo! Como podemos ajudar?",
     "browseAndOrder": "Navegue pelo cardápio e faça seu pedido",
     "trackYourOrders": "Acompanhe o status dos seus pedidos",
-    "needAssistance": "Precisa de assistência?"
+    "needAssistance": "Precisa de assistência?",
+    "googleReviewPrompt": "Quer compartilhar sua experiência também no Google? Ajuda muito.",
+    "leaveGoogleReview": "Deixar avaliação no Google"
   },
   "menu": {
     "title": "Cardápio",
     "empty": "Cardápio não disponível no momento",
     "noItems": "Nenhum item nesta categoria",
     "add": "Adicionar",
-    "viewCart": "Ver Carrinho"
+    "viewCart": "Ver Carrinho",
+    "back": "Voltar"
   },
   "cart": {
     "title": "Meu Pedido",
@@ -60,7 +63,8 @@
     "orderSuccess": "Pedido Enviado!",
     "orderSuccessMessage": "Seu pedido foi recebido e será preparado em breve.",
     "orderError": "Erro ao enviar pedido. Tente novamente.",
-    "rateLimitError": "Aguarde alguns segundos antes de fazer outro pedido."
+    "rateLimitError": "Aguarde alguns segundos antes de fazer outro pedido.",
+    "remove": "Remover item"
   },
   "orders": {
     "title": "Meus Pedidos",
@@ -80,7 +84,9 @@
     "minutesAgo": "Há {minutes} minutos",
     "oneHourAgo": "Há 1 hora",
     "hoursAgo": "Há {hours} horas",
-    "total": "Total"
+    "total": "Total",
+    "back": "Voltar",
+    "refresh": "Atualizar"
   },
   "waiter": {
     "calls": "Chamados",
@@ -306,7 +312,7 @@
       "categoryPlaceholderPt": "Ex: Entradas",
       "categoryPlaceholderEs": "Ex: Entrantes",
       "categoryPlaceholderEn": "Ex: Starters",
-      "priceLabel": "Preço (R$) *",
+      "priceLabel": "Preço ({currency}) *",
       "dishImage": "Imagem do Prato"
     },
     "metricsDashboard": {
@@ -341,7 +347,9 @@
       "step1": "1. Quando um chamado é resolvido, o cliente vê uma tela de avaliação",
       "step2": "2. Se a nota for {count}+ estrelas, o cliente é convidado a avaliar no Google",
       "step3": "3. Notas baixas ficam apenas no sistema interno com feedback privado",
-      "step4": "4. Isso ajuda a aumentar as avaliações positivas no Google"
+      "step4": "4. Isso ajuda a aumentar as avaliações positivas no Google",
+      "currency": "Moeda",
+      "currencyHint": "Usada em todos os preços mostrados a clientes e equipe."
     }
   },
   "auth": {
@@ -368,7 +376,8 @@
     "notFound": "Não encontrado",
     "unauthorized": "Não autorizado",
     "forbidden": "Acesso negado",
-    "rateLimit": "Muitas requisições. Tente novamente em alguns segundos."
+    "rateLimit": "Muitas requisições. Tente novamente em alguns segundos.",
+    "reconnecting": "Conexão perdida. Reconectando..."
   },
   "settings": {
     "title": "Configurações",

@@ -2,6 +2,7 @@
 
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import { Globe } from "lucide-react";
 
 const locales = [
@@ -10,41 +11,36 @@ const locales = [
   { code: "en", label: "EN", flag: "🇺🇸" },
 ];
 
+// Compact native <select> so it never crowds the header (360px safe)
 export function LanguageSelector() {
   const router = useRouter();
+  const current = useLocale();
+  const t = useTranslations("settings.language");
   const [isPending, startTransition] = useTransition();
 
   const changeLocale = (locale: string) => {
-    // Set locale cookie
     document.cookie = `locale=${locale};path=/;max-age=31536000`;
-
-    // Refresh the page to apply the new locale
     startTransition(() => {
       router.refresh();
     });
   };
 
   return (
-    <div className="flex items-center gap-1 p-1.5 rounded-xl bg-secondary/50 border border-border/50">
-      {locales.map((locale) => (
-        <button
-          key={locale.code}
-          onClick={() => changeLocale(locale.code)}
-          disabled={isPending}
-          className="
-            min-w-[44px] min-h-[44px] px-3 py-2 rounded-lg text-sm font-semibold
-            transition-all duration-200
-            hover:bg-primary/20 hover:text-primary
-            active:scale-95
-            disabled:opacity-50 disabled:cursor-not-allowed
-            text-muted-foreground
-            flex items-center justify-center
-          "
-        >
-          <span className="mr-1.5 text-base">{locale.flag}</span>
-          {locale.label}
-        </button>
-      ))}
-    </div>
+    <label className="relative flex items-center rounded-xl bg-secondary/50 border border-border/50 min-h-[44px]">
+      <Globe className="h-4 w-4 ml-3 text-muted-foreground pointer-events-none" />
+      <select
+        aria-label={t("title")}
+        value={current}
+        onChange={(e) => changeLocale(e.target.value)}
+        disabled={isPending}
+        className="appearance-none bg-transparent pl-2 pr-3 py-2 min-h-[44px] text-sm font-semibold text-foreground focus:outline-none disabled:opacity-50"
+      >
+        {locales.map((l) => (
+          <option key={l.code} value={l.code}>
+            {l.flag} {l.label}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }

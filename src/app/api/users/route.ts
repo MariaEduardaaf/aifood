@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { z } from "zod";
+import { validationError, isUniqueViolation } from "@/lib/api";
 import { hash } from "bcryptjs";
 
 const createUserSchema = z.object({
-  email: z.string().email(),
+  email: z.string().trim().toLowerCase().email(),
   password: z.string().min(6),
   name: z.string().min(1).max(100),
   role: z.enum(["WAITER", "ADMIN", "MANAGER", "KITCHEN"]),
@@ -34,7 +35,15 @@ export async function GET(request: NextRequest) {
         : session.user.restaurant_id;
 
     const users = await prisma.user.findMany({
-      where: restaurantId ? { restaurant_id: restaurantId } : undefined,
+      where:
+        session.user.role === "SUPER_ADMIN"
+          ? restaurantId
+            ? { restaurant_id: restaurantId }
+            : undefined
+          : {
+              restaurant_id: session.user.restaurant_id,
+              role: { not: "SUPER_ADMIN" },
+            },
       orderBy: { created_at: "desc" },
       select: {
         id: true,
@@ -75,14 +84,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
+    const body = await request.json().catch(() => null);
     const validation = createUserSchema.safeParse(body);
 
     if (!validation.success) {
-      return NextResponse.json(
-        { error: validation.error.issues },
-        { status: 400 },
-      );
+      return validationError(validation.error);
     }
 
     const {
@@ -92,6 +98,18 @@ export async function POST(request: NextRequest) {
       role,
       restaurantId: restaurantIdInput,
     } = validation.data;
+
+    // Managers can only create waiter and kitchen staff
+    if (
+      session.user.role === "MANAGER" &&
+      role !== "WAITER" &&
+      role !== "KITCHEN"
+    ) {
+      return NextResponse.json(
+        { error: "Managers can only create WAITER or KITCHEN users" },
+        { status: 403 },
+      );
+    }
 
     const restaurantId =
       session.user.role === "SUPER_ADMIN"
@@ -113,7 +131,7 @@ export async function POST(request: NextRequest) {
     if (existingUser) {
       return NextResponse.json(
         { error: "Email already registered" },
-        { status: 400 },
+        { status: 409 },
       );
     }
 
@@ -140,6 +158,12 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(user, { status: 201 });
   } catch (error) {
+    if (isUniqueViolation(error)) {
+      return NextResponse.json(
+        { error: "Email already registered" },
+        { status: 409 },
+      );
+    }
     console.error("Error creating user:", error);
     return NextResponse.json(
       { error: "Internal server error" },

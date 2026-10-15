@@ -28,8 +28,12 @@ declare module "@auth/core/jwt" {
     id: string;
     role: Role;
     restaurant_id: string;
+    checkedAt?: number;
   }
 }
+
+// How often the JWT is re-validated against the database (ms)
+const RECHECK_INTERVAL_MS = 5 * 60 * 1000;
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -48,10 +52,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const { prisma } = await import("@/lib/db");
 
         const user = await prisma.user.findUnique({
-          where: { email: credentials.email as string },
+          where: { email: (credentials.email as string).trim().toLowerCase() },
+          include: { restaurant: { select: { active: true } } },
         });
 
-        if (!user || !user.active) {
+        if (
+          !user ||
+          !user.active ||
+          (user.role !== "SUPER_ADMIN" && !user.restaurant.active)
+        ) {
           return null;
         }
 
@@ -80,7 +89,38 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.id = user.id;
         token.role = user.role;
         token.restaurant_id = user.restaurant_id;
+        token.checkedAt = Date.now();
+        return token;
       }
+
+      // Re-validate at most every RECHECK_INTERVAL_MS so deactivated users,
+      // deactivated restaurants and role changes take effect without re-login.
+      if (Date.now() - (token.checkedAt ?? 0) < RECHECK_INTERVAL_MS) {
+        return token;
+      }
+
+      const { prisma } = await import("@/lib/db");
+      const dbUser = await prisma.user.findUnique({
+        where: { id: token.id },
+        select: {
+          role: true,
+          active: true,
+          restaurant_id: true,
+          restaurant: { select: { active: true } },
+        },
+      });
+
+      if (
+        !dbUser ||
+        !dbUser.active ||
+        (dbUser.role !== "SUPER_ADMIN" && !dbUser.restaurant.active)
+      ) {
+        return null; // Clears the session cookie
+      }
+
+      token.role = dbUser.role;
+      token.restaurant_id = dbUser.restaurant_id;
+      token.checkedAt = Date.now();
       return token;
     },
     async session({ session, token }) {
@@ -97,5 +137,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   session: {
     strategy: "jwt",
+    maxAge: 12 * 60 * 60, // 12h
   },
 });

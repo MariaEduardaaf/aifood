@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { z } from "zod";
+import { validationError, isUniqueViolation } from "@/lib/api";
 
 const restaurantSchema = z.object({
   name: z.string().min(1).max(120).optional(),
@@ -44,14 +45,11 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
+    const body = await request.json().catch(() => null);
     const validation = restaurantSchema.safeParse(body);
 
     if (!validation.success) {
-      return NextResponse.json(
-        { error: "Invalid data", details: validation.error.issues },
-        { status: 400 },
-      );
+      return validationError(validation.error);
     }
 
     const restaurant = await prisma.restaurant.update({
@@ -61,6 +59,12 @@ export async function PATCH(
 
     return NextResponse.json(restaurant);
   } catch (error) {
+    if (isUniqueViolation(error)) {
+      return NextResponse.json(
+        { error: "A restaurant with this slug or domain already exists" },
+        { status: 409 },
+      );
+    }
     console.error("Error updating restaurant:", error);
     return NextResponse.json(
       { error: "Internal server error" },

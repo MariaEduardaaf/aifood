@@ -13,8 +13,10 @@ import {
   Truck,
   Image as ImageIcon,
 } from "lucide-react";
-import { cn, formatTime, getUrgencyClass, localizedName } from "@/lib/utils";
+import { cn, formatMoney, formatTime, getUrgencyClass, localizedName } from "@/lib/utils";
 import { useSound } from "@/components/providers/sound-provider";
+import { useCurrency } from "@/components/providers/currency";
+import { useEventStream, ReconnectBanner } from "@/components/providers/use-event-stream";
 
 interface OrderItem {
   id: string;
@@ -49,6 +51,7 @@ interface Order {
 export function OrdersPanel() {
   const t = useTranslations("waiter");
   const locale = useLocale();
+  const currency = useCurrency();
   const { playNotification } = useSound();
 
   const [orders, setOrders] = useState<Order[]>([]);
@@ -57,14 +60,12 @@ export function OrdersPanel() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [timers, setTimers] = useState<Record<string, number>>({});
 
+  const initializedRef = useRef(false);
   const previousOrdersRef = useRef<string[]>([]);
   const previousReadyRef = useRef<string[]>([]);
 
   // Fetch orders with SSE
-  useEffect(() => {
-    const eventSource = new EventSource("/api/orders/stream");
-
-    eventSource.onmessage = (event) => {
+  const { lost } = useEventStream("/api/orders/stream", (event) => {
       try {
         const newOrders: Order[] = JSON.parse(event.data);
 
@@ -78,27 +79,19 @@ export function OrdersPanel() {
         const previousReadyIds = previousReadyRef.current;
         const hasNewReady = readyIds.some((id) => !previousReadyIds.includes(id));
 
-        if ((hasNewOrder || hasNewReady) && previousIds.length > 0) {
+        if ((hasNewOrder || hasNewReady) && initializedRef.current) {
           playNotification();
         }
 
         previousOrdersRef.current = currentIds;
         previousReadyRef.current = readyIds;
         setOrders(newOrders);
+        initializedRef.current = true;
         setLoading(false);
       } catch (err) {
         console.error("Error parsing SSE data:", err);
       }
-    };
-
-    eventSource.onerror = () => {
-      console.error("SSE connection error");
-    };
-
-    return () => {
-      eventSource.close();
-    };
-  }, [playNotification]);
+  });
 
   // Update timers every second
   useEffect(() => {
@@ -194,6 +187,7 @@ export function OrdersPanel() {
 
   return (
     <div className="space-y-6">
+      <ReconnectBanner show={lost} />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -274,7 +268,7 @@ export function OrdersPanel() {
                       <div>
                         <h3 className="font-bold text-lg">{order.table.label}</h3>
                         <p className="text-sm text-muted-foreground">
-                          {t("itemCount", { count: order.items.length })} • R$ {Number(order.total).toFixed(2)}
+                          {t("itemCount", { count: order.items.length })} • {formatMoney(order.total, currency, locale)}
                         </p>
                       </div>
                     </div>
@@ -338,7 +332,7 @@ export function OrdersPanel() {
                             )}
                           </div>
                           <p className="text-sm font-medium">
-                            R$ {(Number(item.unit_price) * item.quantity).toFixed(2)}
+                            {formatMoney(Number(item.unit_price) * item.quantity, currency, locale)}
                           </p>
                         </div>
                       ))}
@@ -353,7 +347,7 @@ export function OrdersPanel() {
                     </div>
 
                     {/* Actions */}
-                    <div className="p-4 border-t border-border/50 flex gap-3">
+                    <div className="p-4 border-t border-border/50 flex gap-4">
                       {isPending ? (
                         <>
                           <button
@@ -362,7 +356,7 @@ export function OrdersPanel() {
                               handleCancel(order.id);
                             }}
                             disabled={isLoading}
-                            className="flex-1 py-3 px-4 rounded-xl font-medium bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors flex items-center justify-center gap-2"
+                            className="py-3 px-4 min-h-[44px] rounded-xl font-medium text-muted-foreground hover:text-red-600 hover:bg-red-500/10 transition-colors flex items-center justify-center gap-2"
                           >
                             <X className="h-5 w-5" />
                             {t("cancel")}

@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { cn, formatTime, localizedName } from "@/lib/utils";
 import { useSound } from "@/components/providers/sound-provider";
+import { useEventStream, ReconnectBanner } from "@/components/providers/use-event-stream";
 
 interface OrderItem {
   id: string;
@@ -180,7 +181,7 @@ function DraggableOrderCard({
                 <GripVertical className="h-4 w-4 text-muted-foreground" />
               </div>
             )}
-            <h3 className="font-bold text-lg">{order.table.label}</h3>
+            <h3 className="font-bold text-2xl">{order.table.label}</h3>
           </div>
           <div
             className={cn(
@@ -212,12 +213,12 @@ function DraggableOrderCard({
               )}
             </div>
             <div className="flex-1">
-              <p className="font-medium text-sm">
+              <p className="font-medium text-lg">
                 <span className="text-primary font-bold">{item.quantity}x</span>{" "}
                 {localizedName(item.menuItem, locale)}
               </p>
               {item.notes && (
-                <p className="text-xs text-yellow-500">{item.notes}</p>
+                <p className="mt-1 inline-block rounded-md bg-amber-200 px-2 py-1 text-base font-semibold text-amber-950">{item.notes}</p>
               )}
             </div>
           </div>
@@ -225,7 +226,7 @@ function DraggableOrderCard({
 
         {order.notes && (
           <div className="pt-2 mt-2 border-t border-border/30">
-            <p className="text-sm text-yellow-500">
+            <p className="rounded-md bg-amber-200 px-3 py-2 text-base font-semibold text-amber-950">
               <span className="font-medium">{t("notes")}:</span> {order.notes}
             </p>
           </div>
@@ -239,7 +240,7 @@ function DraggableOrderCard({
             <button
               onClick={onAction}
               disabled={isLoading}
-              className="w-full py-3 px-4 rounded-xl font-medium bg-orange-500 hover:bg-orange-600 text-white transition-colors flex items-center justify-center gap-2"
+              className="w-full py-3 px-4 rounded-xl font-medium bg-orange-700 hover:bg-orange-800 text-white transition-colors flex items-center justify-center gap-2"
             >
               {isLoading ? (
                 <Loader2 className="h-5 w-5 animate-spin" />
@@ -254,7 +255,7 @@ function DraggableOrderCard({
             <button
               onClick={onAction}
               disabled={isLoading}
-              className="w-full py-3 px-4 rounded-xl font-medium bg-green-500 hover:bg-green-600 text-white transition-colors flex items-center justify-center gap-2"
+              className="w-full py-3 px-4 rounded-xl font-medium bg-green-700 hover:bg-green-800 text-white transition-colors flex items-center justify-center gap-2"
             >
               {isLoading ? (
                 <Loader2 className="h-5 w-5 animate-spin" />
@@ -291,6 +292,7 @@ export function KitchenKanban() {
   const [timers, setTimers] = useState<Record<string, number>>({});
   const [activeOrder, setActiveOrder] = useState<Order | null>(null);
 
+  const initializedRef = useRef(false);
   const previousOrdersRef = useRef<string[]>([]);
 
   const sensors = useSensors(
@@ -308,10 +310,7 @@ export function KitchenKanban() {
   );
 
   // Fetch orders with SSE
-  useEffect(() => {
-    const eventSource = new EventSource("/api/orders/stream");
-
-    eventSource.onmessage = (event) => {
+  const { lost } = useEventStream("/api/orders/stream", (event) => {
       try {
         const newOrders: Order[] = JSON.parse(event.data);
 
@@ -323,26 +322,18 @@ export function KitchenKanban() {
           (id) => !previousConfirmedIds.includes(id)
         );
 
-        if (hasNewOrder && previousConfirmedIds.length > 0) {
+        if (hasNewOrder && initializedRef.current) {
           playNotification();
         }
 
         previousOrdersRef.current = confirmedIds;
         setOrders(newOrders);
+        initializedRef.current = true;
         setLoading(false);
       } catch (err) {
         console.error("Error parsing SSE data:", err);
       }
-    };
-
-    eventSource.onerror = () => {
-      console.error("SSE connection error");
-    };
-
-    return () => {
-      eventSource.close();
-    };
-  }, [playNotification]);
+  });
 
   // Update timers
   useEffect(() => {
@@ -457,6 +448,7 @@ export function KitchenKanban() {
 
   return (
     <div className="space-y-6">
+      <ReconnectBanner show={lost} />
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
         <div className="card-premium rounded-xl p-4 text-center">

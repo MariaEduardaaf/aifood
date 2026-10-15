@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { z } from "zod";
+import { validationError } from "@/lib/api";
 
 const categorySchema = z.object({
   name_pt: z.string().min(1),
   name_es: z.string().min(1),
   name_en: z.string().min(1),
-  order: z.number().optional(),
+  order: z.number().int().min(0).optional(),
   active: z.boolean().optional(),
   restaurantId: z.string().optional(),
 });
@@ -78,14 +79,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
+    const body = await request.json().catch(() => null);
     const validation = categorySchema.safeParse(body);
 
     if (!validation.success) {
-      return NextResponse.json(
-        { error: "Invalid data", details: validation.error.issues },
-        { status: 400 },
-      );
+      return validationError(validation.error);
     }
 
     // Get max order
@@ -101,6 +99,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // restaurantId is input-only; the column is restaurant_id
+    const { restaurantId: _restaurantId, ...data } = validation.data;
+
     const maxOrder = await prisma.category.aggregate({
       _max: { order: true },
       where: { restaurant_id: restaurantId },
@@ -108,8 +109,8 @@ export async function POST(request: NextRequest) {
 
     const category = await prisma.category.create({
       data: {
-        ...validation.data,
-        order: validation.data.order ?? (maxOrder._max.order ?? 0) + 1,
+        ...data,
+        order: data.order ?? (maxOrder._max.order ?? 0) + 1,
         restaurant_id: restaurantId,
       },
     });

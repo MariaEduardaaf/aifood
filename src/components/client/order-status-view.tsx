@@ -13,6 +13,8 @@ import {
   RefreshCw,
   Image as ImageIcon,
 } from "lucide-react";
+import { formatMoney } from "@/lib/utils";
+import { useCart } from "./cart-context";
 
 interface OrderItem {
   id: string;
@@ -48,6 +50,7 @@ interface OrderStatusViewProps {
 export function OrderStatusView({ tableId, onBack, onNewOrder }: OrderStatusViewProps) {
   const t = useTranslations("orders");
   const locale = useLocale();
+  const { currency } = useCart();
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -99,7 +102,7 @@ export function OrderStatusView({ tableId, onBack, onNewOrder }: OrderStatusView
         return {
           icon: Clock,
           label: t("statusPending"),
-          color: "text-yellow-500",
+          color: "text-amber-800 dark:text-yellow-400",
           bgColor: "bg-yellow-500/10",
           borderColor: "border-yellow-500/30",
         };
@@ -107,7 +110,7 @@ export function OrderStatusView({ tableId, onBack, onNewOrder }: OrderStatusView
         return {
           icon: CheckCircle,
           label: t("statusConfirmed"),
-          color: "text-blue-500",
+          color: "text-blue-800 dark:text-blue-400",
           bgColor: "bg-blue-500/10",
           borderColor: "border-blue-500/30",
         };
@@ -115,7 +118,7 @@ export function OrderStatusView({ tableId, onBack, onNewOrder }: OrderStatusView
         return {
           icon: ChefHat,
           label: t("statusPreparing"),
-          color: "text-orange-500",
+          color: "text-orange-800 dark:text-orange-400",
           bgColor: "bg-orange-500/10",
           borderColor: "border-orange-500/30",
         };
@@ -123,7 +126,7 @@ export function OrderStatusView({ tableId, onBack, onNewOrder }: OrderStatusView
         return {
           icon: Truck,
           label: t("statusReady"),
-          color: "text-green-500",
+          color: "text-green-800 dark:text-green-400",
           bgColor: "bg-green-500/10",
           borderColor: "border-green-500/30",
         };
@@ -131,7 +134,7 @@ export function OrderStatusView({ tableId, onBack, onNewOrder }: OrderStatusView
         return {
           icon: CheckCircle,
           label: t("statusDelivered"),
-          color: "text-green-600",
+          color: "text-green-800 dark:text-green-400",
           bgColor: "bg-green-600/10",
           borderColor: "border-green-600/30",
         };
@@ -139,7 +142,7 @@ export function OrderStatusView({ tableId, onBack, onNewOrder }: OrderStatusView
         return {
           icon: XCircle,
           label: t("statusCancelled"),
-          color: "text-red-500",
+          color: "text-red-700 dark:text-red-400",
           bgColor: "bg-red-500/10",
           borderColor: "border-red-500/30",
         };
@@ -184,6 +187,7 @@ export function OrderStatusView({ tableId, onBack, onNewOrder }: OrderStatusView
           <div className="flex items-center gap-3">
             <button
               onClick={onBack}
+              aria-label={t("back")}
               className="p-2.5 rounded-xl hover:bg-secondary transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
             >
               <ArrowLeft className="h-5 w-5" />
@@ -196,6 +200,7 @@ export function OrderStatusView({ tableId, onBack, onNewOrder }: OrderStatusView
           <button
             onClick={() => fetchOrders(true)}
             disabled={refreshing}
+            aria-label={t("refresh")}
             className="p-2.5 rounded-xl hover:bg-secondary transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
           >
             <RefreshCw className={`h-5 w-5 ${refreshing ? "animate-spin" : ""}`} />
@@ -277,7 +282,7 @@ export function OrderStatusView({ tableId, onBack, onNewOrder }: OrderStatusView
                         )}
                       </div>
                       <p className="text-sm font-medium text-muted-foreground">
-                        R$ {(Number(item.unit_price) * item.quantity).toFixed(2)}
+                        {formatMoney(Number(item.unit_price) * item.quantity, currency, locale)}
                       </p>
                     </div>
                   ))}
@@ -294,8 +299,8 @@ export function OrderStatusView({ tableId, onBack, onNewOrder }: OrderStatusView
                 {/* Order Footer */}
                 <div className="p-4 border-t border-border/50 flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">{t("total")}</span>
-                  <span className="text-lg font-bold text-primary">
-                    R$ {Number(order.total).toFixed(2)}
+                  <span className="text-lg font-bold text-price">
+                    {formatMoney(order.total, currency, locale)}
                   </span>
                 </div>
               </div>

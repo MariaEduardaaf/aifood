@@ -13,6 +13,7 @@ import {
   Image as ImageIcon,
 } from "lucide-react";
 import { useCart } from "./cart-context";
+import { formatMoney } from "@/lib/utils";
 
 interface CartModalProps {
   tableId: string;
@@ -31,6 +32,7 @@ export function CartModal({ tableId, onClose, onOrderSuccess }: CartModalProps) 
     clearCart,
     total,
     itemCount,
+    currency,
   } = useCart();
 
   const [orderNotes, setOrderNotes] = useState("");
@@ -82,7 +84,7 @@ export function CartModal({ tableId, onClose, onOrderSuccess }: CartModalProps) 
       }
 
       if (!res.ok) {
-        setError(data.error || t("orderError"));
+        setError(typeof data.error === "string" ? data.error : t("orderError"));
         return;
       }
 
@@ -172,7 +174,7 @@ export function CartModal({ tableId, onClose, onOrderSuccess }: CartModalProps) 
                     {getName(item.menuItem)}
                   </h4>
                   <p className="text-sm text-primary font-bold">
-                    R$ {(Number(item.menuItem.price) * item.quantity).toFixed(2)}
+                    {formatMoney(Number(item.menuItem.price) * item.quantity, currency, locale)}
                   </p>
 
                   {/* Notes input */}
@@ -191,7 +193,8 @@ export function CartModal({ tableId, onClose, onOrderSuccess }: CartModalProps) 
                 <div className="flex flex-col items-end justify-between">
                   <button
                     onClick={() => removeItem(item.menuItem.id)}
-                    className="p-1.5 rounded-lg hover:bg-red-500/10 text-red-500 transition-colors"
+                    aria-label={t("remove")}
+                    className="p-2.5 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-lg hover:bg-red-500/10 text-red-500 transition-colors"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -201,7 +204,8 @@ export function CartModal({ tableId, onClose, onOrderSuccess }: CartModalProps) 
                       onClick={() =>
                         updateQuantity(item.menuItem.id, item.quantity - 1)
                       }
-                      className="p-1.5 rounded-lg hover:bg-secondary/80 transition-colors"
+                      aria-label="-"
+                      className="min-w-[40px] min-h-[40px] flex items-center justify-center rounded-lg hover:bg-secondary/80 transition-colors"
                     >
                       <Minus className="h-4 w-4" />
                     </button>
@@ -212,7 +216,8 @@ export function CartModal({ tableId, onClose, onOrderSuccess }: CartModalProps) 
                       onClick={() =>
                         updateQuantity(item.menuItem.id, item.quantity + 1)
                       }
-                      className="p-1.5 rounded-lg hover:bg-secondary/80 transition-colors"
+                      aria-label="+"
+                      className="min-w-[40px] min-h-[40px] flex items-center justify-center rounded-lg hover:bg-secondary/80 transition-colors"
                     >
                       <Plus className="h-4 w-4" />
                     </button>
@@ -255,7 +260,7 @@ export function CartModal({ tableId, onClose, onOrderSuccess }: CartModalProps) 
                 {t("total")}
               </span>
               <span className="text-2xl font-bold text-primary">
-                R$ {total.toFixed(2)}
+                {formatMoney(total, currency, locale)}
               </span>
             </div>
 

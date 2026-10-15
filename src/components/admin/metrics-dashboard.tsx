@@ -22,6 +22,7 @@ import {
   Receipt,
   Package,
 } from "lucide-react";
+import { useCurrency } from "@/components/providers/currency";
 
 interface Metrics {
   orders: {
@@ -124,10 +125,11 @@ export function MetricsDashboard({ restaurantId }: MetricsDashboardProps) {
     }
   };
 
+  const currency = useCurrency(restaurantId);
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat(locale, {
       style: "currency",
-      currency: "BRL",
+      currency,
     }).format(value);
   };
 

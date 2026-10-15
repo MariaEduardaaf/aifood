@@ -35,3 +35,24 @@ export function localizedName(
   if (locale === 'en') return item.name_en || item.name_pt
   return item.name_pt
 }
+
+// Format a money amount (Prisma Decimals arrive as strings) in the restaurant currency
+export function formatMoney(
+  amount: number | string,
+  currency: string = 'EUR',
+  locale: string = 'en',
+): string {
+  const n = Number(amount)
+  try {
+    return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(
+      Number.isFinite(n) ? n : 0,
+    )
+  } catch {
+    return `${currency} ${(Number.isFinite(n) ? n : 0).toFixed(2)}`
+  }
+}
+
+// Only http(s) URLs may be opened from user-configured links
+export function isHttpUrl(value: string | null | undefined): value is string {
+  return !!value && /^https?:\/\//i.test(value)
+}

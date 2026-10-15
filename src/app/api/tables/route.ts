@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { z } from "zod";
-import { generateToken } from "@/lib/utils";
+import { validationError } from "@/lib/api";
+import { randomBytes } from "crypto";
 
 const createTableSchema = z.object({
   label: z.string().min(1).max(50),
@@ -75,14 +76,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
+    const body = await request.json().catch(() => null);
     const validation = createTableSchema.safeParse(body);
 
     if (!validation.success) {
-      return NextResponse.json(
-        { error: validation.error.issues },
-        { status: 400 },
-      );
+      return validationError(validation.error);
     }
 
     const { label, restaurantId: restaurantIdInput } = validation.data;
@@ -101,7 +99,7 @@ export async function POST(request: NextRequest) {
     const table = await prisma.table.create({
       data: {
         label,
-        qr_token: generateToken(32),
+        qr_token: randomBytes(16).toString("hex"), // CSPRNG, not Math.random
         active: true,
         restaurant_id: restaurantId,
       },

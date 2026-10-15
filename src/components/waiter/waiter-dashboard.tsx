@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { Bell, Receipt, Check, Loader2, Clock } from "lucide-react";
 import { cn, formatTime, getUrgencyClass } from "@/lib/utils";
+import { useEventStream, ReconnectBanner } from "@/components/providers/use-event-stream";
 
 interface Call {
   id: string;
@@ -28,6 +29,7 @@ export function WaiterDashboard({ userId }: WaiterDashboardProps) {
   const [resolvingId, setResolvingId] = useState<string | null>(null);
   const [timers, setTimers] = useState<Record<string, number>>({});
 
+  const initializedRef = useRef(false);
   const previousCallsRef = useRef<string[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -48,10 +50,7 @@ export function WaiterDashboard({ userId }: WaiterDashboardProps) {
   }, []);
 
   // Fetch calls with SSE
-  useEffect(() => {
-    const eventSource = new EventSource("/api/calls/stream");
-
-    eventSource.onmessage = (event) => {
+  const { lost } = useEventStream("/api/calls/stream", (event) => {
       try {
         const newCalls: Call[] = JSON.parse(event.data);
 
@@ -60,27 +59,18 @@ export function WaiterDashboard({ userId }: WaiterDashboardProps) {
         const previousIds = previousCallsRef.current;
         const hasNewCall = currentIds.some((id) => !previousIds.includes(id));
 
-        if (hasNewCall && previousIds.length > 0) {
+        if (hasNewCall && initializedRef.current) {
           playNotification();
         }
 
         previousCallsRef.current = currentIds;
         setCalls(newCalls);
+        initializedRef.current = true;
         setLoading(false);
       } catch (err) {
         console.error("Error parsing SSE data:", err);
       }
-    };
-
-    eventSource.onerror = () => {
-      console.error("SSE connection error");
-      // Will auto-reconnect
-    };
-
-    return () => {
-      eventSource.close();
-    };
-  }, [playNotification]);
+  });
 
   // Update timers every second
   useEffect(() => {
@@ -141,6 +131,7 @@ export function WaiterDashboard({ userId }: WaiterDashboardProps) {
 
   return (
     <div className="space-y-4">
+      <ReconnectBanner show={lost} />
       {/* Calls List */}
       {calls.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 px-4">
@@ -247,6 +238,7 @@ export function WaiterDashboard({ userId }: WaiterDashboardProps) {
                       <button
                         onClick={() => handleResolve(call.id)}
                         disabled={isResolving}
+                        aria-label={t("resolve")}
                         className="btn-gold flex items-center gap-2 py-3 px-4 sm:px-6 disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
                       >
                         {isResolving ? (

@@ -12,6 +12,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
+import { useCurrency } from "@/components/providers/currency";
 
 interface ProductData {
   id: string;
@@ -93,10 +94,11 @@ export function TopProductsChart({
     );
   }
 
+  const currency = useCurrency(restaurantId);
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat(locale, {
       style: "currency",
-      currency: "BRL",
+      currency,
       minimumFractionDigits: 0,
     }).format(value);
   };

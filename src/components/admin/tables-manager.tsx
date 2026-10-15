@@ -44,6 +44,7 @@ interface TablesManagerProps {
 export function TablesManager({ restaurantId }: TablesManagerProps) {
   const t = useTranslations("admin");
   const tCommon = useTranslations("common");
+  const tErr = useTranslations("errors");
 
   const [tables, setTables] = useState<Table[]>([]);
   const [loading, setLoading] = useState(true);
@@ -54,6 +55,7 @@ export function TablesManager({ restaurantId }: TablesManagerProps) {
   const [formLabel, setFormLabel] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [listError, setListError] = useState("");
 
   useEffect(() => {
     fetchTables();
@@ -126,8 +128,8 @@ export function TablesManager({ restaurantId }: TablesManagerProps) {
         await fetchTables();
         closeModal();
       } else {
-        const data = await res.json();
-        setError(data.error || t("tablesPage.saveError"));
+        const data = await res.json().catch(() => ({}));
+        setError(typeof data.error === "string" ? data.error : t("tablesPage.saveError"));
       }
     } catch (err) {
       setError(t("tablesPage.saveTableError"));
@@ -135,6 +137,35 @@ export function TablesManager({ restaurantId }: TablesManagerProps) {
       setSaving(false);
     }
   };
+
+  const toggleActive = async (table: Table) => {
+    try {
+      const res = await fetch(`/api/tables/${table.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ active: !table.active }),
+      });
+      if (res.ok) {
+        await fetchTables();
+      } else {
+        setListError(tErr("generic"));
+      }
+    } catch (err) {
+      console.error("Error toggling table:", err);
+      setListError(tErr("generic"));
+    }
+  };
+
+  // Escape closes whichever modal is open
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      setShowQRModal(false);
+      setShowModal(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   const handleDelete = async (table: Table) => {
     if (!confirm(t("confirmDelete"))) return;
@@ -189,6 +220,12 @@ export function TablesManager({ restaurantId }: TablesManagerProps) {
         </Button>
       </div>
 
+      {listError && (
+        <p role="alert" className="text-sm text-destructive">
+          {listError}
+        </p>
+      )}
+
       {tables.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
@@ -214,9 +251,19 @@ export function TablesManager({ restaurantId }: TablesManagerProps) {
                           {t("tablesPage.calls", { count: table._count.calls })}
                         </Badge>
                       )}
-                      <Badge variant={table.active ? "success" : "secondary"}>
-                        {table.active ? t("active") : t("inactive")}
-                      </Badge>
+                      <button
+                        type="button"
+                        onClick={() => toggleActive(table)}
+                        role="switch"
+                        aria-checked={table.active}
+                        aria-label={`${table.label}: ${table.active ? t("menuPage.deactivate") : t("menuPage.activate")}`}
+                        title={table.active ? t("menuPage.deactivate") : t("menuPage.activate")}
+                        className="rounded-full min-h-[44px] flex items-center"
+                      >
+                        <Badge variant={table.active ? "success" : "secondary"}>
+                          {table.active ? t("active") : t("inactive")}
+                        </Badge>
+                      </button>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 self-end sm:self-auto">
@@ -224,6 +271,7 @@ export function TablesManager({ restaurantId }: TablesManagerProps) {
                       variant="outline"
                       size="sm"
                       onClick={() => showQRCode(table)}
+                      aria-label={t("qrCode")}
                       className="min-h-[44px]"
                     >
                       <QrCode className="h-4 w-4 sm:mr-2" />
@@ -233,6 +281,7 @@ export function TablesManager({ restaurantId }: TablesManagerProps) {
                       variant="outline"
                       size="sm"
                       onClick={() => openEditModal(table)}
+                      aria-label={tCommon("edit")}
                       className="min-w-[44px] min-h-[44px]"
                     >
                       <Pencil className="h-4 w-4" />
@@ -241,6 +290,7 @@ export function TablesManager({ restaurantId }: TablesManagerProps) {
                       variant="outline"
                       size="sm"
                       onClick={() => handleDelete(table)}
+                      aria-label={tCommon("delete")}
                       className="min-w-[44px] min-h-[44px]"
                     >
                       <Trash2 className="h-4 w-4 text-destructive" />
@@ -263,7 +313,7 @@ export function TablesManager({ restaurantId }: TablesManagerProps) {
                   {editingTable ? tCommon("edit") : tCommon("create")}{" "}
                   {t("tables")}
                 </h2>
-                <Button variant="ghost" size="icon" onClick={closeModal}>
+                <Button variant="ghost" size="icon" onClick={closeModal} aria-label={tCommon("close")}>
                   <X className="h-4 w-4" />
                 </Button>
               </div>
@@ -312,6 +362,7 @@ export function TablesManager({ restaurantId }: TablesManagerProps) {
                   variant="ghost"
                   size="icon"
                   onClick={() => setShowQRModal(false)}
+                  aria-label={tCommon("close")}
                 >
                   <X className="h-4 w-4" />
                 </Button>

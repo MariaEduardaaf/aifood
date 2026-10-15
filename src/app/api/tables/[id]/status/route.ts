@@ -14,11 +14,19 @@ export async function GET(
         label: true,
         active: true,
         restaurant_id: true,
+        restaurant: { select: { active: true } },
       },
     });
 
     if (!table) {
       return NextResponse.json({ error: "Table not found" }, { status: 404 });
+    }
+
+    if (!table.restaurant.active) {
+      return NextResponse.json(
+        { error: "Restaurant is inactive" },
+        { status: 403 },
+      );
     }
 
     if (!table.active) {
@@ -40,11 +48,13 @@ export async function GET(
       orderBy: { created_at: "desc" },
     });
 
-    // Check for recently resolved calls that haven't been rated (last 30 minutes)
+    // Rating prompt: only the latest bill request resolved in the last 30
+    // minutes that has no rating yet (never one per waiter call)
     const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
     const unresolvedRatings = await prisma.call.findMany({
       where: {
         table_id: table.id,
+        type: "REQUEST_BILL",
         status: "RESOLVED",
         resolved_at: { gte: thirtyMinutesAgo },
         rating: null,

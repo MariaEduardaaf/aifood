@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { z } from "zod";
+import { validationError } from "@/lib/api";
 
 const categoryUpdateSchema = z.object({
   name_pt: z.string().min(1).optional(),
   name_es: z.string().min(1).optional(),
   name_en: z.string().min(1).optional(),
-  order: z.number().optional(),
+  order: z.number().int().min(0).optional(),
   active: z.boolean().optional(),
 });
 
@@ -72,14 +73,11 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
+    const body = await request.json().catch(() => null);
     const validation = categoryUpdateSchema.safeParse(body);
 
     if (!validation.success) {
-      return NextResponse.json(
-        { error: "Invalid data", details: validation.error.issues },
-        { status: 400 },
-      );
+      return validationError(validation.error);
     }
 
     const existingCategory = await prisma.category.findFirst({

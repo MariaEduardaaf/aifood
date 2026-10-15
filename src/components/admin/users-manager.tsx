@@ -166,8 +166,8 @@ export function UsersManager({
         await fetchUsers();
         closeModal();
       } else {
-        const data = await res.json();
-        setError(data.error || t("usersPage.saveError"));
+        const data = await res.json().catch(() => ({}));
+        setError(typeof data.error === "string" ? data.error : t("usersPage.saveError"));
       }
     } catch (err) {
       setError(t("usersPage.saveUserError"));
@@ -189,8 +189,8 @@ export function UsersManager({
       if (res.ok) {
         await fetchUsers();
       } else {
-        const data = await res.json();
-        alert(data.error || t("usersPage.deleteError"));
+        const data = await res.json().catch(() => ({}));
+        alert(typeof data.error === "string" ? data.error : t("usersPage.deleteError"));
       }
     } catch (err) {
       console.error("Error deleting user:", err);
@@ -356,6 +356,7 @@ export function UsersManager({
                       size="sm"
                       onClick={() => openEditModal(user)}
                       title={tCommon("edit")}
+                      aria-label={tCommon("edit")}
                       className="min-w-[44px] min-h-[44px]"
                     >
                       <Pencil className="h-4 w-4" />
@@ -366,6 +367,7 @@ export function UsersManager({
                       onClick={() => handleResetPassword(user)}
                       disabled={resettingPasswordId === user.id}
                       title={t("usersPage.generateNewPassword")}
+                      aria-label={t("usersPage.generateNewPassword")}
                       className="min-w-[44px] min-h-[44px]"
                     >
                       {resettingPasswordId === user.id ? (
@@ -379,6 +381,7 @@ export function UsersManager({
                         variant="outline"
                         size="sm"
                         onClick={() => handleDelete(user)}
+                        aria-label={tCommon("delete")}
                         className="min-w-[44px] min-h-[44px]"
                       >
                         <Trash2 className="h-4 w-4 text-destructive" />

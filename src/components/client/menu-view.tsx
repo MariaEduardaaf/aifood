@@ -11,6 +11,7 @@ import {
   ShoppingCart,
 } from "lucide-react";
 import { useCart, CartMenuItem } from "./cart-context";
+import { formatMoney } from "@/lib/utils";
 
 interface MenuItem {
   id: string;
@@ -41,7 +42,15 @@ interface MenuViewProps {
 export function MenuView({ tableId, onBack, onOpenCart }: MenuViewProps) {
   const t = useTranslations("menu");
   const locale = useLocale();
-  const { items: cartItems, addItem, itemCount } = useCart();
+  const {
+    items: cartItems,
+    addItem,
+    updateQuantity,
+    itemCount,
+    total,
+    currency,
+    setCurrency,
+  } = useCart();
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,9 +65,12 @@ export function MenuView({ tableId, onBack, onOpenCart }: MenuViewProps) {
       const res = await fetch(`/api/menu?tableId=${tableId}`);
       if (res.ok) {
         const data = await res.json();
-        setCategories(data);
-        if (data.length > 0) {
-          setSelectedCategory(data[0].id);
+        // Menu response is either the category list or { categories, currency }
+        const list: Category[] = Array.isArray(data) ? data : data.categories ?? [];
+        if (!Array.isArray(data) && data.currency) setCurrency(data.currency);
+        setCategories(list);
+        if (list.length > 0) {
+          setSelectedCategory(list[0].id);
         }
       }
     } catch (err) {
@@ -136,6 +148,7 @@ export function MenuView({ tableId, onBack, onOpenCart }: MenuViewProps) {
           <div className="flex items-center gap-3">
             <button
               onClick={onBack}
+              aria-label={t("back")}
               className="p-2.5 rounded-xl hover:bg-secondary transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
             >
               <ArrowLeft className="h-5 w-5" />
@@ -149,6 +162,7 @@ export function MenuView({ tableId, onBack, onOpenCart }: MenuViewProps) {
           {itemCount > 0 && (
             <button
               onClick={onOpenCart}
+              aria-label={t("viewCart")}
               className="relative p-2.5 rounded-xl bg-primary text-primary-foreground min-w-[44px] min-h-[44px] flex items-center justify-center"
             >
               <ShoppingCart className="h-5 w-5" />
@@ -222,27 +236,37 @@ export function MenuView({ tableId, onBack, onOpenCart }: MenuViewProps) {
                         </p>
                       )}
                       <div className="flex items-center justify-between">
-                        <p className="text-base sm:text-lg font-bold text-primary">
-                          R$ {Number(item.price).toFixed(2)}
+                        <p className="text-base sm:text-lg font-bold text-price">
+                          {formatMoney(item.price, currency, locale)}
                         </p>
 
                         {/* Add Button */}
                         {quantityInCart === 0 ? (
                           <button
                             onClick={() => handleAddItem(item)}
-                            className="flex items-center gap-1 px-3 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors min-h-[40px]"
+                            className="flex items-center gap-1 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors min-h-[44px]"
                           >
                             <Plus className="h-4 w-4" />
                             <span>{t("add")}</span>
                           </button>
                         ) : (
-                          <div className="flex items-center gap-2 bg-primary/10 rounded-xl p-1">
-                            <span className="px-3 py-1 text-sm font-bold text-primary">
-                              {quantityInCart}x
+                          <div className="flex items-center gap-1 bg-primary/10 rounded-xl p-0.5">
+                            <button
+                              onClick={() =>
+                                updateQuantity(item.id, quantityInCart - 1)
+                              }
+                              aria-label={`${getName(item)} -`}
+                              className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-price hover:bg-primary/10 transition-colors"
+                            >
+                              <Minus className="h-4 w-4" />
+                            </button>
+                            <span className="min-w-[24px] text-center text-sm font-bold text-price">
+                              {quantityInCart}
                             </span>
                             <button
                               onClick={() => handleAddItem(item)}
-                              className="p-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                              aria-label={`${getName(item)} +`}
+                              className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
                             >
                               <Plus className="h-4 w-4" />
                             </button>
@@ -270,6 +294,7 @@ export function MenuView({ tableId, onBack, onOpenCart }: MenuViewProps) {
             <span className="px-2 py-0.5 bg-white/20 rounded-full text-sm">
               {itemCount}
             </span>
+            <span className="font-bold">{formatMoney(total, currency, locale)}</span>
           </button>
         </div>
       )}

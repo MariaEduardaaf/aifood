@@ -2,13 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { z } from "zod";
+import { validationError } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
 const settingsSchema = z.object({
-  google_reviews_url: z.string().url().optional().nullable(),
+  google_reviews_url: z
+    .string()
+    .url()
+    .regex(/^https?:\/\//i, "Must be an http(s) URL")
+    .optional()
+    .nullable(),
   google_reviews_enabled: z.boolean().optional(),
-  min_stars_redirect: z.number().min(1).max(5).optional(),
+  min_stars_redirect: z.number().int().min(1).max(5).optional(),
+  currency: z.enum(["EUR", "BRL", "USD", "GBP"]).optional(),
   restaurantId: z.string().optional(),
 });
 
@@ -17,7 +24,8 @@ export async function GET(request: NextRequest) {
   try {
     const session = await auth();
 
-    if (!session || session.user.role === "WAITER") {
+    // Any staff member can read settings (the UI needs currency); nothing secret
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -73,14 +81,11 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
+    const body = await request.json().catch(() => null);
     const validation = settingsSchema.safeParse(body);
 
     if (!validation.success) {
-      return NextResponse.json(
-        { error: "Invalid data", details: validation.error.issues },
-        { status: 400 },
-      );
+      return validationError(validation.error);
     }
 
     const restaurantId =
@@ -95,11 +100,14 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    // restaurantId is input-only; the column is restaurant_id
+    const { restaurantId: _restaurantId, ...data } = validation.data;
+
     const settings = await prisma.settings.upsert({
       where: { restaurant_id: restaurantId },
-      update: validation.data,
+      update: data,
       create: {
-        ...validation.data,
+        ...data,
         restaurant_id: restaurantId,
       },
     });

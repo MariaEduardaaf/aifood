@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { Loader2, Clock, Bell, Receipt } from "lucide-react";
 import { Button, Card, CardContent, Badge } from "@/components/ui";
-import { formatTime, getUrgencyClass } from "@/lib/utils";
+import { formatTime, getUrgencyClass, formatMoney } from "@/lib/utils";
+import { useCurrency } from "@/components/providers/currency";
 
 interface Call {
   id: string;
@@ -39,6 +40,7 @@ interface OperationsPanelProps {
 export function OperationsPanel({ restaurantId }: OperationsPanelProps) {
   const t = useTranslations("superadmin.operations");
   const locale = useLocale();
+  const currency = useCurrency(restaurantId);
   const [calls, setCalls] = useState<Call[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [activeTab, setActiveTab] = useState<"calls" | "orders">("calls");
@@ -175,10 +177,7 @@ export function OperationsPanel({ restaurantId }: OperationsPanelProps) {
                     </div>
                     <p className="text-sm text-muted-foreground">
                       {t("total", {
-                        value: order.total.toLocaleString(locale, {
-                          style: "currency",
-                          currency: "BRL",
-                        }),
+                        value: formatMoney(order.total, currency, locale),
                       })}
                     </p>
                   </div>

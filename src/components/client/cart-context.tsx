@@ -29,12 +29,15 @@ interface CartContextType {
   clearCart: () => void;
   total: number;
   itemCount: number;
+  currency: string;
+  setCurrency: (currency: string) => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [currency, setCurrency] = useState("EUR");
 
   const addItem = useCallback((menuItem: CartMenuItem, quantity: number = 1, notes?: string) => {
     setItems((prev) => {
@@ -102,6 +105,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         clearCart,
         total,
         itemCount,
+        currency,
+        setCurrency,
       }}
     >
       {children}

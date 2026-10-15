@@ -2,24 +2,25 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { z } from "zod";
+import { validationError } from "@/lib/api";
 import { Decimal } from "@prisma/client/runtime/library";
 
 export const dynamic = "force-dynamic";
 
-// Rate limit storage (in-memory for MVP)
-const rateLimitMap = new Map<string, number>();
+// Minimum seconds between two orders from the same table
 const RATE_LIMIT_SECONDS = 10;
 
 const orderItemSchema = z.object({
   menuItemId: z.string(),
-  quantity: z.number().int().min(1),
-  notes: z.string().optional(),
+  quantity: z.number().int().min(1).max(50),
+  notes: z.string().max(200).optional(),
 });
 
 const createOrderSchema = z.object({
+  // TODO(security): resolve table from qr_token instead of id
   tableId: z.string(),
-  items: z.array(orderItemSchema).min(1),
-  notes: z.string().optional(),
+  items: z.array(orderItemSchema).min(1).max(30),
+  notes: z.string().max(200).optional(),
 });
 
 // GET /api/orders?tableId=xxx - List table orders (public)
@@ -79,10 +80,18 @@ export async function GET(request: NextRequest) {
     // Check that the table exists
     const table = await prisma.table.findUnique({
       where: { id: tableId },
+      include: { restaurant: { select: { active: true } } },
     });
 
     if (!table) {
       return NextResponse.json({ error: "Table not found" }, { status: 404 });
+    }
+
+    if (!table.restaurant.active) {
+      return NextResponse.json(
+        { error: "Restaurant is inactive" },
+        { status: 403 },
+      );
     }
 
     // Fetch table orders (last 24h, not cancelled)
@@ -126,14 +135,11 @@ export async function GET(request: NextRequest) {
 // POST /api/orders - Create new order (public, rate limited)
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    const body = await request.json().catch(() => null);
     const validation = createOrderSchema.safeParse(body);
 
     if (!validation.success) {
-      return NextResponse.json(
-        { error: "Invalid data", details: validation.error.issues },
-        { status: 400 },
-      );
+      return validationError(validation.error);
     }
 
     const { tableId, items, notes } = validation.data;
@@ -141,23 +147,40 @@ export async function POST(request: NextRequest) {
     // Check that the table exists and is active
     const table = await prisma.table.findUnique({
       where: { id: tableId },
+      include: { restaurant: { select: { active: true } } },
     });
 
     if (!table) {
       return NextResponse.json({ error: "Table not found" }, { status: 404 });
     }
 
+    if (!table.restaurant.active) {
+      return NextResponse.json(
+        { error: "Restaurant is inactive" },
+        { status: 403 },
+      );
+    }
+
     if (!table.active) {
       return NextResponse.json({ error: "Table is inactive" }, { status: 400 });
     }
 
-    // Rate limiting per table
-    const rateLimitKey = `order-${tableId}`;
-    const lastOrderTime = rateLimitMap.get(rateLimitKey);
+    // Rate limiting per table, backed by the DB so it holds across serverless
+    // instances. ponytail: check-then-insert is not atomic; two simultaneous
+    // requests can both pass. Use a unique time-bucket or advisory lock if needed.
     const now = Date.now();
+    const lastOrder = await prisma.order.findFirst({
+      where: {
+        table_id: tableId,
+        created_at: { gte: new Date(now - RATE_LIMIT_SECONDS * 1000) },
+      },
+      orderBy: { created_at: "desc" },
+      select: { created_at: true },
+    });
 
-    if (lastOrderTime) {
-      const secondsSinceLastOrder = (now - lastOrderTime) / 1000;
+    if (lastOrder) {
+      const secondsSinceLastOrder =
+        (now - lastOrder.created_at.getTime()) / 1000;
       if (secondsSinceLastOrder < RATE_LIMIT_SECONDS) {
         const waitTime = Math.ceil(RATE_LIMIT_SECONDS - secondsSinceLastOrder);
         return NextResponse.json(
@@ -171,8 +194,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Fetch all menu items to validate and get prices
-    const menuItemIds = items.map((item) => item.menuItemId);
+    // Fetch all menu items to validate and get prices. The same item may
+    // appear on several lines (e.g. different notes), so compare unique ids.
+    const menuItemIds = Array.from(new Set(items.map((item) => item.menuItemId)));
     const menuItems = await prisma.menuItem.findMany({
       where: {
         id: { in: menuItemIds },
@@ -241,14 +265,6 @@ export async function POST(request: NextRequest) {
         },
       },
     });
-
-    // Update rate limit
-    rateLimitMap.set(rateLimitKey, now);
-
-    // Clear rate limit after the wait time
-    setTimeout(() => {
-      rateLimitMap.delete(rateLimitKey);
-    }, RATE_LIMIT_SECONDS * 1000);
 
     return NextResponse.json(order, { status: 201 });
   } catch (error) {

@@ -33,6 +33,7 @@ export function Logo({
         alt="aiFood Logo"
         width={width}
         height={height}
+        style={{ width, height }}
         className="object-contain"
         priority
       />
@@ -58,6 +59,7 @@ export function LogoWhite({
         alt="aiFood Logo"
         width={width}
         height={height}
+        style={{ width, height }}
         className="object-contain"
         priority
       />

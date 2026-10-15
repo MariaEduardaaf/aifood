@@ -2,16 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { z } from "zod";
+import { validationError } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
 const createCallSchema = z.object({
+  // TODO(security): resolve table from qr_token instead of id
   tableId: z.string(),
   type: z.enum(["CALL_WAITER", "REQUEST_BILL"]),
 });
 
-// Rate limit storage (in-memory for MVP, use Redis in production)
-const rateLimitMap = new Map<string, number>();
+const callStatusSchema = z.enum(["OPEN", "RESOLVED"]);
+
+// Minimum seconds between two calls of the same type from the same table
 const RATE_LIMIT_SECONDS = 30;
 
 // GET /api/calls - List calls (for waiter dashboard)
@@ -33,7 +36,16 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const status = searchParams.get("status");
+    const statusParam = searchParams.get("status");
+    const statusValidation = statusParam
+      ? callStatusSchema.safeParse(statusParam)
+      : null;
+
+    if (statusValidation && !statusValidation.success) {
+      return validationError(statusValidation.error);
+    }
+
+    const status = statusValidation?.data;
     const restaurantIdParam = searchParams.get("restaurantId");
     const restaurantId =
       session.user.role === "SUPER_ADMIN"
@@ -50,7 +62,7 @@ export async function GET(request: NextRequest) {
     const calls = await prisma.call.findMany({
       where: status
         ? {
-            status: status as "OPEN" | "RESOLVED",
+            status,
             restaurant_id: restaurantId,
           }
         : { restaurant_id: restaurantId },
@@ -84,14 +96,11 @@ export async function GET(request: NextRequest) {
 // POST /api/calls - Create new call (public, rate limited)
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    const body = await request.json().catch(() => null);
     const validation = createCallSchema.safeParse(body);
 
     if (!validation.success) {
-      return NextResponse.json(
-        { error: validation.error.issues },
-        { status: 400 },
-      );
+      return validationError(validation.error);
     }
 
     const { tableId, type } = validation.data;
@@ -99,23 +108,39 @@ export async function POST(request: NextRequest) {
     // Check if table exists and is active
     const table = await prisma.table.findUnique({
       where: { id: tableId },
+      include: { restaurant: { select: { active: true } } },
     });
 
     if (!table) {
       return NextResponse.json({ error: "Table not found" }, { status: 404 });
     }
 
+    if (!table.restaurant.active) {
+      return NextResponse.json(
+        { error: "Restaurant is inactive" },
+        { status: 403 },
+      );
+    }
+
     if (!table.active) {
       return NextResponse.json({ error: "Table is inactive" }, { status: 400 });
     }
 
-    // Rate limiting by table
-    const rateLimitKey = `${tableId}-${type}`;
-    const lastCallTime = rateLimitMap.get(rateLimitKey);
+    // Rate limiting by table and type, backed by the DB so it holds across
+    // serverless instances. ponytail: check-then-insert is not atomic.
     const now = Date.now();
+    const lastCall = await prisma.call.findFirst({
+      where: {
+        table_id: tableId,
+        type,
+        created_at: { gte: new Date(now - RATE_LIMIT_SECONDS * 1000) },
+      },
+      orderBy: { created_at: "desc" },
+      select: { created_at: true },
+    });
 
-    if (lastCallTime) {
-      const secondsSinceLastCall = (now - lastCallTime) / 1000;
+    if (lastCall) {
+      const secondsSinceLastCall = (now - lastCall.created_at.getTime()) / 1000;
       if (secondsSinceLastCall < RATE_LIMIT_SECONDS) {
         const waitTime = Math.ceil(RATE_LIMIT_SECONDS - secondsSinceLastCall);
         return NextResponse.json(
@@ -162,14 +187,6 @@ export async function POST(request: NextRequest) {
         },
       },
     });
-
-    // Update rate limit
-    rateLimitMap.set(rateLimitKey, now);
-
-    // Clean up old rate limit entries (optional, prevents memory leak)
-    setTimeout(() => {
-      rateLimitMap.delete(rateLimitKey);
-    }, RATE_LIMIT_SECONDS * 1000);
 
     return NextResponse.json(call, { status: 201 });
   } catch (error) {

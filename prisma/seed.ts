@@ -107,6 +107,7 @@ async function main() {
         "https://search.google.com/local/writereview?placeid=ChIJmYSE24UoQg0R-6rgBEDufpU",
       google_reviews_enabled: true,
       min_stars_redirect: 4,
+      currency: "EUR",
       restaurant_id: restaurant.id,
     },
   });
@@ -173,7 +174,7 @@ async function main() {
         "Pan italiano crujiente con tomates frescos, albahaca y aceite de oliva",
       description_en:
         "Crispy Italian bread with fresh tomatoes, basil and olive oil",
-      price: 24.9,
+      price: 6.5,
       order: 1,
     },
     {
@@ -189,7 +190,7 @@ async function main() {
         "Finas lonchas de carne cruda con rúcula, parmesano y alcaparras",
       description_en:
         "Thin slices of raw beef with arugula, parmesan and capers",
-      price: 38.9,
+      price: 11.9,
       order: 2,
     },
     // Main courses
@@ -206,7 +207,7 @@ async function main() {
         "Picaña a la parrilla al punto, acompañada de arroz, farofa y vinagreta",
       description_en:
         "Grilled picanha cooked to perfection, served with rice, farofa and vinaigrette",
-      price: 89.9,
+      price: 22.5,
       order: 1,
     },
     {
@@ -222,7 +223,7 @@ async function main() {
         "Filete de salmón a la parrilla con verduras salteadas y puré de papas",
       description_en:
         "Grilled salmon fillet with sautéed vegetables and mashed potatoes",
-      price: 79.9,
+      price: 18.9,
       order: 2,
     },
     {
@@ -235,7 +236,7 @@ async function main() {
       description_pt: "Risoto cremoso com mix de cogumelos e parmesão",
       description_es: "Risotto cremoso con mezcla de hongos y parmesano",
       description_en: "Creamy risotto with mixed mushrooms and parmesan",
-      price: 59.9,
+      price: 14.5,
       order: 3,
     },
     // Drinks
@@ -249,7 +250,7 @@ async function main() {
       description_pt: "Suco natural de laranja, limão, maracujá ou abacaxi",
       description_es: "Jugo natural de naranja, limón, maracuyá o piña",
       description_en: "Fresh orange, lemon, passion fruit or pineapple juice",
-      price: 12.9,
+      price: 3.5,
       order: 1,
     },
     {
@@ -262,7 +263,7 @@ async function main() {
       description_pt: "Coca-Cola, Guaraná ou Sprite (350ml)",
       description_es: "Coca-Cola, Guaraná o Sprite (350ml)",
       description_en: "Coca-Cola, Guaraná or Sprite (350ml)",
-      price: 8.9,
+      price: 2.5,
       order: 2,
     },
     {
@@ -275,7 +276,7 @@ async function main() {
       description_pt: "Cerveja artesanal da casa (500ml)",
       description_es: "Cerveza artesanal de la casa (500ml)",
       description_en: "House craft beer (500ml)",
-      price: 18.9,
+      price: 4.5,
       order: 3,
     },
     // Desserts
@@ -289,7 +290,7 @@ async function main() {
       description_pt: "Pudim de leite condensado com calda de caramelo",
       description_es: "Flan de leche condensada con salsa de caramelo",
       description_en: "Condensed milk pudding with caramel sauce",
-      price: 16.9,
+      price: 5.5,
       order: 1,
     },
     {
@@ -305,7 +306,7 @@ async function main() {
         "Bizcocho de chocolate con relleno cremoso y helado de vainilla",
       description_en:
         "Chocolate cake with creamy filling and vanilla ice cream",
-      price: 28.9,
+      price: 6.9,
       order: 2,
     },
   ];
