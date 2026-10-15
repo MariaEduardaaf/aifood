@@ -44,3 +44,6 @@ prisma/*.db-journal
 *.pem
 *.log
 .vercel
+
+# parallel dev build dirs
+.next-*

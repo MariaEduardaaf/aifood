@@ -55,42 +55,42 @@ model User {
   updated_at    DateTime @updatedAt
   restaurant_id String
 
-  restaurant      Restaurant @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
-  resolved_calls   Call[]  @relation("ResolvedBy")
-  confirmed_orders Order[] @relation("ConfirmedBy")
-  prepared_orders  Order[] @relation("PreparedBy")
+  restaurant       Restaurant @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
+  resolved_calls   Call[]     @relation("ResolvedBy")
+  confirmed_orders Order[]    @relation("ConfirmedBy")
+  prepared_orders  Order[]    @relation("PreparedBy")
 
   @@index([restaurant_id])
 }
 
 model Table {
-  id         String   @id @default(cuid())
-  label      String
-  qr_token   String   @unique @default(cuid())
-  active     Boolean  @default(true)
-  created_at DateTime @default(now())
+  id            String   @id @default(cuid())
+  label         String
+  qr_token      String   @unique @default(cuid())
+  active        Boolean  @default(true)
+  created_at    DateTime @default(now())
   restaurant_id String
 
   restaurant Restaurant @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
-  calls  Call[]
-  orders Order[]
+  calls      Call[]
+  orders     Order[]
 
   @@index([restaurant_id])
 }
 
 model Call {
-  id          String     @id @default(cuid())
-  table_id    String
-  type        CallType
-  status      CallStatus @default(OPEN)
-  created_at  DateTime   @default(now())
-  resolved_at DateTime?
-  resolved_by String?
+  id            String     @id @default(cuid())
+  table_id      String
+  type          CallType
+  status        CallStatus @default(OPEN)
+  created_at    DateTime   @default(now())
+  resolved_at   DateTime?
+  resolved_by   String?
   restaurant_id String
 
-  table    Table  @relation(fields: [table_id], references: [id], onDelete: Cascade)
-  resolver User?  @relation("ResolvedBy", fields: [resolved_by], references: [id])
-  rating   Rating?
+  table      Table      @relation(fields: [table_id], references: [id], onDelete: Cascade)
+  resolver   User?      @relation("ResolvedBy", fields: [resolved_by], references: [id])
+  rating     Rating?
   restaurant Restaurant @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
 
   @@index([status])
@@ -103,13 +103,13 @@ model Call {
 model Rating {
   id                String   @id @default(cuid())
   call_id           String   @unique
-  stars             Int      // 1-5
-  feedback          String?  // comment when the rating is low
+  stars             Int // 1-5
+  feedback          String? // comment when the rating is low
   redirected_google Boolean  @default(false) // was redirected to Google?
   created_at        DateTime @default(now())
   restaurant_id     String
 
-  call Call @relation(fields: [call_id], references: [id], onDelete: Cascade)
+  call       Call       @relation(fields: [call_id], references: [id], onDelete: Cascade)
   restaurant Restaurant @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
 
   @@index([stars])
@@ -118,12 +118,16 @@ model Rating {
 }
 
 model Settings {
-  id                  String  @id @default(cuid())
-  restaurant_id       String  @unique
-  google_reviews_url  String? // Restaurant's Google Reviews URL
-  google_reviews_enabled Boolean @default(true)
-  min_stars_redirect  Int     @default(4) // minimum stars to redirect
-  currency            String  @default("EUR") // ISO 4217 code used for prices
+  id                     String   @id @default(cuid())
+  restaurant_id          String   @unique
+  google_reviews_url     String? // Restaurant's Google Reviews URL
+  google_reviews_enabled Boolean  @default(true)
+  min_stars_redirect     Int      @default(4) // minimum stars to redirect
+  currency               String   @default("EUR") // ISO 4217 code used for prices
+  default_locale         String   @default("es") // fallback language for menu content
+  enabled_locales        String[] @default(["es", "en"]) // languages offered to guests
+  ordering_enabled       Boolean  @default(true) // false = "lite mode": menu + call waiter + bill only
+  timezone               String   @default("Europe/Madrid") // IANA zone used for metrics and day boundaries
 
   restaurant Restaurant @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
 }
@@ -131,17 +135,15 @@ model Settings {
 // ============ PHASE 2: DIGITAL MENU ============
 
 model Category {
-  id         String   @id @default(cuid())
+  id            String   @id @default(cuid())
   restaurant_id String
-  name_pt    String
-  name_es    String
-  name_en    String
-  order      Int      @default(0)
-  active     Boolean  @default(true)
-  created_at DateTime @default(now())
+  names         Json // { "<locale>": "Starters", ... }
+  order         Int      @default(0)
+  active        Boolean  @default(true)
+  created_at    DateTime @default(now())
 
   restaurant Restaurant @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
-  items MenuItem[]
+  items      MenuItem[]
 
   @@index([order])
   @@index([active])
@@ -149,22 +151,19 @@ model Category {
 }
 
 model MenuItem {
-  id             String   @id @default(cuid())
-  restaurant_id  String
-  category_id    String
-  name_pt        String
-  name_es        String
-  name_en        String
-  description_pt String?
-  description_es String?
-  description_en String?
-  price          Decimal  @db.Decimal(10, 2)
-  image_url      String?
-  active         Boolean  @default(true)
-  order          Int      @default(0)
-  created_at     DateTime @default(now())
+  id            String   @id @default(cuid())
+  restaurant_id String
+  category_id   String
+  names         Json // { "<locale>": "Grilled Salmon", ... }
+  descriptions  Json     @default("{}") // { "<locale>": "...", ... }
+  allergens     String[] @default([]) // EU 14 allergen codes, see src/lib/allergens.ts
+  price         Decimal  @db.Decimal(10, 2)
+  image_url     String?
+  active        Boolean  @default(true)
+  order         Int      @default(0)
+  created_at    DateTime @default(now())
 
-  restaurant Restaurant @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
+  restaurant Restaurant  @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
   category   Category    @relation(fields: [category_id], references: [id], onDelete: Cascade)
   orderItems OrderItem[]
 
@@ -177,35 +176,35 @@ model MenuItem {
 // ============ PHASE 3: ORDER SYSTEM ============
 
 enum OrderStatus {
-  PENDING    // Waiting for waiter confirmation
-  CONFIRMED  // Waiter confirmed, sent to preparation
-  PREPARING  // Kitchen preparing (Phase 4)
-  READY      // Ready for delivery (Phase 4)
-  DELIVERED  // Delivered to the customer
-  CANCELLED  // Cancelled
+  PENDING // Waiting for waiter confirmation
+  CONFIRMED // Waiter confirmed, sent to preparation
+  PREPARING // Kitchen preparing (Phase 4)
+  READY // Ready for delivery (Phase 4)
+  DELIVERED // Delivered to the customer
+  CANCELLED // Cancelled
 }
 
 model Order {
-  id           String      @id @default(cuid())
+  id            String      @id @default(cuid())
   restaurant_id String
-  table_id     String
-  status       OrderStatus @default(PENDING)
-  total        Decimal     @db.Decimal(10, 2)
-  notes        String?     // General order notes
-  created_at   DateTime    @default(now())
-  updated_at   DateTime    @updatedAt
-  confirmed_at DateTime?   // When the waiter confirmed
-  delivered_at DateTime?   // When it was delivered
-  confirmed_by String?     // ID of the waiter who confirmed
-  preparing_at DateTime?   // When the kitchen started preparing
-  ready_at     DateTime?   // When it became ready
-  prepared_by  String?     // ID of the cook
+  table_id      String
+  status        OrderStatus @default(PENDING)
+  total         Decimal     @db.Decimal(10, 2)
+  notes         String? // General order notes
+  created_at    DateTime    @default(now())
+  updated_at    DateTime    @updatedAt
+  confirmed_at  DateTime? // When the waiter confirmed
+  delivered_at  DateTime? // When it was delivered
+  confirmed_by  String? // ID of the waiter who confirmed
+  preparing_at  DateTime? // When the kitchen started preparing
+  ready_at      DateTime? // When it became ready
+  prepared_by   String? // ID of the cook
 
-  restaurant Restaurant @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
-  table     Table       @relation(fields: [table_id], references: [id], onDelete: Cascade)
-  confirmer User?       @relation("ConfirmedBy", fields: [confirmed_by], references: [id])
-  preparer  User?       @relation("PreparedBy", fields: [prepared_by], references: [id])
-  items     OrderItem[]
+  restaurant Restaurant  @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
+  table      Table       @relation(fields: [table_id], references: [id], onDelete: Cascade)
+  confirmer  User?       @relation("ConfirmedBy", fields: [confirmed_by], references: [id])
+  preparer   User?       @relation("PreparedBy", fields: [prepared_by], references: [id])
+  items      OrderItem[]
 
   @@index([table_id])
   @@index([status])
@@ -227,4 +226,13 @@ model OrderItem {
   menuItem MenuItem @relation(fields: [menu_item_id], references: [id])
 
   @@index([order_id])
+}
+
+// Login throttling: one row per failed attempt, pruned by the login route
+model LoginAttempt {
+  id         String   @id @default(cuid())
+  email      String
+  created_at DateTime @default(now())
+
+  @@index([email, created_at])
 }
