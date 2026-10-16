@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { z } from "zod";
-import { validationError } from "@/lib/api";
+import { validationError, restaurantIdForbidden } from "@/lib/api";
 
 const querySchema = z.object({
   stars: z.coerce.number().int().min(1).max(5).optional(),
@@ -15,13 +15,15 @@ export const dynamic = "force-dynamic";
 export async function GET(request: NextRequest) {
   const session = await auth();
 
-  if (
-    !session ||
-    (session.user.role !== "ADMIN" &&
-      session.user.role !== "MANAGER" &&
-      session.user.role !== "SUPER_ADMIN")
-  ) {
+  if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (
+    session.user.role !== "ADMIN" &&
+    session.user.role !== "MANAGER" &&
+    session.user.role !== "SUPER_ADMIN"
+  ) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const { searchParams } = new URL(request.url);
@@ -36,6 +38,8 @@ export async function GET(request: NextRequest) {
 
   const { stars, limit } = query.data;
   const restaurantIdParam = searchParams.get("restaurantId");
+  const forbidden = restaurantIdForbidden(session.user.role, restaurantIdParam);
+  if (forbidden) return forbidden;
   const restaurantId =
     session.user.role === "SUPER_ADMIN"
       ? restaurantIdParam

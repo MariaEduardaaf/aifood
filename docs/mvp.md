@@ -11,10 +11,11 @@
 |-------|--------|-------------|
 | MVP | ✅ 100% | Calls + Waiter + Admin |
 | Phase 1.5: Google Reviews | ✅ 100% | Smart rating flow |
-| Phase 2: Digital Menu | ✅ 100% | Menu with photos |
+| Phase 2: Digital Menu | ✅ 100% | Menu with photos, per-restaurant languages, EU allergens, CSV import |
 | Phase 3: Orders | ✅ 100% | Customer places orders |
 | Phase 4: Kitchen | ✅ 100% | Preparation panel |
-| Deploy | ⏳ Pending | Vercel + PostgreSQL |
+| Production milestone | ✅ Code complete | Lite mode, Prisma migrations, Docker, `/api/health`, tests (see PLAN-PRODUCTION.md) |
+| Deploy | ⏳ Pending | Railway or Fly + PostgreSQL, guide in DEPLOY.md |
 
 ---
 
@@ -259,30 +260,9 @@ model OrderItem {
 
 ---
 
-## Deploy (Pending)
+## Deploy
 
-### Requirements
-1. Cloud PostgreSQL (Neon/Supabase/Railway)
-2. Cloudinary account for images
-3. Vercel account for deployment
-
-### Environment Variables
-```env
-DATABASE_URL="postgresql://..."
-AUTH_SECRET="generate-with-openssl-rand-base64-32"
-NEXT_PUBLIC_APP_URL="https://your-domain.vercel.app"
-CLOUDINARY_CLOUD_NAME="your-cloud-name"
-CLOUDINARY_API_KEY="your-api-key"
-CLOUDINARY_API_SECRET="your-api-secret"
-```
-
-### Deploy Steps
-1. Create the PostgreSQL database (recommended: Neon)
-2. Connect the repository to Vercel
-3. Configure environment variables
-4. Automatic deploy
-5. Run `npx prisma db push`
-6. Run `npm run db:seed` (optional)
+See `docs/DEPLOY.md`: the app runs as a Docker image on a long-running Node host (Railway or Fly), with Prisma migrations applied on start and a health check at `/api/health`.
 
 ---
 

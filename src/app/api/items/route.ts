@@ -2,18 +2,23 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { z } from "zod";
-import { validationError } from "@/lib/api";
+import {
+  validationError,
+  localeTextMap,
+  allergensSchema,
+  missingDefaultLocale,
+  imageUrlSchema,
+  restaurantIdForbidden,
+} from "@/lib/api";
+import { getSettings } from "@/lib/settings";
 
 const menuItemSchema = z.object({
   category_id: z.string(),
-  name_pt: z.string().min(1),
-  name_es: z.string().min(1),
-  name_en: z.string().min(1),
-  description_pt: z.string().optional().nullable(),
-  description_es: z.string().optional().nullable(),
-  description_en: z.string().optional().nullable(),
+  names: localeTextMap(120),
+  descriptions: localeTextMap(500).optional(),
+  allergens: allergensSchema.optional(),
   price: z.number().min(0).max(99999.99),
-  image_url: z.string().url().optional().nullable(),
+  image_url: imageUrlSchema.optional().nullable(),
   order: z.number().int().min(0).optional(),
   active: z.boolean().optional(),
   restaurantId: z.string().optional(),
@@ -24,19 +29,23 @@ export async function GET(request: NextRequest) {
   try {
     const session = await auth();
 
-    if (
-      !session ||
-      (session.user.role !== "ADMIN" &&
-        session.user.role !== "MANAGER" &&
-        session.user.role !== "SUPER_ADMIN")
-    ) {
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (
+      session.user.role !== "ADMIN" &&
+      session.user.role !== "MANAGER" &&
+      session.user.role !== "SUPER_ADMIN"
+    ) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const { searchParams } = new URL(request.url);
     const categoryId = searchParams.get("categoryId");
     const activeOnly = searchParams.get("active") === "true";
     const restaurantIdParam = searchParams.get("restaurantId");
+    const forbidden = restaurantIdForbidden(session.user.role, restaurantIdParam);
+    if (forbidden) return forbidden;
     const restaurantId =
       session.user.role === "SUPER_ADMIN"
         ? restaurantIdParam
@@ -76,11 +85,11 @@ export async function POST(request: NextRequest) {
   try {
     const session = await auth();
 
-    if (
-      !session ||
-      (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN")
-    ) {
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const body = await request.json().catch(() => null);
@@ -91,6 +100,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify category exists
+    const forbidden = restaurantIdForbidden(session.user.role, validation.data.restaurantId);
+    if (forbidden) return forbidden;
     const restaurantId =
       session.user.role === "SUPER_ADMIN"
         ? validation.data.restaurantId
@@ -102,6 +113,13 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       );
     }
+
+    const { default_locale } = await getSettings(restaurantId);
+    const localeError = missingDefaultLocale(
+      validation.data.names,
+      default_locale,
+    );
+    if (localeError) return localeError;
 
     const category = await prisma.category.findFirst({
       where: {

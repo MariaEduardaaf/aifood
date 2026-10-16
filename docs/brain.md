@@ -8,10 +8,12 @@
 |-------|--------|-------|
 | MVP (Calls) | ✅ Complete | Working 100% |
 | Phase 1.5 (Google Reviews) | ✅ Complete | Smart rating flow working |
-| Phase 2 (Digital Menu) | ✅ Complete | Trilingual menu with photos |
+| Phase 2 (Digital Menu) | ✅ Complete | Per-restaurant languages (es, en, pt, de, nl, fr), EU allergens, photos, CSV import |
 | Phase 3 (Orders) | ✅ Complete | Cart and order tracking |
 | Phase 4 (Kitchen) | ✅ Complete | Kanban panel working |
-| Production Deploy | ⏳ Pending | Awaiting configuration |
+| Phase 5-6 (UX, Metrics) | ✅ Complete | Today page, timezone-aware metrics, toasts, staff alerts |
+| Production milestone | ✅ Code complete | Lite mode, migrations, Docker, health check, login throttling, tests. See PLAN-PRODUCTION.md |
+| Production Deploy | ⏳ Pending | Guide ready in DEPLOY.md (Railway/Fly); first customer deploy not done yet |
 
 ---
 

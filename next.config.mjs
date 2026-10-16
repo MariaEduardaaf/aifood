@@ -19,6 +19,16 @@ const securityHeaders = [
 ];
 
 const nextConfig = {
+  // Lets parallel dev servers from the same checkout keep separate build dirs
+  distDir: process.env.NEXT_DIST_DIR || ".next",
+  // Self-contained server bundle for the Docker image (node server.js). Only
+  // when asked for: `next start` refuses to run a standalone build.
+  output: process.env.NEXT_OUTPUT_STANDALONE === "1" ? "standalone" : undefined,
+  experimental: {
+    // src/lib/uploads.ts reads <cwd>/uploads at runtime; without this the
+    // file tracer copies local menu photos into the standalone bundle
+    outputFileTracingExcludes: { "*": ["./uploads/**"] },
+  },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },

@@ -2,18 +2,22 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { z } from "zod";
-import { validationError } from "@/lib/api";
+import {
+  validationError,
+  localeTextMap,
+  allergensSchema,
+  missingDefaultLocale,
+  imageUrlSchema,
+} from "@/lib/api";
+import { getSettings } from "@/lib/settings";
 
 const menuItemUpdateSchema = z.object({
   category_id: z.string().optional(),
-  name_pt: z.string().min(1).optional(),
-  name_es: z.string().min(1).optional(),
-  name_en: z.string().min(1).optional(),
-  description_pt: z.string().optional().nullable(),
-  description_es: z.string().optional().nullable(),
-  description_en: z.string().optional().nullable(),
+  names: localeTextMap(120).optional(),
+  descriptions: localeTextMap(500).optional(),
+  allergens: allergensSchema.optional(),
   price: z.number().min(0).max(99999.99).optional(),
-  image_url: z.string().url().optional().nullable(),
+  image_url: imageUrlSchema.optional().nullable(),
   order: z.number().int().min(0).optional(),
   active: z.boolean().optional(),
 });
@@ -26,13 +30,15 @@ export async function GET(
   try {
     const session = await auth();
 
-    if (
-      !session ||
-      (session.user.role !== "ADMIN" &&
-        session.user.role !== "MANAGER" &&
-        session.user.role !== "SUPER_ADMIN")
-    ) {
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (
+      session.user.role !== "ADMIN" &&
+      session.user.role !== "MANAGER" &&
+      session.user.role !== "SUPER_ADMIN"
+    ) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const item = await prisma.menuItem.findFirst({
@@ -65,11 +71,11 @@ export async function PUT(
   try {
     const session = await auth();
 
-    if (
-      !session ||
-      (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN")
-    ) {
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const body = await request.json().catch(() => null);
@@ -77,26 +83,6 @@ export async function PUT(
 
     if (!validation.success) {
       return validationError(validation.error);
-    }
-
-    // If changing category, verify it exists
-    if (validation.data.category_id) {
-      const category = await prisma.category.findFirst({
-        where:
-          session.user.role === "SUPER_ADMIN"
-            ? { id: validation.data.category_id }
-            : {
-                id: validation.data.category_id,
-                restaurant_id: session.user.restaurant_id,
-              },
-      });
-
-      if (!category) {
-        return NextResponse.json(
-          { error: "Category not found" },
-          { status: 404 },
-        );
-      }
     }
 
     const existingItem = await prisma.menuItem.findFirst({
@@ -108,6 +94,32 @@ export async function PUT(
 
     if (!existingItem) {
       return NextResponse.json({ error: "Item not found" }, { status: 404 });
+    }
+
+    // If changing category, it must belong to the item's restaurant
+    if (validation.data.category_id) {
+      const category = await prisma.category.findFirst({
+        where: {
+          id: validation.data.category_id,
+          restaurant_id: existingItem.restaurant_id,
+        },
+      });
+
+      if (!category) {
+        return NextResponse.json(
+          { error: "Category not found" },
+          { status: 404 },
+        );
+      }
+    }
+
+    if (validation.data.names) {
+      const { default_locale } = await getSettings(existingItem.restaurant_id);
+      const localeError = missingDefaultLocale(
+        validation.data.names,
+        default_locale,
+      );
+      if (localeError) return localeError;
     }
 
     const item = await prisma.menuItem.update({
@@ -133,11 +145,11 @@ export async function DELETE(
   try {
     const session = await auth();
 
-    if (
-      !session ||
-      (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN")
-    ) {
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const existingItem = await prisma.menuItem.findFirst({

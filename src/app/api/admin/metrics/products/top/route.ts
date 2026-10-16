@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { restaurantIdForbidden } from "@/lib/api";
 import { prisma } from "@/lib/db";
-import { getPeriodRange, SALE_EXCLUDED_STATUSES } from "@/lib/metrics";
+import { getSettings } from "@/lib/settings";
+import { getPeriodRange, SALE_EXCLUDED_STATUSES, isPeriod, PERIODS } from "@/lib/metrics";
 import { getLocale } from "next-intl/server";
-import { localizedName } from "@/lib/utils";
+import { localizedText } from "@/lib/i18n/text";
 
 export const dynamic = "force-dynamic";
 
@@ -26,14 +28,23 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const period = searchParams.get("period") || "month";
+    if (!isPeriod(period)) {
+      return NextResponse.json(
+        { error: `Invalid period (use: ${PERIODS.join(", ")})` },
+        { status: 400 },
+      );
+    }
     const limit = parseInt(searchParams.get("limit") || "10");
     const restaurantIdParam = searchParams.get("restaurantId");
+    const forbidden = restaurantIdForbidden(session.user.role, restaurantIdParam);
+    if (forbidden) return forbidden;
     const restaurantId =
       session.user.role === "SUPER_ADMIN"
         ? restaurantIdParam
         : session.user.restaurant_id;
 
-    const { start: startDate, end: now } = getPeriodRange(period);
+    const settings = await getSettings(restaurantId);
+    const { start: startDate, end: now } = getPeriodRange(period, settings.timezone);
 
     // Fetch order items for the period with aggregation
     const locale = await getLocale();
@@ -84,8 +95,8 @@ export async function GET(request: NextRequest) {
       } else {
         productMap.set(key, {
           id: item.menu_item_id,
-          name: localizedName(item.menuItem, locale),
-          category: localizedName(item.menuItem.category, locale),
+          name: localizedText(item.menuItem.names, locale, settings.default_locale),
+          category: localizedText(item.menuItem.category.names, locale, settings.default_locale),
           quantity: item.quantity,
           revenue,
         });

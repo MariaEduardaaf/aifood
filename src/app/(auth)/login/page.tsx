@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
@@ -11,7 +11,7 @@ import { Loader2, Mail, Lock, ArrowRight, Eye, EyeOff } from "lucide-react";
 export default function LoginPage() {
   const t = useTranslations("auth");
   const tErrors = useTranslations("errors");
-  const router = useRouter();
+  const tClient = useTranslations("client");
   const searchParams = useSearchParams();
   const callbackUrl = safeCallbackUrl(searchParams.get("callbackUrl"), "/waiter");
 
@@ -35,7 +35,11 @@ export default function LoginPage() {
 
 
       if (result?.error) {
-        setError(t("invalidCredentials"));
+        setError(
+          result.code === "rate_limited"
+            ? t("rateLimited")
+            : t("invalidCredentials"),
+        );
         setLoading(false);
       } else if (result?.ok) {
         window.location.href = callbackUrl;
@@ -211,6 +215,15 @@ export default function LoginPage() {
         {/* Footer */}
         <p className="text-center text-sm text-muted-foreground/60 mt-6">
           Powered by <span className="text-gold font-semibold">aiFood</span>
+        </p>
+        <p className="text-center text-xs text-muted-foreground/60 mt-2">
+          <a href="/privacy" className="underline underline-offset-2 hover:text-foreground">
+            {tClient("privacy")}
+          </a>
+          {" · "}
+          <a href="/cookies" className="underline underline-offset-2 hover:text-foreground">
+            {tClient("cookies")}
+          </a>
         </p>
       </div>
     </div>

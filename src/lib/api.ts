@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
-import { Prisma } from "@prisma/client";
-import type { ZodError } from "zod";
+import { Prisma, type Role } from "@prisma/client";
+import { z, type ZodError } from "zod";
+import { SUPPORTED_LOCALES } from "@/lib/i18n/locales";
+import { ALLERGEN_CODES } from "@/lib/allergens";
+import { prisma } from "@/lib/db";
+import { isUploadedImageUrl } from "@/lib/uploads";
 
 // Standard 400 for zod failures: `error` is always a renderable string.
 export function validationError(error: ZodError) {
@@ -19,5 +23,65 @@ export function isUniqueViolation(error: unknown): boolean {
   return (
     error instanceof Prisma.PrismaClientKnownRequestError &&
     error.code === "P2002"
+  );
+}
+
+// Only SUPER_ADMIN picks the restaurant. Other roles are pinned to their own,
+// so a `restaurantId` from them is refused (403) instead of silently ignored.
+export function restaurantIdForbidden(role: Role, requested: unknown) {
+  return role !== "SUPER_ADMIN" && requested != null && requested !== ""
+    ? NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    : null;
+}
+
+// 404 when a restaurant id (from a SUPER_ADMIN's input) does not exist, so
+// writes do not fail later on the foreign key with a 500
+export async function restaurantNotFound(restaurantId: string) {
+  const found = await prisma.restaurant.findUnique({
+    where: { id: restaurantId },
+    select: { id: true },
+  });
+  return found
+    ? null
+    : NextResponse.json({ error: "Restaurant not found" }, { status: 404 });
+}
+
+// Menu photos must be https so they never load as mixed content, or a photo
+// stored by /api/upload on local disk (same-origin relative path)
+export const imageUrlSchema = z
+  .string()
+  .refine(
+    (v) => isUploadedImageUrl(v) || (z.url().safeParse(v).success && /^https:\/\//i.test(v)),
+    "Must be an https URL or an uploaded photo",
+  );
+
+// { "<locale>": "text" } map limited to supported locales; empty strings are
+// dropped so sending "" clears a translation
+export function localeTextMap(max: number) {
+  return z
+    .partialRecord(z.enum(SUPPORTED_LOCALES), z.string().trim().max(max))
+    .transform(
+      (map) =>
+        Object.fromEntries(
+          Object.entries(map).filter(([, text]) => !!text),
+        ) as Record<string, string>,
+    );
+}
+
+// EU allergen codes, de-duplicated
+export const allergensSchema = z
+  .array(z.enum(ALLERGEN_CODES))
+  .max(ALLERGEN_CODES.length)
+  .transform((codes) => Array.from(new Set(codes)));
+
+// 400 unless the names map has text for the restaurant's default locale
+export function missingDefaultLocale(
+  names: Record<string, string>,
+  defaultLocale: string,
+) {
+  if (names[defaultLocale]) return null;
+  return NextResponse.json(
+    { error: `names.${defaultLocale}: required (restaurant default language)` },
+    { status: 400 },
   );
 }

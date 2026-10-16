@@ -2,13 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { z } from "zod";
-import { validationError } from "@/lib/api";
+import { validationError, restaurantIdForbidden } from "@/lib/api";
 import { Decimal } from "@prisma/client/runtime/library";
+import { findPublicTable, orderingDisabled } from "@/lib/public-table";
+import { emit } from "@/lib/events";
 
 export const dynamic = "force-dynamic";
 
 // Minimum seconds between two orders from the same table
 const RATE_LIMIT_SECONDS = 10;
+
+// Longest a guest sees a table's orders when no bill was settled meanwhile
+const GUEST_WINDOW_MS = 3 * 60 * 60 * 1000;
 
 const orderItemSchema = z.object({
   menuItemId: z.string(),
@@ -17,19 +22,19 @@ const orderItemSchema = z.object({
 });
 
 const createOrderSchema = z.object({
-  // TODO(security): resolve table from qr_token instead of id
-  tableId: z.string(),
+  table: z.string().min(1).max(100), // qr_token
   items: z.array(orderItemSchema).min(1).max(30),
   notes: z.string().max(200).optional(),
 });
 
-// GET /api/orders?tableId=xxx - List table orders (public)
+// GET /api/orders?table=<qr_token> - List table orders (public)
+// GET /api/orders - Active orders for staff (session)
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const tableId = searchParams.get("tableId");
+    const tableToken = searchParams.get("table");
 
-    if (!tableId) {
+    if (tableToken === null) {
       const session = await auth();
 
       if (!session) {
@@ -46,6 +51,8 @@ export async function GET(request: NextRequest) {
       }
 
       const restaurantIdParam = searchParams.get("restaurantId");
+      const forbidden = restaurantIdForbidden(session.user.role, restaurantIdParam);
+      if (forbidden) return forbidden;
       const restaurantId =
         session.user.role === "SUPER_ADMIN"
           ? restaurantIdParam
@@ -77,44 +84,50 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(orders);
     }
 
-    // Check that the table exists
-    const table = await prisma.table.findUnique({
-      where: { id: tableId },
-      include: { restaurant: { select: { active: true } } },
+    const found = await findPublicTable(tableToken);
+    if ("error" in found) return found.error;
+    const { table } = found;
+    if (!table.settings.ordering_enabled) return orderingDisabled();
+
+    // Only the current party's orders: since the table's last settled bill,
+    // and never older than GUEST_WINDOW_MS, so the next guests at the table
+    // do not see what the previous ones ordered.
+    const lastBill = await prisma.call.findFirst({
+      where: {
+        table_id: table.id,
+        type: "REQUEST_BILL",
+        status: "RESOLVED",
+        resolved_at: { not: null },
+      },
+      orderBy: { resolved_at: "desc" },
+      select: { resolved_at: true },
     });
-
-    if (!table) {
-      return NextResponse.json({ error: "Table not found" }, { status: 404 });
-    }
-
-    if (!table.restaurant.active) {
-      return NextResponse.json(
-        { error: "Restaurant is inactive" },
-        { status: 403 },
-      );
-    }
-
-    // Fetch table orders (last 24h, not cancelled)
-    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const since = Math.max(
+      lastBill?.resolved_at?.getTime() ?? 0,
+      Date.now() - GUEST_WINDOW_MS,
+    );
 
     const orders = await prisma.order.findMany({
       where: {
-        table_id: tableId,
+        table_id: table.id,
         restaurant_id: table.restaurant_id,
-        created_at: { gte: twentyFourHoursAgo },
+        created_at: { gte: new Date(since) },
         status: { not: "CANCELLED" },
       },
-      include: {
+      select: {
+        id: true,
+        status: true,
+        total: true,
+        notes: true,
+        created_at: true,
         items: {
-          include: {
+          select: {
+            id: true,
+            quantity: true,
+            unit_price: true,
+            notes: true,
             menuItem: {
-              select: {
-                id: true,
-                name_pt: true,
-                name_es: true,
-                name_en: true,
-                image_url: true,
-              },
+              select: { id: true, names: true, image_url: true },
             },
           },
         },
@@ -142,28 +155,13 @@ export async function POST(request: NextRequest) {
       return validationError(validation.error);
     }
 
-    const { tableId, items, notes } = validation.data;
+    const { items, notes } = validation.data;
 
-    // Check that the table exists and is active
-    const table = await prisma.table.findUnique({
-      where: { id: tableId },
-      include: { restaurant: { select: { active: true } } },
-    });
-
-    if (!table) {
-      return NextResponse.json({ error: "Table not found" }, { status: 404 });
-    }
-
-    if (!table.restaurant.active) {
-      return NextResponse.json(
-        { error: "Restaurant is inactive" },
-        { status: 403 },
-      );
-    }
-
-    if (!table.active) {
-      return NextResponse.json({ error: "Table is inactive" }, { status: 400 });
-    }
+    const found = await findPublicTable(validation.data.table);
+    if ("error" in found) return found.error;
+    const { table } = found;
+    if (!table.settings.ordering_enabled) return orderingDisabled();
+    const tableId = table.id;
 
     // Rate limiting per table, backed by the DB so it holds across serverless
     // instances. ponytail: check-then-insert is not atomic; two simultaneous
@@ -248,13 +246,7 @@ export async function POST(request: NextRequest) {
         items: {
           include: {
             menuItem: {
-              select: {
-                id: true,
-                name_pt: true,
-                name_es: true,
-                name_en: true,
-                image_url: true,
-              },
+              select: { id: true, names: true, image_url: true },
             },
           },
         },
@@ -264,6 +256,13 @@ export async function POST(request: NextRequest) {
           },
         },
       },
+    });
+
+    emit(table.restaurant_id, {
+      type: "order",
+      action: "created",
+      id: order.id,
+      status: order.status,
     });
 
     return NextResponse.json(order, { status: 201 });

@@ -25,6 +25,9 @@ export function SoundSettings() {
         <span className="text-sm">{t("sound.enabled")}</span>
         <button
           onClick={() => updateSettings({ enabled: !settings.enabled })}
+          role="switch"
+          aria-checked={settings.enabled}
+          aria-label={t("sound.enabled")}
           className={cn(
             "w-12 h-6 rounded-full transition-colors relative",
             settings.enabled ? "bg-primary" : "bg-secondary",
@@ -105,6 +108,8 @@ export function SoundToggleCompact({ className }: { className?: string }) {
             : "bg-secondary/30 border border-border/50 text-muted-foreground"),
       )}
       title={settings.enabled ? t("sound.on") : t("sound.off")}
+      aria-label={settings.enabled ? t("sound.on") : t("sound.off")}
+      aria-pressed={settings.enabled}
     >
       {settings.enabled ? (
         <Volume2 className="h-5 w-5" />

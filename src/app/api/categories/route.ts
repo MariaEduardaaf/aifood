@@ -2,12 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { z } from "zod";
-import { validationError } from "@/lib/api";
+import {
+  validationError,
+  localeTextMap,
+  missingDefaultLocale,
+  restaurantIdForbidden,
+} from "@/lib/api";
+import { getSettings } from "@/lib/settings";
 
 const categorySchema = z.object({
-  name_pt: z.string().min(1),
-  name_es: z.string().min(1),
-  name_en: z.string().min(1),
+  names: localeTextMap(120),
   order: z.number().int().min(0).optional(),
   active: z.boolean().optional(),
   restaurantId: z.string().optional(),
@@ -18,18 +22,22 @@ export async function GET(request: NextRequest) {
   try {
     const session = await auth();
 
-    if (
-      !session ||
-      (session.user.role !== "ADMIN" &&
-        session.user.role !== "MANAGER" &&
-        session.user.role !== "SUPER_ADMIN")
-    ) {
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (
+      session.user.role !== "ADMIN" &&
+      session.user.role !== "MANAGER" &&
+      session.user.role !== "SUPER_ADMIN"
+    ) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const { searchParams } = new URL(request.url);
     const activeOnly = searchParams.get("active") === "true";
     const restaurantIdParam = searchParams.get("restaurantId");
+    const forbidden = restaurantIdForbidden(session.user.role, restaurantIdParam);
+    if (forbidden) return forbidden;
     const restaurantId =
       session.user.role === "SUPER_ADMIN"
         ? restaurantIdParam
@@ -72,11 +80,11 @@ export async function POST(request: NextRequest) {
   try {
     const session = await auth();
 
-    if (
-      !session ||
-      (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN")
-    ) {
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const body = await request.json().catch(() => null);
@@ -87,6 +95,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Get max order
+    const forbidden = restaurantIdForbidden(session.user.role, validation.data.restaurantId);
+    if (forbidden) return forbidden;
     const restaurantId =
       session.user.role === "SUPER_ADMIN"
         ? validation.data.restaurantId
@@ -101,6 +111,10 @@ export async function POST(request: NextRequest) {
 
     // restaurantId is input-only; the column is restaurant_id
     const { restaurantId: _restaurantId, ...data } = validation.data;
+
+    const { default_locale } = await getSettings(restaurantId);
+    const localeError = missingDefaultLocale(data.names, default_locale);
+    if (localeError) return localeError;
 
     const maxOrder = await prisma.category.aggregate({
       _max: { order: true },

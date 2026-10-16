@@ -11,6 +11,5 @@ export default async function AdminPage() {
     redirect("/waiter");
   }
 
-  // Redirect to the tables page
-  redirect("/admin/tables");
+  redirect("/admin/today");
 }

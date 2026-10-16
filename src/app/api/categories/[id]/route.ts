@@ -2,12 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { z } from "zod";
-import { validationError } from "@/lib/api";
+import {
+  validationError,
+  localeTextMap,
+  missingDefaultLocale,
+} from "@/lib/api";
+import { getSettings } from "@/lib/settings";
 
 const categoryUpdateSchema = z.object({
-  name_pt: z.string().min(1).optional(),
-  name_es: z.string().min(1).optional(),
-  name_en: z.string().min(1).optional(),
+  names: localeTextMap(120).optional(),
   order: z.number().int().min(0).optional(),
   active: z.boolean().optional(),
 });
@@ -20,13 +23,15 @@ export async function GET(
   try {
     const session = await auth();
 
-    if (
-      !session ||
-      (session.user.role !== "ADMIN" &&
-        session.user.role !== "MANAGER" &&
-        session.user.role !== "SUPER_ADMIN")
-    ) {
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (
+      session.user.role !== "ADMIN" &&
+      session.user.role !== "MANAGER" &&
+      session.user.role !== "SUPER_ADMIN"
+    ) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const category = await prisma.category.findFirst({
@@ -66,11 +71,11 @@ export async function PUT(
   try {
     const session = await auth();
 
-    if (
-      !session ||
-      (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN")
-    ) {
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const body = await request.json().catch(() => null);
@@ -92,6 +97,17 @@ export async function PUT(
         { error: "Category not found" },
         { status: 404 },
       );
+    }
+
+    if (validation.data.names) {
+      const { default_locale } = await getSettings(
+        existingCategory.restaurant_id,
+      );
+      const localeError = missingDefaultLocale(
+        validation.data.names,
+        default_locale,
+      );
+      if (localeError) return localeError;
     }
 
     const category = await prisma.category.update({
@@ -117,11 +133,11 @@ export async function DELETE(
   try {
     const session = await auth();
 
-    if (
-      !session ||
-      (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN")
-    ) {
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const existingCategory = await prisma.category.findFirst({

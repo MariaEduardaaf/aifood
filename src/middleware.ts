@@ -19,31 +19,37 @@ export default async function middleware(req: NextRequest) {
   const isLoggedIn = !!token;
   const userRole = token?.role;
 
+  // Lets getRequestConfig see the path (the guest table page needs the
+  // restaurant's locale for the first render). Always overwritten here, so a
+  // client-sent x-pathname is ignored.
+  const forwarded = new Headers(req.headers);
+  forwarded.set("x-pathname", pathname);
+  const next = () => NextResponse.next({ request: { headers: forwarded } });
+
   // Public routes - no auth required
-  const publicRoutes = ["/", "/login", "/table"];
+  const publicRoutes = ["/", "/login", "/table", "/privacy", "/cookies"];
   const isPublicRoute = publicRoutes.some(
     (route) => pathname === route || pathname.startsWith("/table/"),
   );
 
-  // API routes that are public
-  const publicApiPrefixes = ["/api/auth"];
+  // API routes that are public. Guest endpoints identify the table by its
+  // qr_token; staff-only methods on the same paths check the session in the
+  // route handler.
+  const publicApiPrefixes = ["/api/auth/", "/api/uploads/"];
   const publicApiExact = [
     "/api/calls",
     "/api/menu",
     "/api/orders",
     "/api/review",
+    "/api/tables/status",
+    "/api/health",
   ];
   const isPublicApiRoute =
     publicApiPrefixes.some((route) => pathname.startsWith(route)) ||
     publicApiExact.includes(pathname);
 
-  // Special public routes for tables (token lookup and status)
-  const isPublicTableRoute =
-    pathname.startsWith("/api/tables/token/") ||
-    /^\/api\/tables\/[^/]+\/status$/.test(pathname);
-
-  if (isPublicRoute || isPublicApiRoute || isPublicTableRoute) {
-    return NextResponse.next();
+  if (isPublicRoute || isPublicApiRoute) {
+    return next();
   }
 
   // Protected API routes - JSON 401 instead of a redirect to the login page
@@ -104,7 +110,7 @@ export default async function middleware(req: NextRequest) {
     }
   }
 
-  return NextResponse.next();
+  return next();
 }
 
 export const config = {

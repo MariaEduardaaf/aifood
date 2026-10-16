@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Bell, ShoppingBag, Utensils } from "lucide-react";
 import { WaiterDashboard } from "./waiter-dashboard";
 import { OrdersKanban } from "./orders-kanban";
+import { useOrderingEnabled } from "@/components/providers/currency";
+import { useWakeLock } from "@/components/providers/staff-alerts";
 import { cn } from "@/lib/utils";
 
 interface WaiterPageProps {
@@ -14,105 +16,69 @@ interface WaiterPageProps {
 
 type Tab = "calls" | "orders";
 
-export function WaiterPage({ userId, userName = "Waiter" }: WaiterPageProps) {
+export function WaiterPage({ userId }: WaiterPageProps) {
   const t = useTranslations("waiter");
+  const ordering = useOrderingEnabled();
   const [activeTab, setActiveTab] = useState<Tab>("calls");
   const [callsCount, setCallsCount] = useState(0);
   const [ordersCount, setOrdersCount] = useState(0);
+  useWakeLock();
 
-  // Fetch counts for badges
-  useEffect(() => {
-    const fetchCounts = async () => {
-      try {
-        // Fetch calls count
-        const callsRes = await fetch("/api/calls");
-        if (callsRes.ok) {
-          const calls = await callsRes.json();
-          setCallsCount(calls.filter((c: any) => c.status === "OPEN").length);
-        }
-
-        // Fetch orders count (pending orders)
-        const ordersRes = await fetch("/api/orders");
-        if (ordersRes.ok) {
-          const orders = await ordersRes.json();
-          setOrdersCount(
-            orders.filter(
-              (o: any) => o.status === "PENDING" || o.status === "READY",
-            ).length,
-          );
-        }
-      } catch (err) {
-        console.error("Error fetching counts:", err);
-      }
-    };
-
-    fetchCounts();
-
-    // Poll every 10 seconds
-    const interval = setInterval(fetchCounts, 10000);
-    return () => clearInterval(interval);
-  }, []);
+  const tabs: { id: Tab; label: string; icon: typeof Bell; count: number }[] = [
+    { id: "calls", label: t("calls"), icon: Bell, count: callsCount },
+    { id: "orders", label: t("orders"), icon: ShoppingBag, count: ordersCount },
+  ];
 
   return (
     <div className="min-h-screen">
-      {/* Header */}
-      <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b border-border/50 -mx-4 px-4 -mt-6 pt-4 pb-4 mb-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-xl">
-              <Utensils className="h-6 w-6 text-primary" />
-            </div>
-            <div>
-              <h1 className="font-bold text-lg">{t("roleTitle")}</h1>
-              <p className="text-sm text-muted-foreground">{userName}</p>
-            </div>
-          </div>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <Utensils aria-hidden className="h-5 w-5 text-price" />
+          <h1 className="text-lg font-semibold">{t("roleTitle")}</h1>
         </div>
+
+        {/* Lite mode (ordering off): calls only, no tabs */}
+        {ordering && (
+          <div className="flex gap-1 rounded-full border border-border bg-card p-1">
+            {tabs.map(({ id, label, icon: Icon, count }) => (
+              <button
+                key={id}
+                type="button"
+                aria-pressed={activeTab === id}
+                onClick={() => setActiveTab(id)}
+                className={cn(
+                  "flex min-h-[44px] items-center gap-2 rounded-full px-4 text-sm font-medium transition-colors",
+                  activeTab === id
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                )}
+              >
+                <Icon aria-hidden className="h-4 w-4" />
+                {label}
+                {count > 0 && (
+                  <span
+                    className={cn(
+                      "flex h-5 min-w-[1.25rem] items-center justify-center rounded-full px-1.5 text-xs font-bold tabular-nums",
+                      activeTab === id ? "bg-primary-foreground/20" : "bg-red-600 text-white",
+                    )}
+                  >
+                    {count}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-2 mb-6">
-        <button
-          onClick={() => setActiveTab("calls")}
-          className={cn(
-            "flex items-center gap-2 px-5 py-2.5 rounded-full font-medium transition-all duration-200 relative",
-            activeTab === "calls"
-              ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
-              : "bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground",
-          )}
-        >
-          <Bell className="h-4 w-4" />
-          <span>{t("calls")}</span>
-          {callsCount > 0 && (
-            <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1.5 flex items-center justify-center bg-red-500 text-white text-xs font-bold rounded-full animate-pulse">
-              {callsCount}
-            </span>
-          )}
-        </button>
-        <button
-          onClick={() => setActiveTab("orders")}
-          className={cn(
-            "flex items-center gap-2 px-5 py-2.5 rounded-full font-medium transition-all duration-200 relative",
-            activeTab === "orders"
-              ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
-              : "bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground",
-          )}
-        >
-          <ShoppingBag className="h-4 w-4" />
-          <span>{t("orders")}</span>
-          {ordersCount > 0 && (
-            <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1.5 flex items-center justify-center bg-orange-500 text-white text-xs font-bold rounded-full animate-pulse">
-              {ordersCount}
-            </span>
-          )}
-        </button>
+      {/* Both stay mounted so alerts fire whichever tab is open */}
+      <div hidden={ordering === true && activeTab !== "calls"}>
+        <WaiterDashboard userId={userId} onCount={setCallsCount} />
       </div>
-
-      {/* Content */}
-      {activeTab === "calls" ? (
-        <WaiterDashboard userId={userId} />
-      ) : (
-        <OrdersKanban />
+      {ordering && (
+        <div hidden={activeTab !== "orders"}>
+          <OrdersKanban onCount={setOrdersCount} />
+        </div>
       )}
     </div>
   );

@@ -39,6 +39,8 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
 
   // Load settings and initialize audio
   useEffect(() => {
+    // Hydration from localStorage must happen after mount to match the server render
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
 
     // Load saved settings

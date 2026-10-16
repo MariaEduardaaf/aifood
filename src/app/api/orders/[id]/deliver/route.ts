@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { emit, orderInclude } from "@/lib/events";
 
 // PATCH /api/orders/[id]/deliver - Mark order as delivered
 export async function PATCH(
@@ -64,26 +65,14 @@ export async function PATCH(
 
     const updatedOrder = await prisma.order.findUnique({
       where: { id: params.id },
-      include: {
-        table: {
-          select: {
-            id: true,
-            label: true,
-          },
-        },
-        items: {
-          include: {
-            menuItem: {
-              select: {
-                id: true,
-                name_pt: true,
-                name_es: true,
-                name_en: true,
-              },
-            },
-          },
-        },
-      },
+      include: orderInclude,
+    });
+
+    emit(order.restaurant_id, {
+      type: "order",
+      action: "updated",
+      id: params.id,
+      status: updatedOrder?.status ?? "UNKNOWN",
     });
 
     return NextResponse.json(updatedOrder);

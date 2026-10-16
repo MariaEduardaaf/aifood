@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { emit, callInclude } from "@/lib/events";
 
 // PATCH /api/calls/[id]/resolve - Mark call as resolved
 export async function PATCH(
@@ -64,20 +65,14 @@ export async function PATCH(
 
     const updatedCall = await prisma.call.findUnique({
       where: { id: params.id },
-      include: {
-        table: {
-          select: {
-            id: true,
-            label: true,
-          },
-        },
-        resolver: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
+      include: callInclude,
+    });
+
+    emit(call.restaurant_id, {
+      type: "call",
+      action: "updated",
+      id: params.id,
+      status: "RESOLVED",
     });
 
     return NextResponse.json(updatedCall);

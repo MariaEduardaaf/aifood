@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { restaurantIdForbidden } from "@/lib/api";
 import { prisma } from "@/lib/db";
-import { getPeriodRange, SALE_EXCLUDED_STATUSES } from "@/lib/metrics";
+import { getSettings } from "@/lib/settings";
+import { getPeriodRange, SALE_EXCLUDED_STATUSES, zonedParts, isPeriod, PERIODS } from "@/lib/metrics";
 
 export const dynamic = "force-dynamic";
 
@@ -35,13 +37,22 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const period = searchParams.get("period") || "month";
+    if (!isPeriod(period)) {
+      return NextResponse.json(
+        { error: `Invalid period (use: ${PERIODS.join(", ")})` },
+        { status: 400 },
+      );
+    }
     const restaurantIdParam = searchParams.get("restaurantId");
+    const forbidden = restaurantIdForbidden(session.user.role, restaurantIdParam);
+    if (forbidden) return forbidden;
     const restaurantId =
       session.user.role === "SUPER_ADMIN"
         ? restaurantIdParam
         : session.user.restaurant_id;
 
-    const { start: startDate, end: now } = getPeriodRange(period);
+    const settings = await getSettings(restaurantId);
+    const { start: startDate, end: now } = getPeriodRange(period, settings.timezone);
 
     // Fetch orders for the period
     const orders = await prisma.order.findMany({
@@ -69,7 +80,7 @@ export async function GET(request: NextRequest) {
 
     // Fill in with real data
     orders.forEach((order) => {
-      const day = new Date(order.created_at).getDay();
+      const day = zonedParts(order.created_at, settings.timezone).weekday;
       const current = dayMap.get(day)!;
       dayMap.set(day, {
         quantity: current.quantity + 1,

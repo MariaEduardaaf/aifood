@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import {
   Card,
@@ -17,12 +17,12 @@ import {
   Users,
   Star,
   XCircle,
-  TrendingUp,
   Bell,
   Receipt,
   Package,
 } from "lucide-react";
 import { useCurrency } from "@/components/providers/currency";
+import { formatPercent } from "./format";
 
 interface Metrics {
   orders: {
@@ -73,12 +73,7 @@ export function MetricsDashboard({ restaurantId }: MetricsDashboardProps) {
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<"today" | "week" | "month">("today");
 
-  useEffect(() => {
-    fetchMetrics();
-    fetchTopProducts();
-  }, [period, restaurantId]);
-
-  const fetchMetrics = async () => {
+  const fetchMetrics = useCallback(async () => {
     setLoading(true);
     try {
       const periodMap = { today: "today", week: "week", month: "month" };
@@ -100,9 +95,9 @@ export function MetricsDashboard({ restaurantId }: MetricsDashboardProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [period, restaurantId]);
 
-  const fetchTopProducts = async () => {
+  const fetchTopProducts = useCallback(async () => {
     try {
       const periodMap = { today: "today", week: "week", month: "month" };
       const params = new URLSearchParams({
@@ -123,7 +118,12 @@ export function MetricsDashboard({ restaurantId }: MetricsDashboardProps) {
     } catch (err) {
       console.error("Error fetching top products:", err);
     }
-  };
+  }, [period, restaurantId]);
+
+  useEffect(() => {
+    fetchMetrics();
+    fetchTopProducts();
+  }, [fetchMetrics, fetchTopProducts]);
 
   const currency = useCurrency(restaurantId);
   const formatCurrency = (value: number) => {
@@ -326,7 +326,7 @@ export function MetricsDashboard({ restaurantId }: MetricsDashboardProps) {
                         : "text-red-500"
                   }`}
                 >
-                  {metrics?.times.preparationSla || 0}%
+                  {formatPercent(metrics?.times.preparationSla || 0, locale)}
                 </p>
               </div>
             </div>

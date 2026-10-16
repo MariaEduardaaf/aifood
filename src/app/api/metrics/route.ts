@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { restaurantIdForbidden } from "@/lib/api";
 import { prisma } from "@/lib/db";
-import { getPeriodRange } from "@/lib/metrics";
+import { getSettings } from "@/lib/settings";
+import { getPeriodRange, zonedParts, isPeriod, PERIODS } from "@/lib/metrics";
 
 export const dynamic = "force-dynamic";
 
@@ -10,24 +12,35 @@ export async function GET(request: NextRequest) {
   try {
     const session = await auth();
 
-    if (
-      !session ||
-      (session.user.role !== "ADMIN" &&
-        session.user.role !== "MANAGER" &&
-        session.user.role !== "SUPER_ADMIN")
-    ) {
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (
+      session.user.role !== "ADMIN" &&
+      session.user.role !== "MANAGER" &&
+      session.user.role !== "SUPER_ADMIN"
+    ) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const { searchParams } = new URL(request.url);
     const period = searchParams.get("period") || "today";
+    if (!isPeriod(period)) {
+      return NextResponse.json(
+        { error: `Invalid period (use: ${PERIODS.join(", ")})` },
+        { status: 400 },
+      );
+    }
     const restaurantIdParam = searchParams.get("restaurantId");
+    const forbidden = restaurantIdForbidden(session.user.role, restaurantIdParam);
+    if (forbidden) return forbidden;
     const restaurantId =
       session.user.role === "SUPER_ADMIN"
         ? restaurantIdParam
         : session.user.restaurant_id;
 
-    const { start: startDate } = getPeriodRange(period);
+    const settings = await getSettings(restaurantId);
+    const { start: startDate } = getPeriodRange(period, settings.timezone);
 
     // Total calls in period
     const totalCalls = await prisma.call.count({
@@ -103,7 +116,7 @@ export async function GET(request: NextRequest) {
       }
 
       todayCalls.forEach((call) => {
-        const hour = new Date(call.created_at).getHours();
+        const hour = zonedParts(call.created_at, settings.timezone).hour;
         callsByHour[hour]++;
       });
     }
