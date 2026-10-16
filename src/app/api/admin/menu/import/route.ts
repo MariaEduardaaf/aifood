@@ -2,13 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { validationError } from "@/lib/api";
+import { restaurantNotFound, validationError } from "@/lib/api";
 import { parseMenuCsv } from "@/lib/csv";
 import { getSettings } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
 const MAX_CSV_BYTES = 1024 * 1024;
+// Whole request: the CSV plus multipart/JSON overhead
+const MAX_BODY_BYTES = 1.1 * 1024 * 1024;
+const MAX_REDIRECTS = 3;
 
 const jsonSchema = z
   .object({
@@ -34,6 +37,42 @@ function sheetCsvUrl(raw: string): string | null {
   return url.toString();
 }
 
+// Google answers export links with a redirect to googleusercontent.com
+function isGoogleHost(url: URL) {
+  return (
+    url.protocol === "https:" &&
+    (url.hostname === "docs.google.com" ||
+      url.hostname.endsWith(".googleusercontent.com"))
+  );
+}
+
+// Reads a request or response body, giving up (null) past `limit` bytes so
+// a huge or endless body is never buffered whole
+async function readCapped(
+  message: Request | Response,
+  limit: number,
+): Promise<Buffer | null> {
+  if (Number(message.headers.get("content-length") ?? 0) > limit) return null;
+  if (!message.body) return Buffer.alloc(0);
+  const reader = message.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > limit) {
+      await reader.cancel();
+      return null;
+    }
+    chunks.push(value);
+  }
+  return Buffer.concat(chunks);
+}
+
+const tooLarge = () =>
+  NextResponse.json({ error: "File too large (max 1MB)" }, { status: 413 });
+
 async function fetchCsv(raw: string): Promise<string | NextResponse> {
   const target = sheetCsvUrl(raw);
   if (!target) {
@@ -42,20 +81,28 @@ async function fetchCsv(raw: string): Promise<string | NextResponse> {
       { status: 400 },
     );
   }
-  const res = await fetch(target, {
-    redirect: "follow",
-    signal: AbortSignal.timeout(10_000),
-  }).catch(() => null);
-  if (!res || !res.ok) {
-    return NextResponse.json(
-      { error: "Could not download the sheet. Publish it to the web as CSV and try again." },
-      { status: 400 },
-    );
+  const downloadError = NextResponse.json(
+    { error: "Could not download the sheet. Publish it to the web as CSV and try again." },
+    { status: 400 },
+  );
+
+  // Follow redirects by hand so every hop stays on Google hosts
+  const signal = AbortSignal.timeout(10_000);
+  let url = new URL(target);
+  let res: Response | null = null;
+  for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+    res = await fetch(url, { redirect: "manual", signal }).catch(() => null);
+    const location = res && res.status >= 300 && res.status < 400 && res.headers.get("location");
+    if (!location) break;
+    url = new URL(location, url);
+    if (!isGoogleHost(url) || hop === MAX_REDIRECTS) return downloadError;
   }
-  const text = await res.text();
-  if (text.length > MAX_CSV_BYTES) {
-    return NextResponse.json({ error: "File too large (max 1MB)" }, { status: 400 });
-  }
+  if (!res || !res.ok) return downloadError;
+
+  const bytes = await readCapped(res, MAX_CSV_BYTES).catch(() => undefined);
+  if (bytes === undefined) return downloadError;
+  if (bytes === null) return tooLarge();
+  const text = bytes.toString("utf8");
   if (/^\s*<(!doctype|html)/i.test(text)) {
     return NextResponse.json(
       { error: "The link returned a web page, not CSV. Publish the sheet to the web as CSV." },
@@ -83,24 +130,37 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    // Rejected by Content-Length before parsing; bodies without one (chunked)
+    // are cut off while reading
+    const body = await readCapped(request, MAX_BODY_BYTES);
+    if (!body) return tooLarge();
+    const contentType = request.headers.get("content-type") ?? "";
+
     let csv: string;
     let restaurantIdInput: string | undefined;
 
-    if (request.headers.get("content-type")?.includes("multipart/form-data")) {
-      const form = await request.formData().catch(() => null);
+    if (contentType.includes("multipart/form-data")) {
+      const form = await new Response(new Uint8Array(body), {
+        headers: { "content-type": contentType },
+      })
+        .formData()
+        .catch(() => null);
       const file = form?.get("file");
       if (!(file instanceof File)) {
         return NextResponse.json({ error: "No file provided" }, { status: 400 });
       }
-      if (file.size > MAX_CSV_BYTES) {
-        return NextResponse.json({ error: "File too large (max 1MB)" }, { status: 400 });
-      }
+      if (file.size > MAX_CSV_BYTES) return tooLarge();
       csv = await file.text();
       const rid = form?.get("restaurantId");
       restaurantIdInput = typeof rid === "string" ? rid : undefined;
     } else {
-      const body = await request.json().catch(() => null);
-      const validation = jsonSchema.safeParse(body);
+      let json: unknown = null;
+      try {
+        json = JSON.parse(body.toString("utf8"));
+      } catch {
+        // invalid JSON fails validation below
+      }
+      const validation = jsonSchema.safeParse(json);
       if (!validation.success) return validationError(validation.error);
       restaurantIdInput = validation.data.restaurantId;
       if (validation.data.url) {
@@ -122,6 +182,11 @@ export async function POST(request: NextRequest) {
         { error: "restaurantId is required" },
         { status: 400 },
       );
+    }
+
+    if (session.user.role === "SUPER_ADMIN") {
+      const notFound = await restaurantNotFound(restaurantId);
+      if (notFound) return notFound;
     }
 
     const { default_locale } = await getSettings(restaurantId);
@@ -192,7 +257,9 @@ export async function POST(request: NextRequest) {
                   ...row.descriptions,
                 },
                 price: row.price,
-                allergens: row.allergens,
+                // No allergens column = keep what the item has; an empty
+                // cell in a present column clears them
+                ...(parsed.hasAllergens ? { allergens: row.allergens } : {}),
                 ...(row.image_url ? { image_url: row.image_url } : {}),
               },
             });

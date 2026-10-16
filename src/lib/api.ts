@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { z, type ZodError } from "zod";
 import { SUPPORTED_LOCALES } from "@/lib/i18n/locales";
 import { ALLERGEN_CODES } from "@/lib/allergens";
+import { prisma } from "@/lib/db";
 
 // Standard 400 for zod failures: `error` is always a renderable string.
 export function validationError(error: ZodError) {
@@ -23,6 +24,24 @@ export function isUniqueViolation(error: unknown): boolean {
     error.code === "P2002"
   );
 }
+
+// 404 when a restaurant id (from a SUPER_ADMIN's input) does not exist, so
+// writes do not fail later on the foreign key with a 500
+export async function restaurantNotFound(restaurantId: string) {
+  const found = await prisma.restaurant.findUnique({
+    where: { id: restaurantId },
+    select: { id: true },
+  });
+  return found
+    ? null
+    : NextResponse.json({ error: "Restaurant not found" }, { status: 404 });
+}
+
+// Menu photos must be https so they never load as mixed content
+export const imageUrlSchema = z
+  .string()
+  .url()
+  .regex(/^https:\/\//i, "Must be an https URL");
 
 // { "<locale>": "text" } map limited to supported locales; empty strings are
 // dropped so sending "" clears a translation

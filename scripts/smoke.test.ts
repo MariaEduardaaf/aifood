@@ -235,7 +235,7 @@ test("settings validation: default locale must be enabled, timezone must exist",
   assert.equal(badLocale.status, 400);
   const badTz = await api("/api/settings", { jar: admin, method: "PUT", body: { timezone: "Mars/Base" } });
   assert.equal(badTz.status, 400);
-  assert.equal((await api("/api/settings", { jar: waiter, method: "PUT", body: {} })).status, 401);
+  assert.equal((await api("/api/settings", { jar: waiter, method: "PUT", body: {} })).status, 403);
 });
 
 test("call, resolve, table status and review", async () => {

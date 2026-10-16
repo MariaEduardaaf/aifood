@@ -40,7 +40,7 @@ Wrong-role visits are redirected to the user's own home. Unauthenticated `/api/*
 `allergens.ts` (14 EU codes), `csv.ts` (import parser), `events.ts` (in-process bus), `sse.ts`, `metrics.ts` (timezone-aware), `settings.ts`, `public-table.ts` (qr_token lookup), `i18n/` (`locales.ts`, `text.ts`, `request.ts`), `auth/`, `db/`, `safe-redirect.ts`.
 
 ### Data and tooling
-- Prisma models: Restaurant, User, Table, Call, Rating, Settings, Category, MenuItem, Order, OrderItem, LoginAttempt. Migrations: `0001_init`, `0002_locales_allergens_lite`.
+- Prisma models: Restaurant, User, Table, Call, Rating, Settings, Category, MenuItem, Order, OrderItem, LoginAttempt. Migrations: `0001_init`, `0002_locales_allergens_lite`, `0003_login_attempt_ip`.
 - Menu text lives in JSON maps per locale (`names`, `descriptions`); `allergens` is `string[]`.
 - Scripts: `prisma/seed.ts` (demo data), `scripts/create-admin.ts` (first admin), `scripts/test/*.test.ts` (unit), `scripts/smoke.test.ts` (API).
 
@@ -52,7 +52,7 @@ Unknown or inactive table: 404 `{ error: "Table not found" }`; inactive restaura
 - `GET /api/tables/status?table=<token>` -> `{ label, ordering_enabled, openCalls, pendingRating }`.
 - `POST /api/calls` `{ table, type: "CALL_WAITER" | "REQUEST_BILL" }` -> 201; 200 if one is already open; 429 within 30s.
 - `POST /api/orders` `{ table, items: [{ menuItemId, quantity 1-50, notes? }] (1-30), notes? }` -> 201; 429 within 10s; 400 `{ error, missingIds }`.
-- `GET /api/orders?table=<token>` -> last 24h, not cancelled.
+- `GET /api/orders?table=<token>` -> since the table's last settled bill (at most 3h), not cancelled; `{ id, status, total, notes, created_at, items: [{ id, quantity, unit_price, notes, menuItem: { id, names, image_url } }] }`.
 - Lite mode (`ordering_enabled: false`): both order calls return 403 `{ error: "ordering_disabled" }`.
 - `POST /api/review`, `GET /api/review?callId=`.
 - `GET /api/health` -> `{ status: "ok", db: "up" }` or 503.
@@ -72,7 +72,7 @@ All need a session unless noted. Admin routes: ADMIN/MANAGER; SUPER_ADMIN passes
 | Settings | `GET/PUT /api/settings` |
 | Restaurants | `GET/POST /api/restaurants`, `GET/PATCH/DELETE /api/restaurants/[id]` (SUPER_ADMIN) |
 | Metrics | `GET /api/metrics`, `GET /api/admin/metrics/{summary,real-time,categories,orders/hourly,orders/weekday,products/top}`, `GET /api/admin/feedbacks` |
-| Auth | `/api/auth/[...nextauth]`; 5 failed logins per email in 15 min -> `code=rate_limited` |
+| Auth | `/api/auth/[...nextauth]`; in 15 min, more than 5 attempts per email+IP, 30 per IP or 30 per email -> `code=rate_limited` |
 
 Write rules: `names` max 120 chars per locale, `descriptions` 500; keys must be supported locales; `names` must include the restaurant's default locale; `allergens` must be EU codes. Settings `PUT`: `currency` (EUR|BRL|USD|GBP), `enabled_locales` (1-6), `default_locale` (must be enabled), `ordering_enabled`, `timezone` (IANA), Google Reviews fields.
 

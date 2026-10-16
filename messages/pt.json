@@ -475,6 +475,7 @@
     "email": "Email",
     "password": "Senha",
     "invalidCredentials": "Email ou senha inválidos",
+    "rateLimited": "Muitas tentativas de login. Aguarde 15 minutos e tente novamente.",
     "loginSuccess": "Login realizado com sucesso",
     "logoutSuccess": "Logout realizado com sucesso",
     "platformTagline": "Plataforma de Atendimento",

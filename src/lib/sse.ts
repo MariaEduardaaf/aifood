@@ -2,6 +2,11 @@ import { subscribe, type RealtimeEvent } from "@/lib/events";
 
 const HEARTBEAT_MS = 25_000;
 const REFRESH_MS = 30_000;
+// Streams end after this; EventSource reconnects on its own (retry: 3000),
+// which also re-runs auth for long-lived screens
+const MAX_LIFETIME_MS = 5 * 60_000;
+// Unread events queued for a client before it is treated as stalled
+const MAX_QUEUED_CHUNKS = 64;
 
 // Server-Sent Events stream for one restaurant:
 //   event: refresh  data: full list (on connect and every 30s, safety net)
@@ -27,6 +32,11 @@ export function sseResponse(
 
       const send = (chunk: string) => {
         if (closed) return;
+        // Client stopped reading: drop it instead of buffering without limit
+        if ((controller.desiredSize ?? 1) <= 0) {
+          close();
+          return;
+        }
         try {
           controller.enqueue(encoder.encode(chunk));
         } catch {
@@ -60,12 +70,14 @@ export function sseResponse(
 
       const heartbeat = setInterval(() => send(": heartbeat\n\n"), HEARTBEAT_MS);
       const poll = setInterval(refresh, REFRESH_MS);
+      const lifetime = setTimeout(() => close(), MAX_LIFETIME_MS);
 
       close = () => {
         if (closed) return;
         closed = true;
         clearInterval(heartbeat);
         clearInterval(poll);
+        clearTimeout(lifetime);
         unsubscribe();
         try {
           controller.close();
@@ -75,13 +87,18 @@ export function sseResponse(
       };
 
       request.signal.addEventListener("abort", () => close());
+      // Aborted while auth ran: the listener above would never fire
+      if (request.signal.aborted) {
+        close();
+        return;
+      }
       send("retry: 3000\n\n");
       refresh();
     },
     cancel() {
       close();
     },
-  });
+  }, new CountQueuingStrategy({ highWaterMark: MAX_QUEUED_CHUNKS }));
 
   return new Response(stream, {
     headers: {

@@ -52,3 +52,38 @@ test("parseMenuCsv rejects missing columns and reports bad rows by line number",
   assert.deepEqual(bad.errors.map((e) => e.row), [2, 3, 4]);
   assert.deepEqual(bad.rows.map((r) => r.names.es), ["D"]);
 });
+
+test("parseMenuCsv flags whether the allergens column exists", () => {
+  // No column: imports must keep each item's current allergens
+  const without = parseMenuCsv("category,name_es,price\nA,B,1", "es");
+  assert.ok(without.ok);
+  assert.equal(without.hasAllergens, false);
+
+  // Column present but empty cell: clears them
+  const empty = parseMenuCsv("category,name_es,price,allergens\nA,B,1,", "es");
+  assert.ok(empty.ok);
+  assert.equal(empty.hasAllergens, true);
+  assert.deepEqual(empty.rows[0].allergens, []);
+});
+
+test("parseMenuCsv accepts only plain prices and https images", () => {
+  const result = parseMenuCsv(
+    [
+      "category,name_es,price,image_url",
+      "A,ok1,3,",
+      "A,ok2,€3.5,",
+      'A,ok3,"3,50",https://example.com/a.jpg',
+      "A,bad1,1e3,",
+      "A,bad2,-1,",
+      "A,bad3,1.234,",
+      'A,bad4,"1.234,56",',
+      "A,bad5,3,http://example.com/a.jpg",
+    ].join("\n"),
+    "es",
+  );
+  assert.ok(result.ok);
+  assert.deepEqual(result.rows.map((r) => r.names.es), ["ok1", "ok2", "ok3"]);
+  assert.deepEqual(result.rows.map((r) => r.price), [3, 3.5, 3.5]);
+  assert.deepEqual(result.errors.map((e) => e.row), [5, 6, 7, 8, 9]);
+  assert.match(result.errors.at(-1)!.message, /https/);
+});

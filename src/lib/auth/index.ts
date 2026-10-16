@@ -35,9 +35,25 @@ declare module "@auth/core/jwt" {
 // How often the JWT is re-validated against the database (ms)
 const RECHECK_INTERVAL_MS = 5 * 60 * 1000;
 
-// Login throttling: max failed attempts per email inside the window
-const MAX_FAILED_LOGINS = 5;
+// Login throttling inside a sliding window: attempts per email+IP, plus
+// looser caps per IP (spraying many emails) and per email (backstop when the
+// IP is spoofed or rotated). Rows for the email are deleted on success.
+const MAX_ATTEMPTS_PER_EMAIL_IP = 5;
+const MAX_ATTEMPTS_PER_IP = 30;
+const MAX_ATTEMPTS_PER_EMAIL = 30;
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+const MAX_EMAIL_LENGTH = 254;
+
+// bcrypt hash (cost 12, same as real ones) of a random string, compared when
+// the user does not exist so response time does not reveal valid emails
+const DUMMY_HASH = "$2b$12$35Tw3RwpQ3XFfRF3Z4hxN.491TzBeetKOxd9Bsl93Kb8ADZP36eIu";
+
+// First x-forwarded-for hop: the client as seen by the platform proxy.
+// ponytail: trusts the header; fine behind Railway/Fly, which set it.
+function clientIp(request: Request): string | null {
+  const forwarded = request.headers.get("x-forwarded-for");
+  return forwarded?.split(",")[0].trim().slice(0, 64) || null;
+}
 
 // Surfaces as `?error=CredentialsSignin&code=rate_limited` on the login page
 class TooManyAttempts extends CredentialsSignin {
@@ -52,56 +68,65 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, request) {
         if (!credentials?.email || !credentials?.password) {
           return null;
         }
 
+        const email = String(credentials.email).trim().toLowerCase();
+        if (email.length > MAX_EMAIL_LENGTH) return null;
+
         // Dynamic import to avoid build-time database connection
         const { prisma } = await import("@/lib/db");
 
-        const email = String(credentials.email).trim().toLowerCase();
+        const ip = clientIp(request);
         const windowStart = new Date(Date.now() - LOGIN_WINDOW_MS);
 
-        const failedAttempts = await prisma.loginAttempt.count({
-          where: { email, created_at: { gte: windowStart } },
-        });
-        if (failedAttempts >= MAX_FAILED_LOGINS) {
+        // Record first, then count: parallel bursts all see each other's rows,
+        // so at most MAX_ATTEMPTS_PER_EMAIL_IP of them get to bcrypt.
+        await prisma.loginAttempt.create({ data: { email, ip } });
+        const recent = { created_at: { gte: windowStart } };
+        const [perEmailIp, perIp, perEmail] = await Promise.all([
+          prisma.loginAttempt.count({ where: { email, ip, ...recent } }),
+          ip ? prisma.loginAttempt.count({ where: { ip, ...recent } }) : 0,
+          prisma.loginAttempt.count({ where: { email, ...recent } }),
+        ]);
+
+        // ponytail: prunes expired rows on every rejected attempt; fine while
+        // the table stays small, move to a cron if it ever grows
+        const prune = () =>
+          prisma.loginAttempt.deleteMany({
+            where: { created_at: { lt: windowStart } },
+          });
+
+        if (
+          perEmailIp > MAX_ATTEMPTS_PER_EMAIL_IP ||
+          perIp > MAX_ATTEMPTS_PER_IP ||
+          perEmail > MAX_ATTEMPTS_PER_EMAIL
+        ) {
+          await prune();
           throw new TooManyAttempts();
         }
-
-        const fail = async () => {
-          // ponytail: prunes expired rows on every failure; fine while the
-          // table stays small, move to a cron if it ever grows
-          await prisma.$transaction([
-            prisma.loginAttempt.deleteMany({
-              where: { created_at: { lt: windowStart } },
-            }),
-            prisma.loginAttempt.create({ data: { email } }),
-          ]);
-          return null;
-        };
 
         const user = await prisma.user.findUnique({
           where: { email },
           include: { restaurant: { select: { active: true } } },
         });
 
+        // Always run bcrypt so unknown and known emails take the same time
+        const isPasswordValid = await compare(
+          String(credentials.password),
+          user?.password_hash ?? DUMMY_HASH,
+        );
+
         if (
           !user ||
+          !isPasswordValid ||
           !user.active ||
           (user.role !== "SUPER_ADMIN" && !user.restaurant.active)
         ) {
-          return fail();
-        }
-
-        const isPasswordValid = await compare(
-          String(credentials.password),
-          user.password_hash,
-        );
-
-        if (!isPasswordValid) {
-          return fail();
+          await prune();
+          return null;
         }
 
         await prisma.loginAttempt.deleteMany({ where: { email } });

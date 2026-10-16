@@ -55,6 +55,14 @@ test("lastweekday covers the same weekday up to the same time", () => {
   assert.equal(end.toISOString(), "2026-10-09T10:00:00.000Z");
 });
 
+test("lastweekday across the DST change ends at the same local time", () => {
+  // 2026-04-01 12:00 CEST; a week before is CET, so 12:00 local = 11:00 UTC
+  const now = new Date("2026-04-01T10:00:00Z");
+  const { start, end } = getPeriodRange("lastweekday", MADRID, now);
+  assert.equal(start.toISOString(), "2026-03-24T23:00:00.000Z");
+  assert.equal(end.toISOString(), "2026-03-25T11:00:00.000Z");
+});
+
 test("zonedParts gives local hour and weekday", () => {
   const p = zonedParts(new Date("2026-10-16T23:30:00Z"), MADRID); // Sat 01:30 CEST
   assert.equal(p.hour, 1);

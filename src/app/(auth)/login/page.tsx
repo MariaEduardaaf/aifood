@@ -36,7 +36,11 @@ export default function LoginPage() {
 
 
       if (result?.error) {
-        setError(t("invalidCredentials"));
+        setError(
+          result.code === "rate_limited"
+            ? t("rateLimited")
+            : t("invalidCredentials"),
+        );
         setLoading(false);
       } else if (result?.ok) {
         window.location.href = callbackUrl;

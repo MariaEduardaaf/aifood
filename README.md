@@ -83,7 +83,7 @@ Runs as one long-running Node process (Docker image) plus Postgres, on Railway o
 
 - Step-by-step guide, env vars, Railway and Fly setup: [docs/DEPLOY.md](docs/DEPLOY.md).
 - Docker: `docker build --build-arg NEXT_PUBLIC_APP_URL=https://your-domain -t aifood .`. The container runs `prisma migrate deploy` and then the standalone server on `$PORT` (default 3000).
-- First admin (idempotent): `npm run create-admin -- --restaurant "Café Sol" --slug cafe-sol --email owner@cafesol.es --password '...'` (add `--role SUPER_ADMIN` for the studio account). In the image: `node scripts/create-admin.ts ...`.
+- First admin: `ADMIN_PASSWORD='...' npm run create-admin -- --restaurant "Café Sol" --slug cafe-sol --email owner@cafesol.es` (add `--role SUPER_ADMIN` for the studio account; an existing slug aborts unless `--attach`). In the image: `node scripts/create-admin.ts ...`. See `docs/DEPLOY.md`.
 - Health check: `GET /api/health` returns `{"status":"ok","db":"up"}` (503 if the database is down).
 - `NEXT_PUBLIC_*` variables are baked in at build time, so pass them as build args.
 

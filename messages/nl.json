@@ -475,6 +475,7 @@
     "email": "E-mail",
     "password": "Wachtwoord",
     "invalidCredentials": "Ongeldig e-mailadres of wachtwoord",
+    "rateLimited": "Te veel inlogpogingen. Wacht 15 minuten en probeer het opnieuw.",
     "loginSuccess": "Succesvol ingelogd",
     "logoutSuccess": "Succesvol uitgelogd",
     "platformTagline": "Serviceplatform",

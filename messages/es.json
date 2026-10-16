@@ -475,6 +475,7 @@
     "email": "Email",
     "password": "Contraseña",
     "invalidCredentials": "Email o contraseña inválidos",
+    "rateLimited": "Demasiados intentos de inicio de sesión. Espere 15 minutos e inténtelo de nuevo.",
     "loginSuccess": "Inicio de sesión exitoso",
     "logoutSuccess": "Cierre de sesión exitoso",
     "platformTagline": "Plataforma de Atención",

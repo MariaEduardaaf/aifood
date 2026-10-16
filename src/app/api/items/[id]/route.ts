@@ -7,6 +7,7 @@ import {
   localeTextMap,
   allergensSchema,
   missingDefaultLocale,
+  imageUrlSchema,
 } from "@/lib/api";
 import { getSettings } from "@/lib/settings";
 
@@ -16,7 +17,7 @@ const menuItemUpdateSchema = z.object({
   descriptions: localeTextMap(500).optional(),
   allergens: allergensSchema.optional(),
   price: z.number().min(0).max(99999.99).optional(),
-  image_url: z.string().url().optional().nullable(),
+  image_url: imageUrlSchema.optional().nullable(),
   order: z.number().int().min(0).optional(),
   active: z.boolean().optional(),
 });
@@ -29,13 +30,15 @@ export async function GET(
   try {
     const session = await auth();
 
-    if (
-      !session ||
-      (session.user.role !== "ADMIN" &&
-        session.user.role !== "MANAGER" &&
-        session.user.role !== "SUPER_ADMIN")
-    ) {
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (
+      session.user.role !== "ADMIN" &&
+      session.user.role !== "MANAGER" &&
+      session.user.role !== "SUPER_ADMIN"
+    ) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const item = await prisma.menuItem.findFirst({
@@ -68,11 +71,11 @@ export async function PUT(
   try {
     const session = await auth();
 
-    if (
-      !session ||
-      (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN")
-    ) {
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const body = await request.json().catch(() => null);
@@ -142,11 +145,11 @@ export async function DELETE(
   try {
     const session = await auth();
 
-    if (
-      !session ||
-      (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN")
-    ) {
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const existingItem = await prisma.menuItem.findFirst({

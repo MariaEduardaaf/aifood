@@ -63,7 +63,9 @@ export type MenuCsvError = { row: number; message: string };
 
 // File-level problems fail the whole import; row problems skip only that row
 export type MenuCsvResult =
-  | { ok: true; rows: MenuCsvRow[]; errors: MenuCsvError[] }
+  // hasAllergens: the file has an `allergens` column. Without it, imports
+  // must leave existing allergens alone instead of clearing them.
+  | { ok: true; rows: MenuCsvRow[]; errors: MenuCsvError[]; hasAllergens: boolean }
   | { ok: false; error: string };
 
 export const MENU_CSV_MAX_ROWS = 500;
@@ -107,13 +109,11 @@ export function parseMenuCsv(text: string, defaultLocale: string): MenuCsvResult
       }
     }
 
-    // Accept "3,50" as well as "3.50"
+    // Accept "3,50" as well as "3.50"; no thousands separators or signs
     const rawPrice = cell("price").replace(/[€$£\s]/g, "");
-    const price = Number(
-      rawPrice.includes(",") && !rawPrice.includes(".")
-        ? rawPrice.replace(",", ".")
-        : rawPrice,
-    );
+    const price = /^\d+([.,]\d{1,2})?$/.test(rawPrice)
+      ? Number(rawPrice.replace(",", "."))
+      : NaN;
 
     const allergens = cell("allergens")
       .toLowerCase()
@@ -132,12 +132,12 @@ export function parseMenuCsv(text: string, defaultLocale: string): MenuCsvResult
             ? "a name is longer than 120 characters"
             : Object.values(descriptions).some((d) => d.length > 500)
               ? "a description is longer than 500 characters"
-              : !rawPrice || !Number.isFinite(price) || price < 0 || price > 99999.99
+              : !Number.isFinite(price) || price > 99999.99
                 ? `invalid price "${cell("price")}"`
                 : badAllergen
                   ? `unknown allergen "${badAllergen}"`
-                  : image && !/^https?:\/\/\S+$/i.test(image)
-                    ? "image_url must be an http(s) URL"
+                  : image && !/^https:\/\/\S+$/i.test(image)
+                    ? "image_url must be an https URL"
                     : null;
 
     if (error) {
@@ -156,5 +156,5 @@ export function parseMenuCsv(text: string, defaultLocale: string): MenuCsvResult
     });
   });
 
-  return { ok: true, rows, errors };
+  return { ok: true, rows, errors, hasAllergens: col("allergens") !== -1 };
 }

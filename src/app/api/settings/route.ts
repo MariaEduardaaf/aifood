@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { z } from "zod";
-import { validationError } from "@/lib/api";
+import { restaurantNotFound, validationError } from "@/lib/api";
 import {
   CURRENCIES,
   DEFAULT_SETTINGS,
@@ -55,6 +55,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    if (session.user.role === "SUPER_ADMIN") {
+      const notFound = await restaurantNotFound(restaurantId);
+      if (notFound) return notFound;
+    }
+
     let settings = await prisma.settings.findUnique({
       where: { restaurant_id: restaurantId },
     });
@@ -86,11 +91,11 @@ export async function PUT(request: NextRequest) {
   try {
     const session = await auth();
 
-    if (
-      !session ||
-      (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN")
-    ) {
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const body = await request.json().catch(() => null);
@@ -110,6 +115,11 @@ export async function PUT(request: NextRequest) {
         { error: "restaurantId is required" },
         { status: 400 },
       );
+    }
+
+    if (session.user.role === "SUPER_ADMIN") {
+      const notFound = await restaurantNotFound(restaurantId);
+      if (notFound) return notFound;
     }
 
     // restaurantId is input-only; the column is restaurant_id

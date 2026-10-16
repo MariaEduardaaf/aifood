@@ -228,11 +228,14 @@ model OrderItem {
   @@index([order_id])
 }
 
-// Login throttling: one row per failed attempt, pruned by the login route
+// Login throttling: one row per attempt, deleted on success and pruned by
+// the login route once older than the window
 model LoginAttempt {
   id         String   @id @default(cuid())
   email      String
+  ip         String?
   created_at DateTime @default(now())
 
   @@index([email, created_at])
+  @@index([ip, created_at])
 }

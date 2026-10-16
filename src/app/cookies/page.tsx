@@ -18,15 +18,19 @@ const content: Record<"es" | "en", Doc> = {
         heading: "Cookies que usamos",
         paragraphs: [
           "locale: guarda el idioma que eliges para la carta. Duración: un año.",
-          "authjs.session-token, authjs.csrf-token y authjs.callback-url: solo se crean cuando el personal del local inicia sesión en su panel. Duración: la de la sesión de trabajo.",
+          "__Secure-authjs.session-token: mantiene abierta la sesión del personal del local en su panel. Duración: hasta 12 horas.",
+          "__Host-authjs.csrf-token y __Secure-authjs.callback-url: protegen el inicio de sesión del personal y recuerdan a qué página volver. Duración: la de la sesión del navegador.",
+          "Las cookies authjs solo se crean cuando el personal inicia sesión; los clientes que consultan la carta no las reciben.",
         ],
       },
       {
         heading: "Almacenamiento del navegador",
         paragraphs: [
+          "aifood-locale-auto (sessionStorage): recuerda que ya adaptamos el idioma de la carta al de tu navegador, para no volver a cambiarlo mientras la pestaña está abierta.",
           "aifood-hide-allergens (sessionStorage): recuerda los alérgenos que has elegido ocultar mientras la pestaña está abierta.",
           "aifood-rated-… (localStorage): evita volver a pedirte una valoración que ya diste u omitiste.",
-          "Preferencias de tema y sonido (localStorage): solo en los paneles del personal.",
+          "aifood-sa-restaurant (localStorage): recuerda qué local está gestionando el administrador de la plataforma. Solo en su panel.",
+          "visionary-theme y visionary-sound-settings (localStorage): preferencias de tema y sonido, solo en los paneles del personal.",
         ],
       },
       {
@@ -47,15 +51,19 @@ const content: Record<"es" | "en", Doc> = {
         heading: "Cookies we use",
         paragraphs: [
           "locale: remembers the language you pick for the menu. Lasts one year.",
-          "authjs.session-token, authjs.csrf-token and authjs.callback-url: only created when venue staff sign in to their dashboard. Last for the working session.",
+          "__Secure-authjs.session-token: keeps venue staff signed in to their dashboard. Lasts up to 12 hours.",
+          "__Host-authjs.csrf-token and __Secure-authjs.callback-url: protect the staff sign-in and remember which page to return to. Last until the browser session ends.",
+          "The authjs cookies are only set when staff sign in; guests browsing the menu never get them.",
         ],
       },
       {
         heading: "Browser storage",
         paragraphs: [
+          "aifood-locale-auto (sessionStorage): remembers that the menu language was already matched to your browser, so it is not switched again while the tab is open.",
           "aifood-hide-allergens (sessionStorage): remembers the allergens you chose to hide while the tab is open.",
           "aifood-rated-… (localStorage): avoids asking again for a rating you already gave or skipped.",
-          "Theme and sound preferences (localStorage): staff dashboards only.",
+          "aifood-sa-restaurant (localStorage): remembers which venue the platform administrator is managing. Their dashboard only.",
+          "visionary-theme and visionary-sound-settings (localStorage): theme and sound preferences, staff dashboards only.",
         ],
       },
       {

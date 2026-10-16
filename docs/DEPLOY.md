@@ -39,15 +39,23 @@ the database is unreachable).
 5. Deploy. The logs show `prisma migrate deploy` applying migrations, then
    `Ready`. Migrations run on every start and are a no-op when up to date.
 6. **First admin.** Open a shell in the running container with the Railway
-   CLI and run the script the image ships (Node strips the types):
+   CLI and run the script the image ships (Node strips the types). The
+   password goes in `ADMIN_PASSWORD`, read without echo, so it stays out of
+   shell history and the process list:
    ```bash
    railway ssh --service <app-service>
+   bash   # if the shell is not bash already; `read -s` needs it
+   read -rsp "Admin password: " ADMIN_PASSWORD && export ADMIN_PASSWORD
    node scripts/create-admin.ts --restaurant "Café Sol" --slug cafe-sol \
-     --email owner@cafesol.es --password "a-long-password"
+     --email owner@cafesol.es
    ```
    Alternative from a local checkout: enable public networking on Postgres and
-   run `DATABASE_URL=<DATABASE_PUBLIC_URL> npm run create-admin -- ...`.
-   The script is idempotent: an existing restaurant or user is left unchanged.
+   run `DATABASE_URL=<DATABASE_PUBLIC_URL> npm run create-admin -- ...` with
+   `ADMIN_PASSWORD` exported the same way.
+   An existing user (same email) is left unchanged. If a restaurant with the
+   same slug already exists the script stops with an error; pass `--attach`
+   only when you mean to add the admin to that existing restaurant.
+   `--password` still works but prints a warning.
    Add `--role SUPER_ADMIN` for the studio's own super admin account.
 7. **Custom domain**: *Settings* → *Networking* → *Custom Domain* → add
    `pedidos.cafesol.es` and create the CNAME Railway shows at your DNS provider.
@@ -91,17 +99,39 @@ the database is unreachable).
    ```
 5. `fly deploy`. Keep a single machine (`fly scale count 1`): realtime uses an
    in-process event bus.
-6. **First admin** (the image ships the script; Node strips the types):
+6. **First admin** (the image ships the script; Node strips the types). Open
+   an interactive shell so the password never appears in a command line:
    ```bash
-   fly ssh console -C "node scripts/create-admin.ts --restaurant 'Café Sol' \
-     --slug cafe-sol --email owner@cafesol.es --password 'a-long-password'"
+   fly ssh console -C bash
+   read -rsp "Admin password: " ADMIN_PASSWORD && export ADMIN_PASSWORD
+   node scripts/create-admin.ts --restaurant "Café Sol" --slug cafe-sol \
+     --email owner@cafesol.es
    ```
+   Same rules as on Railway: an existing slug stops the script unless you pass
+   `--attach`.
 7. **Custom domain**:
    ```bash
    fly certs add pedidos.cafesol.es
    ```
    Create the DNS records it prints (CNAME to `<app>.fly.dev`, or A/AAAA), then
    update the `NEXT_PUBLIC_APP_URL` build arg and `fly deploy` again.
+
+## Baselining a database created with `db push`
+
+A database set up earlier with `prisma db push` (instead of migrations) has
+the tables but no `_prisma_migrations` history, so `prisma migrate deploy`
+fails trying to create tables that already exist. Mark the first migration as
+applied once, then deploy the rest:
+
+```bash
+DATABASE_URL=<url> npx prisma migrate resolve --applied 0001_init
+DATABASE_URL=<url> npx prisma migrate deploy
+```
+
+Only do this when the schema really matches `0001_init`; if later migrations
+(`0002_...`, `0003_...`) were also pushed already, mark each of them with
+`migrate resolve --applied <name>` too. Check first with
+`npx prisma migrate diff --from-url <url> --to-schema-datamodel prisma/schema.prisma`.
 
 ## Local Docker check
 

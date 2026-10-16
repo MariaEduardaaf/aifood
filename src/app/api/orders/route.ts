@@ -12,6 +12,9 @@ export const dynamic = "force-dynamic";
 // Minimum seconds between two orders from the same table
 const RATE_LIMIT_SECONDS = 10;
 
+// Longest a guest sees a table's orders when no bill was settled meanwhile
+const GUEST_WINDOW_MS = 3 * 60 * 60 * 1000;
+
 const orderItemSchema = z.object({
   menuItemId: z.string(),
   quantity: z.number().int().min(1).max(50),
@@ -84,19 +87,43 @@ export async function GET(request: NextRequest) {
     const { table } = found;
     if (!table.settings.ordering_enabled) return orderingDisabled();
 
-    // Fetch table orders (last 24h, not cancelled)
-    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    // Only the current party's orders: since the table's last settled bill,
+    // and never older than GUEST_WINDOW_MS, so the next guests at the table
+    // do not see what the previous ones ordered.
+    const lastBill = await prisma.call.findFirst({
+      where: {
+        table_id: table.id,
+        type: "REQUEST_BILL",
+        status: "RESOLVED",
+        resolved_at: { not: null },
+      },
+      orderBy: { resolved_at: "desc" },
+      select: { resolved_at: true },
+    });
+    const since = Math.max(
+      lastBill?.resolved_at?.getTime() ?? 0,
+      Date.now() - GUEST_WINDOW_MS,
+    );
 
     const orders = await prisma.order.findMany({
       where: {
         table_id: table.id,
         restaurant_id: table.restaurant_id,
-        created_at: { gte: twentyFourHoursAgo },
+        created_at: { gte: new Date(since) },
         status: { not: "CANCELLED" },
       },
-      include: {
+      select: {
+        id: true,
+        status: true,
+        total: true,
+        notes: true,
+        created_at: true,
         items: {
-          include: {
+          select: {
+            id: true,
+            quantity: true,
+            unit_price: true,
+            notes: true,
             menuItem: {
               select: { id: true, names: true, image_url: true },
             },

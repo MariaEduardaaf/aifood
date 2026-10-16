@@ -75,11 +75,15 @@ export function getPeriodRange(
       return { start: startOfZonedDay(year, month, 1, timeZone), end: now };
     case "30days": // last 30 days, today included
       return { start: dayStart(29), end: now };
-    case "lastweekday": // same weekday a week ago, up to the same time of day
+    case "lastweekday": {
+      // Same weekday a week ago, up to the same elapsed time since local
+      // midnight (not now - 7*24h, which is an hour off across a DST change)
+      const start = dayStart(7);
       return {
-        start: dayStart(7),
-        end: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000),
+        start,
+        end: new Date(start.getTime() + (now.getTime() - dayStart(0).getTime())),
       };
+    }
     case "today":
     default:
       return { start: dayStart(0), end: now };

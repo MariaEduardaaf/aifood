@@ -12,11 +12,11 @@ export async function POST(request: NextRequest) {
   try {
     const session = await auth();
 
-    if (
-      !session ||
-      !["ADMIN", "MANAGER", "SUPER_ADMIN"].includes(session.user.role)
-    ) {
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (!["ADMIN", "MANAGER", "SUPER_ADMIN"].includes(session.user.role)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const formData = await request.formData().catch(() => null);

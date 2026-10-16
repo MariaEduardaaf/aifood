@@ -475,6 +475,7 @@
     "email": "Email",
     "password": "Password",
     "invalidCredentials": "Invalid email or password",
+    "rateLimited": "Too many sign-in attempts. Please wait 15 minutes and try again.",
     "loginSuccess": "Login successful",
     "logoutSuccess": "Logout successful",
     "platformTagline": "Service Platform",

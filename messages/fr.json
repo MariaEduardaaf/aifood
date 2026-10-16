@@ -475,6 +475,7 @@
     "email": "E-mail",
     "password": "Mot de passe",
     "invalidCredentials": "E-mail ou mot de passe invalide",
+    "rateLimited": "Trop de tentatives de connexion. Patientez 15 minutes puis réessayez.",
     "loginSuccess": "Connexion réussie",
     "logoutSuccess": "Déconnexion réussie",
     "platformTagline": "Plateforme de service",
