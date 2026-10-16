@@ -1,8 +1,13 @@
 import { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { callInclude } from "@/lib/events";
+import { sseResponse } from "@/lib/sse";
 
-// GET /api/calls/stream - Server-Sent Events for real-time updates
+export const dynamic = "force-dynamic";
+
+// GET /api/calls/stream - Server-Sent Events for real-time calls.
+// `refresh` carries the open calls; `call` carries any created or resolved call.
 export async function GET(request: NextRequest) {
   const session = await auth();
 
@@ -19,8 +24,7 @@ export async function GET(request: NextRequest) {
     return new Response("Forbidden", { status: 403 });
   }
 
-  const { searchParams } = new URL(request.url);
-  const restaurantIdParam = searchParams.get("restaurantId");
+  const restaurantIdParam = request.nextUrl.searchParams.get("restaurantId");
   const restaurantId =
     session.user.role === "SUPER_ADMIN"
       ? restaurantIdParam
@@ -30,65 +34,19 @@ export async function GET(request: NextRequest) {
     return new Response("restaurantId is required", { status: 400 });
   }
 
-  const encoder = new TextEncoder();
-  let isConnected = true;
-
-  const stream = new ReadableStream({
-    async start(controller) {
-      // Send initial data
-      const sendCalls = async () => {
-        if (!isConnected) return;
-
-        try {
-          const calls = await prisma.call.findMany({
-            where: {
-              status: "OPEN",
-              restaurant_id: restaurantId,
-            },
-            orderBy: { created_at: "asc" },
-            include: {
-              table: {
-                select: {
-                  id: true,
-                  label: true,
-                },
-              },
-            },
-          });
-
-          const data = `data: ${JSON.stringify(calls)}\n\n`;
-          controller.enqueue(encoder.encode(data));
-        } catch (error) {
-          console.error("SSE error:", error);
-        }
-      };
-
-      // Send initial data
-      await sendCalls();
-
-      // Poll for updates every 2 seconds (simple approach for MVP)
-      const interval = setInterval(async () => {
-        if (!isConnected) {
-          clearInterval(interval);
-          return;
-        }
-        await sendCalls();
-      }, 2000);
-
-      // Handle client disconnect
-      request.signal.addEventListener("abort", () => {
-        isConnected = false;
-        clearInterval(interval);
-        controller.close();
-      });
-    },
-  });
-
-  return new Response(stream, {
-    headers: {
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache",
-      Connection: "keep-alive",
-    },
+  return sseResponse(request, {
+    restaurantId,
+    type: "call",
+    loadRecord: (id) =>
+      prisma.call.findFirst({
+        where: { id, restaurant_id: restaurantId },
+        include: callInclude,
+      }),
+    loadList: () =>
+      prisma.call.findMany({
+        where: { status: "OPEN", restaurant_id: restaurantId },
+        orderBy: { created_at: "asc" },
+        include: callInclude,
+      }),
   });
 }

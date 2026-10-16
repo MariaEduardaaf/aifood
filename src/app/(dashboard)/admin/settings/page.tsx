@@ -2,180 +2,211 @@
 
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
-import { ExternalLink, Loader2, Check } from "lucide-react";
+import { ExternalLink, Loader2, Globe, ShoppingBag, Clock } from "lucide-react";
 import { isHttpUrl } from "@/lib/utils";
+import { useToast } from "@/components/ui/toast";
+import { CURRENCIES, LanguageFields, TimezoneSelect, fieldClass } from "@/components/admin/regional-fields";
 
 interface SettingsData {
-  id: string;
+  currency: string;
+  default_locale: string;
+  enabled_locales: string[];
+  ordering_enabled: boolean;
+  timezone: string;
   google_reviews_url: string | null;
   google_reviews_enabled: boolean;
-  min_stars_redirect: number;
-  currency?: string;
 }
 
-const CURRENCIES = ["EUR", "BRL", "USD", "GBP"];
+
+function Switch({
+  checked,
+  onChange,
+  label,
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(!checked)}
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      className={`relative h-7 w-14 flex-shrink-0 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 ${
+        checked ? "bg-primary" : "bg-muted-foreground/40"
+      }`}
+    >
+      <span
+        className={`absolute left-0 top-1 h-5 w-5 rounded-full bg-white transition-transform ${
+          checked ? "translate-x-8" : "translate-x-1"
+        }`}
+      />
+    </button>
+  );
+}
+
+function Section({
+  icon: Icon,
+  title,
+  subtitle,
+  children,
+}: {
+  icon: typeof Globe;
+  title: string;
+  subtitle: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="card-premium rounded-2xl p-6 sm:p-8">
+      <div className="mb-6 flex items-center gap-3">
+        <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-primary/10">
+          <Icon className="h-6 w-6 text-primary" />
+        </div>
+        <div>
+          <h2 className="text-xl font-semibold text-foreground">{title}</h2>
+          <p className="text-sm text-muted-foreground">{subtitle}</p>
+        </div>
+      </div>
+      <div className="space-y-6">{children}</div>
+    </section>
+  );
+}
 
 export default function SettingsPage() {
   const t = useTranslations("admin");
   const tCommon = useTranslations("common");
   const tErr = useTranslations("errors");
+  const toast = useToast();
 
-  const [settings, setSettings] = useState<SettingsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-
-  const [googleUrl, setGoogleUrl] = useState("");
-  const [enabled, setEnabled] = useState(true);
-  const [currency, setCurrency] = useState("EUR");
   const [error, setError] = useState<string | null>(null);
+  const [form, setForm] = useState<SettingsData | null>(null);
 
   useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const res = await fetch("/api/settings");
-        if (res.ok) {
-          const data = await res.json();
-          setSettings(data);
-          setGoogleUrl(data.google_reviews_url || "");
-          setEnabled(data.google_reviews_enabled);
-          setCurrency(data.currency || "EUR");
-        }
-      } catch (err) {
-        console.error("Error fetching settings:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchSettings();
+    fetch("/api/settings")
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((d) =>
+        setForm({
+          currency: d.currency || "EUR",
+          default_locale: d.default_locale || "es",
+          enabled_locales: d.enabled_locales?.length ? d.enabled_locales : ["es"],
+          ordering_enabled: d.ordering_enabled ?? true,
+          timezone: d.timezone || "Europe/Madrid",
+          google_reviews_url: d.google_reviews_url,
+          google_reviews_enabled: d.google_reviews_enabled ?? true,
+        }),
+      )
+      .catch(() => toast(tErr("generic"), "error"))
+      .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleSave = async () => {
-    setSaving(true);
-    setSaved(false);
-    setError(null);
+  if (loading || !form) {
+    return (
+      <div className="flex min-h-[400px] items-center justify-center">
+        {loading ? (
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        ) : (
+          <p role="alert" className="text-muted-foreground">
+            {tErr("generic")}
+          </p>
+        )}
+      </div>
+    );
+  }
 
+  const set = (patch: Partial<SettingsData>) => setForm({ ...form, ...patch });
+
+  const save = async () => {
+    setSaving(true);
+    setError(null);
     try {
       const res = await fetch("/api/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          google_reviews_url: googleUrl || null,
-          google_reviews_enabled: enabled,
-          currency,
+          ...form,
+          google_reviews_url: form.google_reviews_url?.trim() || null,
         }),
       });
-
       if (res.ok) {
-        const data = await res.json();
-        setSettings(data);
-        setSaved(true);
-        setTimeout(() => setSaved(false), 3000);
+        toast(t("settingsSaved"), "success");
       } else {
         const data = await res.json().catch(() => ({}));
-        setError(typeof data.error === "string" ? data.error : tErr("generic"));
+        const msg = typeof data.error === "string" ? data.error : tErr("generic");
+        setError(msg);
+        toast(msg, "error");
       }
-    } catch (err) {
-      console.error("Error saving settings:", err);
+    } catch {
       setError(tErr("generic"));
+      toast(tErr("generic"), "error");
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  const googleUrl = form.google_reviews_url ?? "";
 
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold">{t("settings")}</h1>
-      </div>
+      <h1 className="text-2xl font-bold">{t("settings")}</h1>
 
-      {/* Google Reviews Card */}
-      <div className="card-premium rounded-2xl p-8">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-            <ExternalLink className="h-6 w-6 text-primary" />
-          </div>
+      <Section
+        icon={Globe}
+        title={t("settingsPage.languages")}
+        subtitle={t("settingsPage.languagesSubtitle")}
+      >
+        <LanguageFields
+          enabled={form.enabled_locales}
+          defaultLocale={form.default_locale}
+          onChange={set}
+        />
+        <p className="text-xs text-muted-foreground">{t("settingsPage.languagesHint")}</p>
+      </Section>
+
+      <Section
+        icon={ShoppingBag}
+        title={t("settingsPage.ordering")}
+        subtitle={t("settingsPage.orderingSubtitle")}
+      >
+        <div className="flex items-center justify-between gap-4 rounded-xl border border-border/30 bg-secondary/30 p-4">
           <div>
-            <h2 className="text-xl font-semibold text-foreground">
-              {t("googleReviews")}
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              {t("settingsPage.googleReviewsSubtitle")}
-            </p>
+            <p className="text-sm font-medium text-foreground">{t("settingsPage.orderingEnabled")}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{t("settingsPage.orderingLite")}</p>
           </div>
+          <Switch
+            checked={form.ordering_enabled}
+            onChange={(v) => set({ ordering_enabled: v })}
+            label={t("settingsPage.orderingEnabled")}
+          />
         </div>
+      </Section>
 
-        <div className="space-y-6">
-          {/* URL Input */}
+      <Section
+        icon={Clock}
+        title={t("settingsPage.regional")}
+        subtitle={t("settingsPage.regionalSubtitle")}
+      >
+        <div className="grid gap-6 sm:grid-cols-2">
           <div>
-            <label
-              htmlFor="google-url"
-              className="block text-sm font-medium text-foreground mb-2"
-            >
-              {t("googleReviewsUrl")}
+            <label htmlFor="timezone" className="mb-2 block text-sm font-medium text-foreground">
+              {t("settingsPage.timezone")}
             </label>
-            <input
-              id="google-url"
-              type="url"
-              value={googleUrl}
-              onChange={(e) => setGoogleUrl(e.target.value)}
-              placeholder={t("googleReviewsUrlPlaceholder")}
-              className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-            />
-            <p className="mt-2 text-xs text-muted-foreground">
-              {t("settingsPage.urlTip")}
-            </p>
+            <TimezoneSelect id="timezone" value={form.timezone} onChange={(v) => set({ timezone: v })} />
+            <p className="mt-2 text-xs text-muted-foreground">{t("settingsPage.timezoneHint")}</p>
           </div>
-
-          {/* Enable Toggle */}
-          <div className="flex items-center justify-between p-4 rounded-xl bg-secondary/30 border border-border/30">
-            <div>
-              <label className="text-sm font-medium text-foreground">
-                {t("googleReviewsEnabled")}
-              </label>
-              <p className="text-xs text-muted-foreground mt-1">
-                {t("settingsPage.redirectDescription")}
-              </p>
-            </div>
-            <button
-              onClick={() => setEnabled(!enabled)}
-              role="switch"
-              aria-checked={enabled}
-              aria-label={t("googleReviewsEnabled")}
-              className={`relative w-14 h-7 rounded-full transition-colors ${
-                enabled ? "bg-primary" : "bg-secondary"
-              }`}
-            >
-              <div
-                className={`absolute top-1 w-5 h-5 rounded-full bg-white transition-transform ${
-                  enabled ? "translate-x-8" : "translate-x-1"
-                }`}
-              />
-            </button>
-          </div>
-
-          {/* Currency */}
           <div>
-            <label
-              htmlFor="currency"
-              className="block text-sm font-medium text-foreground mb-2"
-            >
+            <label htmlFor="currency" className="mb-2 block text-sm font-medium text-foreground">
               {t("settingsPage.currency")}
             </label>
             <select
               id="currency"
-              value={currency}
-              onChange={(e) => setCurrency(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border/50 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+              value={form.currency}
+              onChange={(e) => set({ currency: e.target.value })}
+              className={fieldClass}
             >
               {CURRENCIES.map((c) => (
                 <option key={c} value={c}>
@@ -183,56 +214,71 @@ export default function SettingsPage() {
                 </option>
               ))}
             </select>
-            <p className="mt-2 text-xs text-muted-foreground">
-              {t("settingsPage.currencyHint")}
-            </p>
+            <p className="mt-2 text-xs text-muted-foreground">{t("settingsPage.currencyHint")}</p>
           </div>
         </div>
+      </Section>
 
-        {error && (
-          <p role="alert" className="mt-6 text-sm text-red-600">
-            {error}
-          </p>
-        )}
-
-        {/* Save Button */}
-        <div className="mt-8 flex items-center gap-4">
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="btn-gold px-6 py-3 rounded-xl font-medium flex items-center gap-2 disabled:opacity-50"
-          >
-            {saving ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
-            ) : saved ? (
-              <Check className="h-5 w-5" />
-            ) : null}
-            {saved ? t("settingsSaved") : tCommon("save")}
-          </button>
-
-          {isHttpUrl(googleUrl) && (
-            <a
-              href={googleUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn-secondary-premium px-4 py-3 rounded-xl font-medium flex items-center gap-2"
-            >
-              <ExternalLink className="h-4 w-4" />
-              {t("settingsPage.testUrl")}
-            </a>
-          )}
+      <Section
+        icon={ExternalLink}
+        title={t("googleReviews")}
+        subtitle={t("settingsPage.googleReviewsSubtitle")}
+      >
+        <div>
+          <label htmlFor="google-url" className="mb-2 block text-sm font-medium text-foreground">
+            {t("googleReviewsUrl")}
+          </label>
+          <input
+            id="google-url"
+            type="url"
+            value={googleUrl}
+            onChange={(e) => set({ google_reviews_url: e.target.value })}
+            placeholder={t("googleReviewsUrlPlaceholder")}
+            className={fieldClass}
+          />
+          <p className="mt-2 text-xs text-muted-foreground">{t("settingsPage.urlTip")}</p>
         </div>
-      </div>
 
-      {/* Info Card */}
-      <div className="card-premium rounded-2xl p-6 border-l-4 border-l-primary">
-        <h3 className="font-semibold text-foreground mb-2">{t("settingsPage.howItWorks")}</h3>
-        <ul className="space-y-2 text-sm text-muted-foreground">
-          <li>
-            {t("settingsPage.step1")}
-          </li>
-          <li>{t("settingsPage.step4")}</li>
-        </ul>
+        <div className="flex items-center justify-between gap-4 rounded-xl border border-border/30 bg-secondary/30 p-4">
+          <div>
+            <p className="text-sm font-medium text-foreground">{t("googleReviewsEnabled")}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{t("settingsPage.redirectDescription")}</p>
+          </div>
+          <Switch
+            checked={form.google_reviews_enabled}
+            onChange={(v) => set({ google_reviews_enabled: v })}
+            label={t("googleReviewsEnabled")}
+          />
+        </div>
+
+        {isHttpUrl(googleUrl) && (
+          <a
+            href={googleUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-secondary-premium inline-flex items-center gap-2 rounded-xl px-4 py-3 font-medium"
+          >
+            <ExternalLink className="h-4 w-4" />
+            {t("settingsPage.testUrl")}
+          </a>
+        )}
+      </Section>
+
+      {error && (
+        <p role="alert" className="text-sm text-destructive">
+          {error}
+        </p>
+      )}
+
+      <div className="flex items-center gap-4">
+        <button
+          onClick={save}
+          disabled={saving}
+          className="btn-gold flex min-h-[44px] items-center gap-2 rounded-xl px-6 py-3 font-medium disabled:opacity-50"
+        >
+          {saving && <Loader2 className="h-5 w-5 animate-spin" />}
+          {tCommon("save")}
+        </button>
       </div>
     </div>
   );

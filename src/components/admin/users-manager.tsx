@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
+import { useConfirm } from "@/components/ui/confirm-dialog";
+import { useToast } from "@/components/ui/toast";
 import {
   Button,
   Card,
@@ -50,6 +52,9 @@ export function UsersManager({
   const t = useTranslations("admin");
   const tCommon = useTranslations("common");
   const tAuth = useTranslations("auth");
+  const tErr = useTranslations("errors");
+  const toast = useToast();
+  const { confirm, dialog } = useConfirm();
 
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -163,14 +168,18 @@ export function UsersManager({
       });
 
       if (res.ok) {
+        toast(t("toast.saved"), "success");
         await fetchUsers();
         closeModal();
       } else {
         const data = await res.json().catch(() => ({}));
-        setError(typeof data.error === "string" ? data.error : t("usersPage.saveError"));
+        const msg = typeof data.error === "string" ? data.error : t("usersPage.saveError");
+        setError(msg);
+        toast(msg, "error");
       }
     } catch (err) {
       setError(t("usersPage.saveUserError"));
+      toast(t("usersPage.saveUserError"), "error");
     } finally {
       setSaving(false);
     }
@@ -178,22 +187,24 @@ export function UsersManager({
 
   const handleDelete = async (user: User) => {
     if (user.id === currentUserId) {
-      alert(t("usersPage.cannotDeleteSelf"));
+      toast(t("usersPage.cannotDeleteSelf"), "error");
       return;
     }
 
-    if (!confirm(t("confirmDelete"))) return;
+    if (!(await confirm({ message: t("confirmDelete") }))) return;
 
     try {
       const res = await fetch(`/api/users/${user.id}`, { method: "DELETE" });
       if (res.ok) {
+        toast(t("toast.deleted"), "success");
         await fetchUsers();
       } else {
         const data = await res.json().catch(() => ({}));
-        alert(typeof data.error === "string" ? data.error : t("usersPage.deleteError"));
+        toast(typeof data.error === "string" ? data.error : t("usersPage.deleteError"), "error");
       }
     } catch (err) {
       console.error("Error deleting user:", err);
+      toast(t("usersPage.deleteError"), "error");
     }
   };
 
@@ -205,10 +216,14 @@ export function UsersManager({
         body: JSON.stringify({ active: !user.active }),
       });
       if (res.ok) {
+        toast(t("toast.updated"), "success");
         await fetchUsers();
+      } else {
+        toast(tErr("generic"), "error");
       }
     } catch (err) {
       console.error("Error toggling user active status:", err);
+      toast(tErr("generic"), "error");
     }
   };
 
@@ -239,11 +254,11 @@ export function UsersManager({
         setGeneratedPassword(newPassword);
         setCopiedPassword(false);
       } else {
-        alert(t("usersPage.resetPasswordError"));
+        toast(t("usersPage.resetPasswordError"), "error");
       }
     } catch (err) {
       console.error("Error resetting password:", err);
-      alert(t("usersPage.resetPasswordError"));
+      toast(t("usersPage.resetPasswordError"), "error");
     } finally {
       setResettingPasswordId(null);
     }
@@ -296,6 +311,7 @@ export function UsersManager({
 
   return (
     <div className="space-y-6">
+      {dialog}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">{t("users")}</h1>
         <Button onClick={openCreateModal}>

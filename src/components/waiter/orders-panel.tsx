@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import {
   ShoppingBag,
@@ -13,10 +13,11 @@ import {
   Truck,
   Image as ImageIcon,
 } from "lucide-react";
-import { cn, formatMoney, formatTime, getUrgencyClass, localizedName } from "@/lib/utils";
+import { cn, formatMoney, formatTime, getUrgencyClass } from "@/lib/utils";
+import { localizedText } from "@/lib/i18n/text";
 import { useSound } from "@/components/providers/sound-provider";
 import { useCurrency } from "@/components/providers/currency";
-import { useEventStream, ReconnectBanner } from "@/components/providers/use-event-stream";
+import { useLiveRecords, ReconnectBanner } from "@/components/providers/use-event-stream";
 
 interface OrderItem {
   id: string;
@@ -25,9 +26,7 @@ interface OrderItem {
   notes: string | null;
   menuItem: {
     id: string;
-    name_pt: string;
-    name_es: string;
-    name_en: string;
+    names: Record<string, string>;
     image_url: string | null;
   };
 }
@@ -54,43 +53,19 @@ export function OrdersPanel() {
   const currency = useCurrency();
   const { playNotification } = useSound();
 
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [timers, setTimers] = useState<Record<string, number>>({});
 
-  const initializedRef = useRef(false);
-  const previousOrdersRef = useRef<string[]>([]);
-  const previousReadyRef = useRef<string[]>([]);
-
-  // Fetch orders with SSE
-  const { lost } = useEventStream("/api/orders/stream", (event) => {
-      try {
-        const newOrders: Order[] = JSON.parse(event.data);
-
-        // Check for new orders
-        const currentIds = newOrders.map((o) => o.id);
-        const previousIds = previousOrdersRef.current;
-        const hasNewOrder = currentIds.some((id) => !previousIds.includes(id));
-
-        // Check for new READY orders (kitchen finished)
-        const readyIds = newOrders.filter((o) => o.status === "READY").map((o) => o.id);
-        const previousReadyIds = previousReadyRef.current;
-        const hasNewReady = readyIds.some((id) => !previousReadyIds.includes(id));
-
-        if ((hasNewOrder || hasNewReady) && initializedRef.current) {
-          playNotification();
-        }
-
-        previousOrdersRef.current = currentIds;
-        previousReadyRef.current = readyIds;
-        setOrders(newOrders);
-        initializedRef.current = true;
-        setLoading(false);
-      } catch (err) {
-        console.error("Error parsing SSE data:", err);
-      }
+  // Unused since OrdersKanban replaced it; kept compiling on the live stream
+  const { records: orders, loading, lost, remove } = useLiveRecords<Order>({
+    streamUrl: "/api/orders/stream",
+    event: "order",
+    keep: (o) => o.status === "PENDING" || o.status === "CONFIRMED" || o.status === "READY",
+    sort: (a, b) => b.created_at.localeCompare(a.created_at),
+    onChange: (order, previous) => {
+      if ((!previous && order.status === "PENDING") || order.status === "READY") playNotification();
+    },
   });
 
   // Update timers every second
@@ -145,8 +120,7 @@ export function OrdersPanel() {
         method: "PATCH",
       });
       if (res.ok) {
-        // Remove from list (will be updated via SSE)
-        setOrders((prev) => prev.filter((o) => o.id !== orderId));
+        remove(orderId);
       }
     } catch (err) {
       console.error("Error delivering order:", err);
@@ -164,7 +138,7 @@ export function OrdersPanel() {
         method: "PATCH",
       });
       if (res.ok) {
-        setOrders((prev) => prev.filter((o) => o.id !== orderId));
+        remove(orderId);
       }
     } catch (err) {
       console.error("Error cancelling order:", err);
@@ -312,7 +286,7 @@ export function OrdersPanel() {
                             {item.menuItem.image_url ? (
                               <img
                                 src={item.menuItem.image_url}
-                                alt={localizedName(item.menuItem, locale)}
+                                alt={localizedText(item.menuItem.names, locale, locale)}
                                 className="w-full h-full object-cover"
                               />
                             ) : (
@@ -323,7 +297,7 @@ export function OrdersPanel() {
                           </div>
                           <div className="flex-1">
                             <p className="font-medium text-sm">
-                              {item.quantity}x {localizedName(item.menuItem, locale)}
+                              {item.quantity}x {localizedText(item.menuItem.names, locale, locale)}
                             </p>
                             {item.notes && (
                               <p className="text-xs text-muted-foreground">

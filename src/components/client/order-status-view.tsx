@@ -1,320 +1,234 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslations, useLocale } from "next-intl";
-import {
-  ArrowLeft,
-  Loader2,
-  Clock,
-  CheckCircle,
-  ChefHat,
-  Truck,
-  XCircle,
-  RefreshCw,
-  Image as ImageIcon,
-} from "lucide-react";
-import { formatMoney } from "@/lib/utils";
+import { ArrowLeft, RefreshCw } from "lucide-react";
+import { localizedText } from "@/lib/i18n/text";
+import { cn, formatMoney } from "@/lib/utils";
 import { useCart } from "./cart-context";
+import type { LocaleMap } from "./types";
+
+type OrderStatus = "PENDING" | "CONFIRMED" | "PREPARING" | "READY" | "DELIVERED" | "CANCELLED";
 
 interface OrderItem {
   id: string;
   quantity: number;
-  unit_price: number;
+  unit_price: number | string;
   notes: string | null;
-  menuItem: {
-    id: string;
-    name_pt: string;
-    name_es: string;
-    name_en: string;
-    image_url: string | null;
-  };
+  menuItem: { id: string; names: LocaleMap; image_url: string | null };
 }
 
 interface Order {
   id: string;
-  status: "PENDING" | "CONFIRMED" | "PREPARING" | "READY" | "DELIVERED" | "CANCELLED";
-  total: number;
+  status: OrderStatus;
+  total: number | string;
   notes: string | null;
   created_at: string;
-  confirmed_at: string | null;
-  delivered_at: string | null;
   items: OrderItem[];
 }
 
 interface OrderStatusViewProps {
-  tableId: string;
+  token: string;
+  fallbackLocale: string;
   onBack: () => void;
   onNewOrder: () => void;
 }
 
-export function OrderStatusView({ tableId, onBack, onNewOrder }: OrderStatusViewProps) {
+// The order lifecycle as the guest sees it; CANCELLED sits outside it
+const STEPS: OrderStatus[] = ["PENDING", "CONFIRMED", "PREPARING", "READY", "DELIVERED"];
+
+const STATUS_STYLE: Record<OrderStatus, string> = {
+  PENDING: "text-amber-800 dark:text-amber-300",
+  CONFIRMED: "text-sky-800 dark:text-sky-300",
+  PREPARING: "text-orange-800 dark:text-orange-300",
+  READY: "text-green-800 dark:text-green-300",
+  DELIVERED: "text-muted-foreground",
+  CANCELLED: "text-red-700 dark:text-red-300",
+};
+
+export function OrderStatusView({ token, fallbackLocale, onBack, onNewOrder }: OrderStatusViewProps) {
   const t = useTranslations("orders");
   const locale = useLocale();
   const { currency } = useCart();
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+
+  const fetchOrders = useCallback(
+    async (showRefresh = false) => {
+      if (showRefresh) setRefreshing(true);
+      try {
+        const res = await fetch(`/api/orders?table=${encodeURIComponent(token)}`);
+        if (!res.ok) throw new Error(String(res.status));
+        setOrders(await res.json());
+        setFailed(false);
+      } catch {
+        setFailed(true);
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [token],
+  );
 
   useEffect(() => {
     fetchOrders();
-
-    // Refresh every 10 seconds
     const interval = setInterval(fetchOrders, 10000);
     return () => clearInterval(interval);
-  }, [tableId]);
+  }, [fetchOrders]);
 
-  const fetchOrders = async (showRefresh = false) => {
-    if (showRefresh) setRefreshing(true);
+  const statusLabel = (status: OrderStatus) =>
+    ({
+      PENDING: t("statusPending"),
+      CONFIRMED: t("statusConfirmed"),
+      PREPARING: t("statusPreparing"),
+      READY: t("statusReady"),
+      DELIVERED: t("statusDelivered"),
+      CANCELLED: t("statusCancelled"),
+    })[status];
 
-    try {
-      const res = await fetch(`/api/orders?tableId=${tableId}`);
-      if (res.ok) {
-        const data = await res.json();
-        setOrders(data);
-      }
-    } catch (err) {
-      console.error("Error fetching orders:", err);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
-
-  const getName = (item: {
-    name_pt: string;
-    name_es: string;
-    name_en: string;
-  }) => {
-    switch (locale) {
-      case "es":
-        return item.name_es;
-      case "en":
-        return item.name_en;
-      default:
-        return item.name_pt;
-    }
-  };
-
-  const getStatusInfo = (status: Order["status"]) => {
-    switch (status) {
-      case "PENDING":
-        return {
-          icon: Clock,
-          label: t("statusPending"),
-          color: "text-amber-800 dark:text-yellow-400",
-          bgColor: "bg-yellow-500/10",
-          borderColor: "border-yellow-500/30",
-        };
-      case "CONFIRMED":
-        return {
-          icon: CheckCircle,
-          label: t("statusConfirmed"),
-          color: "text-blue-800 dark:text-blue-400",
-          bgColor: "bg-blue-500/10",
-          borderColor: "border-blue-500/30",
-        };
-      case "PREPARING":
-        return {
-          icon: ChefHat,
-          label: t("statusPreparing"),
-          color: "text-orange-800 dark:text-orange-400",
-          bgColor: "bg-orange-500/10",
-          borderColor: "border-orange-500/30",
-        };
-      case "READY":
-        return {
-          icon: Truck,
-          label: t("statusReady"),
-          color: "text-green-800 dark:text-green-400",
-          bgColor: "bg-green-500/10",
-          borderColor: "border-green-500/30",
-        };
-      case "DELIVERED":
-        return {
-          icon: CheckCircle,
-          label: t("statusDelivered"),
-          color: "text-green-800 dark:text-green-400",
-          bgColor: "bg-green-600/10",
-          borderColor: "border-green-600/30",
-        };
-      case "CANCELLED":
-        return {
-          icon: XCircle,
-          label: t("statusCancelled"),
-          color: "text-red-700 dark:text-red-400",
-          bgColor: "bg-red-500/10",
-          borderColor: "border-red-500/30",
-        };
-    }
-  };
-
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString(locale, {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  const getTimeSince = (dateString: string) => {
-    const now = Date.now();
-    const created = new Date(dateString).getTime();
-    const minutes = Math.floor((now - created) / 60000);
-
+  const timeSince = (dateString: string) => {
+    const minutes = Math.floor((Date.now() - new Date(dateString).getTime()) / 60000);
     if (minutes < 1) return t("justNow");
     if (minutes === 1) return t("oneMinuteAgo");
     if (minutes < 60) return t("minutesAgo", { minutes });
-
     const hours = Math.floor(minutes / 60);
-    if (hours === 1) return t("oneHourAgo");
-    return t("hoursAgo", { hours });
+    return hours === 1 ? t("oneHourAgo") : t("hoursAgo", { hours });
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-background pb-24">
-      {/* Header */}
-      <header className="sticky top-0 z-10 bg-card/95 backdrop-blur-sm border-b border-border/50">
-        <div className="flex items-center justify-between gap-3 p-4">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={onBack}
-              aria-label={t("back")}
-              className="p-2.5 rounded-xl hover:bg-secondary transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </button>
-            <h1 className="text-lg sm:text-xl font-bold text-gold">
-              {t("title")}
-            </h1>
-          </div>
-
+    <div className={cn("min-h-screen bg-background", orders.length > 0 ? "pb-32" : "pb-12")}>
+      <header className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur">
+        <div className="mx-auto flex max-w-2xl items-center gap-2 px-2 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))]">
           <button
+            type="button"
+            onClick={onBack}
+            aria-label={t("back")}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full hover:bg-foreground/[0.06]"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+          <h1 className="flex-1 text-lg font-semibold tracking-tight">{t("title")}</h1>
+          <button
+            type="button"
             onClick={() => fetchOrders(true)}
             disabled={refreshing}
             aria-label={t("refresh")}
-            className="p-2.5 rounded-xl hover:bg-secondary transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full hover:bg-foreground/[0.06]"
           >
-            <RefreshCw className={`h-5 w-5 ${refreshing ? "animate-spin" : ""}`} />
+            <RefreshCw className={cn("h-5 w-5", refreshing && "animate-spin")} />
           </button>
         </div>
       </header>
 
-      {/* Orders List */}
-      <main className="p-4 space-y-4">
-        {orders.length === 0 ? (
-          <div className="text-center py-12">
-            <Clock className="h-12 w-12 mx-auto text-muted-foreground/30 mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">
-              {t("noOrders")}
-            </h3>
-            <p className="text-muted-foreground mb-6">{t("noOrdersMessage")}</p>
+      <main className="mx-auto max-w-2xl space-y-4 px-4 pt-5">
+        {loading ? (
+          <div aria-hidden className="space-y-4">
+            {[0, 1].map((i) => (
+              <div key={i} className="shimmer h-40 rounded-2xl" />
+            ))}
+          </div>
+        ) : failed && orders.length === 0 ? (
+          <div className="py-20 text-center">
+            <p className="text-lg font-semibold text-foreground">{t("loadError")}</p>
             <button
+              type="button"
+              onClick={() => fetchOrders(true)}
+              className="mt-5 h-11 rounded-full border border-border px-5 text-sm font-semibold hover:bg-foreground/[0.06]"
+            >
+              {t("refresh")}
+            </button>
+          </div>
+        ) : orders.length === 0 ? (
+          <div className="py-20 text-center">
+            <p className="text-lg font-semibold text-foreground">{t("noOrders")}</p>
+            <p className="mt-1 text-sm text-muted-foreground">{t("noOrdersMessage")}</p>
+            <button
+              type="button"
               onClick={onNewOrder}
-              className="btn-gold px-6 py-3 rounded-xl font-medium"
+              className="mt-6 h-12 rounded-full bg-primary px-6 font-semibold text-primary-foreground hover:bg-primary/90"
             >
               {t("makeOrder")}
             </button>
           </div>
         ) : (
           orders.map((order) => {
-            const statusInfo = getStatusInfo(order.status);
-            const StatusIcon = statusInfo.icon;
-
+            const step = STEPS.indexOf(order.status);
             return (
-              <div
-                key={order.id}
-                className={`card-premium rounded-2xl overflow-hidden border ${statusInfo.borderColor}`}
-              >
-                {/* Order Header */}
-                <div className={`p-4 ${statusInfo.bgColor}`}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <StatusIcon className={`h-5 w-5 ${statusInfo.color}`} />
-                      <span className={`font-semibold ${statusInfo.color}`}>
-                        {statusInfo.label}
-                      </span>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm text-muted-foreground">
-                        {formatTime(order.created_at)}
-                      </p>
-                      <p className="text-xs text-muted-foreground/70">
-                        {getTimeSince(order.created_at)}
-                      </p>
-                    </div>
+              <article key={order.id} className="rounded-2xl border border-border bg-card p-5">
+                <div className="flex items-start justify-between gap-3">
+                  <p aria-live="polite" className={cn("min-w-0 text-base font-semibold leading-snug", STATUS_STYLE[order.status])}>
+                    {statusLabel(order.status)}
+                  </p>
+                  <p className="shrink-0 text-right text-sm leading-snug tabular-nums text-muted-foreground">
+                    <time dateTime={order.created_at} className="block text-foreground">
+                      {new Date(order.created_at).toLocaleTimeString(locale, {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </time>
+                    <span className="sr-only">, </span>
+                    <span className="block text-xs">{timeSince(order.created_at)}</span>
+                  </p>
+                </div>
+
+                {step >= 0 && (
+                  <div aria-hidden className="mt-3 grid grid-cols-5 gap-1">
+                    {STEPS.map((s, i) => (
+                      <div
+                        key={s}
+                        className={cn("h-1 rounded-full", i <= step ? "bg-primary" : "bg-foreground/[0.07]")}
+                      />
+                    ))}
                   </div>
-                </div>
+                )}
 
-                {/* Order Items */}
-                <div className="p-4 space-y-3">
+                <ul className="mt-4 space-y-2">
                   {order.items.map((item) => (
-                    <div key={item.id} className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-lg bg-secondary flex-shrink-0 overflow-hidden">
-                        {item.menuItem.image_url ? (
-                          <img
-                            src={item.menuItem.image_url}
-                            alt={getName(item.menuItem)}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <ImageIcon className="h-4 w-4 text-muted-foreground/30" />
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">
-                          {item.quantity}x {getName(item.menuItem)}
+                    <li key={item.id} className="flex items-start gap-3 text-[0.9375rem]">
+                      <span className="w-7 shrink-0 font-semibold tabular-nums text-foreground">
+                        {item.quantity}×
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-foreground">
+                          {localizedText(item.menuItem.names, locale, fallbackLocale)}
                         </p>
-                        {item.notes && (
-                          <p className="text-xs text-muted-foreground truncate">
-                            {item.notes}
-                          </p>
-                        )}
+                        {item.notes && <p className="text-sm text-muted-foreground">{item.notes}</p>}
                       </div>
-                      <p className="text-sm font-medium text-muted-foreground">
+                      <span className="tabular-nums text-muted-foreground">
                         {formatMoney(Number(item.unit_price) * item.quantity, currency, locale)}
-                      </p>
-                    </div>
+                      </span>
+                    </li>
                   ))}
+                </ul>
 
-                  {order.notes && (
-                    <div className="pt-2 border-t border-border/50">
-                      <p className="text-xs text-muted-foreground">
-                        <span className="font-medium">{t("notes")}:</span> {order.notes}
-                      </p>
-                    </div>
-                  )}
-                </div>
+                {order.notes && (
+                  <p className="mt-3 text-sm text-muted-foreground">
+                    <span className="font-medium text-foreground">{t("notes")}:</span> {order.notes}
+                  </p>
+                )}
 
-                {/* Order Footer */}
-                <div className="p-4 border-t border-border/50 flex items-center justify-between">
+                <div className="mt-4 flex items-baseline justify-between border-t border-border pt-3">
                   <span className="text-sm text-muted-foreground">{t("total")}</span>
-                  <span className="text-lg font-bold text-price">
+                  <span className="text-lg font-semibold tabular-nums text-foreground">
                     {formatMoney(order.total, currency, locale)}
                   </span>
                 </div>
-              </div>
+              </article>
             );
           })
         )}
       </main>
 
-      {/* Floating Button */}
       {orders.length > 0 && (
-        <div className="fixed bottom-6 left-4 right-4 z-20">
+        <div className="fixed inset-x-0 bottom-0 z-20 px-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
           <button
+            type="button"
             onClick={onNewOrder}
-            className="w-full btn-gold py-4 rounded-xl font-semibold shadow-lg"
+            className="mx-auto flex h-14 w-full max-w-2xl items-center justify-center rounded-full bg-primary font-semibold text-primary-foreground shadow-[0_8px_24px_-6px_rgba(0,0,0,0.35)] hover:bg-primary/95"
           >
             {t("makeAnotherOrder")}
           </button>

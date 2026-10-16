@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { getSettings } from "@/lib/settings";
 import { getPeriodRange, SALE_EXCLUDED_STATUSES } from "@/lib/metrics";
 import { getLocale } from "next-intl/server";
-import { localizedName } from "@/lib/utils";
+import { localizedText } from "@/lib/i18n/text";
 
 export const dynamic = "force-dynamic";
 
@@ -32,7 +33,8 @@ export async function GET(request: NextRequest) {
         ? restaurantIdParam
         : session.user.restaurant_id;
 
-    const { start: startDate, end: now } = getPeriodRange(period);
+    const settings = await getSettings(restaurantId);
+    const { start: startDate, end: now } = getPeriodRange(period, settings.timezone);
 
     // Fetch order items for the period
     const locale = await getLocale();
@@ -86,7 +88,7 @@ export async function GET(request: NextRequest) {
         orders.add(item.order_id);
         categoryMap.set(key, {
           id: item.menuItem.category_id,
-          name: localizedName(item.menuItem.category, locale),
+          name: localizedText(item.menuItem.category.names, locale, settings.default_locale),
           orders,
           items: item.quantity,
           revenue,

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { getSettings } from "@/lib/settings";
 import { getPeriodRange, SALE_EXCLUDED_STATUSES } from "@/lib/metrics";
 
 export const dynamic = "force-dynamic";
@@ -30,7 +31,8 @@ export async function GET(request: NextRequest) {
         ? restaurantIdParam
         : session.user.restaurant_id;
 
-    const { start: startDate, end: endDate } = getPeriodRange(period);
+    const settings = await getSettings(restaurantId);
+    const { start: startDate, end: endDate } = getPeriodRange(period, settings.timezone);
 
     const restaurantFilter = restaurantId
       ? { restaurant_id: restaurantId }

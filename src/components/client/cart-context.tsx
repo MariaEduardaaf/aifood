@@ -1,16 +1,12 @@
 "use client";
 
 import { createContext, useContext, useState, useCallback, ReactNode } from "react";
+import type { LocaleMap } from "./types";
 
 export interface CartMenuItem {
   id: string;
-  name_pt: string;
-  name_es: string;
-  name_en: string;
-  description_pt: string | null;
-  description_es: string | null;
-  description_en: string | null;
-  price: number;
+  names: LocaleMap;
+  price: number | string;
   image_url: string | null;
 }
 

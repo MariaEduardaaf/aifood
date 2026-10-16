@@ -74,3 +74,57 @@
 
 ## Out of scope (next milestones)
 Payments and tips, POS/printer integration, Verifactu, item modifiers, web push, multi-instance realtime, reservations.
+
+## API contract (final)
+
+Written by the backend agent (Phase 1 / A) on 2026-10-16. Verified by `npm run test:smoke`.
+Additions and deviations from the plan above are marked **(change)**.
+
+### Locale content
+- `Category.names`, `MenuItem.names`, `MenuItem.descriptions`: `{ "<locale>": "text" }`, locales from `src/lib/i18n/locales.ts`.
+- Render with `localizedText(map, locale, settings.default_locale)` from `src/lib/i18n/text.ts` (accepts Prisma Json directly).
+- Writes (`POST/PUT /api/categories`, `/api/items`): `names` max 120 chars per locale, `descriptions` max 500; keys outside the supported set are rejected; empty strings are dropped (send `""` to clear a translation); `names` must contain the restaurant's `default_locale` (400 `names.<locale>: required ...`). `allergens: string[]` of EU codes from `src/lib/allergens.ts`, de-duplicated.
+
+### Public (guest) endpoints, identified by `qr_token`
+Unknown or inactive table: 404 `{ error: "Table not found" }` **(change: inactive used to be 400)**. Inactive restaurant: 403. Missing `table`: 400.
+- `GET /api/menu?table=<token>` → `{ restaurant: { name }, table: { label } (change: added), settings: { currency, enabled_locales, default_locale, ordering_enabled }, categories: [{ id, names, items: [{ id, names, descriptions, allergens, price, image_url }] }] }`. Empty categories are omitted. `price` is a decimal string.
+- `GET /api/tables/status?table=<token>` → `{ label, ordering_enabled, openCalls: [{ id, type, created_at }], pendingRating: { id, type, resolved_at } | null }` **(change: no table `id`)**.
+- `POST /api/calls` `{ table, type: "CALL_WAITER" | "REQUEST_BILL" }` → 201 call `{ ..., table: { label } }`; 200 `{ message, call }` if one is already open; 429 `{ error, waitTime, message }` within 30s.
+- `POST /api/orders` `{ table, items: [{ menuItemId, quantity 1-50, notes? }] (1-30), notes? }` → 201 order with `items[].menuItem { id, names, image_url }`; 429 within 10s; 400 `{ error, missingIds }` for unknown/inactive items.
+- `GET /api/orders?table=<token>` → last 24h, not cancelled, same item shape.
+- Lite mode (`ordering_enabled: false`): both order calls above return 403 `{ error: "ordering_disabled" }`. Staff `GET /api/orders` (no `table`) is not blocked **(change: staff list keeps working so old orders can be closed)**.
+- `POST /api/review` and `GET /api/review?callId=` unchanged.
+- Removed: `/api/tables/[id]/status`, `/api/tables/token/[token]`, `tableId` params.
+
+### Settings
+- `GET /api/settings[?restaurantId=]` any logged-in staff (superadmin passes `restaurantId`) → full Settings row.
+- `PUT /api/settings` (ADMIN, SUPER_ADMIN with `restaurantId` in the body) accepts `google_reviews_url`, `google_reviews_enabled`, `min_stars_redirect`, `currency` (EUR|BRL|USD|GBP), `enabled_locales` (1-6 supported codes), `default_locale`, `ordering_enabled`, `timezone` (IANA, checked with `Intl.supportedValuesOf("timeZone")`, plus `UTC`). 400 if the resulting `default_locale` is not in `enabled_locales`.
+- `POST /api/restaurants` (SUPER_ADMIN) also accepts flat `currency`, `enabled_locales`, `default_locale`, `timezone` and creates the Settings row with them; response includes `settings`.
+
+### Realtime (SSE)
+- `GET /api/orders/stream` (WAITER, ADMIN, MANAGER, KITCHEN, SUPER_ADMIN with `?restaurantId=`), `GET /api/calls/stream` (same minus KITCHEN).
+- Frames:
+  - `event: refresh` / `data: [records]`: the full list, sent on connect and every 30s. Orders: KITCHEN gets CONFIRMED, PREPARING, READY; others PENDING, CONFIRMED, READY. Calls: OPEN calls.
+  - `event: order` / `data: <order>` on every create and status change of any order of the restaurant. **Clients drop records whose status is outside their view** (e.g. waiter on PREPARING, everyone on DELIVERED/CANCELLED).
+  - `event: call` / `data: <call>` on create and resolve; `status: "RESOLVED"` means remove.
+  - `: heartbeat` comment every 25s; `retry: 3000` on connect.
+- Order record: Order fields + `table { id, label }`, `items [{ ...OrderItem, menuItem { id, names, image_url } }]`, `preparer { id, name } | null`, `confirmer { id, name } | null`. The PATCH transition routes return the same shape.
+- Call record: Call fields + `table { id, label }`, `resolver { id, name } | null`. `GET /api/calls` and the resolve route return the same shape.
+- Server side: `emit(restaurantId, { type, action, id, status })` / `subscribe(restaurantId, listener)` in `src/lib/events.ts`.
+
+### Metrics
+- All `/api/admin/metrics/*` and `/api/metrics` compute day/hour/weekday buckets in `Settings.timezone`.
+- New `period=lastweekday`: same weekday last week, from local midnight up to the current time of day 7 days ago (for "vs last Tuesday").
+
+### Menu import
+- `POST /api/admin/menu/import` (ADMIN; SUPER_ADMIN with `restaurantId`). Body: multipart `file` (+ `restaurantId`), or JSON `{ url }` (Google Sheets links only: `https://docs.google.com/spreadsheets/...`; edit links are converted to CSV export) or JSON `{ csv }` (raw text) **(change: `csv` added)**. Max 1MB, 500 rows; `,` or `;` delimited (auto-detected).
+- Columns as in `public/menu-template.csv`; `allergens` separated by `;` (also `|`, `,`, spaces). Price accepts `3,50`.
+- Categories match by default-locale name (case-insensitive) or are created; items match by default-locale name inside the category and are updated (names/descriptions merged), otherwise created.
+- 200 `{ created: { categories, items }, updated: { items }, errors: [{ row, message }] }`; invalid rows are skipped and listed. File-level problems (missing column, empty, too many rows, bad URL) are 400 `{ error }`.
+
+### Auth
+- Login throttling: after 5 failed attempts per email in 15 min the credentials callback redirects with `?error=CredentialsSignin&code=rate_limited` (also when the password is right). A successful login clears the counter.
+
+### Ops
+- `GET /api/health` (public) → 200 `{ status: "ok", db: "up" }` or 503.
+- `npm start` is `next start`; the Docker CMD runs `prisma migrate deploy` then `node server.js` **(change from plan item 11)**. See `docs/DEPLOY.md`.

@@ -3,12 +3,13 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { z } from "zod";
 import { validationError } from "@/lib/api";
+import { findPublicTable } from "@/lib/public-table";
+import { emit, callInclude } from "@/lib/events";
 
 export const dynamic = "force-dynamic";
 
 const createCallSchema = z.object({
-  // TODO(security): resolve table from qr_token instead of id
-  tableId: z.string(),
+  table: z.string().min(1).max(100), // qr_token
   type: z.enum(["CALL_WAITER", "REQUEST_BILL"]),
 });
 
@@ -67,20 +68,7 @@ export async function GET(request: NextRequest) {
           }
         : { restaurant_id: restaurantId },
       orderBy: { created_at: "asc" },
-      include: {
-        table: {
-          select: {
-            id: true,
-            label: true,
-          },
-        },
-        resolver: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
+      include: callInclude,
     });
 
     return NextResponse.json(calls);
@@ -103,28 +91,12 @@ export async function POST(request: NextRequest) {
       return validationError(validation.error);
     }
 
-    const { tableId, type } = validation.data;
+    const { type } = validation.data;
 
-    // Check if table exists and is active
-    const table = await prisma.table.findUnique({
-      where: { id: tableId },
-      include: { restaurant: { select: { active: true } } },
-    });
-
-    if (!table) {
-      return NextResponse.json({ error: "Table not found" }, { status: 404 });
-    }
-
-    if (!table.restaurant.active) {
-      return NextResponse.json(
-        { error: "Restaurant is inactive" },
-        { status: 403 },
-      );
-    }
-
-    if (!table.active) {
-      return NextResponse.json({ error: "Table is inactive" }, { status: 400 });
-    }
+    const found = await findPublicTable(validation.data.table);
+    if ("error" in found) return found.error;
+    const { table } = found;
+    const tableId = table.id;
 
     // Rate limiting by table and type, backed by the DB so it holds across
     // serverless instances. ponytail: check-then-insert is not atomic.
@@ -186,6 +158,13 @@ export async function POST(request: NextRequest) {
           },
         },
       },
+    });
+
+    emit(table.restaurant_id, {
+      type: "call",
+      action: "created",
+      id: call.id,
+      status: call.status,
     });
 
     return NextResponse.json(call, { status: 201 });

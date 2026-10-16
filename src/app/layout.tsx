@@ -4,6 +4,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { SoundProvider } from "@/components/providers/sound-provider";
+import { ToastProvider } from "@/components/ui/toast";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -34,7 +35,7 @@ export default async function RootLayout({
         <ThemeProvider>
           <SoundProvider>
             <NextIntlClientProvider messages={messages}>
-              {children}
+              <ToastProvider>{children}</ToastProvider>
             </NextIntlClientProvider>
           </SoundProvider>
         </ThemeProvider>

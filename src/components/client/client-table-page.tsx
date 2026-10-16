@@ -1,83 +1,110 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
-import Image from "next/image";
-import {
-  Bell,
-  Receipt,
-  Loader2,
-  Check,
-  BookOpen,
-  ShoppingBag,
-  Clock,
-  ChefHat,
-  Sparkles,
-} from "lucide-react";
-import { useTheme } from "@/components/providers/theme-provider";
-import { LanguageSelector } from "./language-selector";
+import { Bell, BookOpen, Check, ChevronRight, Loader2, Receipt, ShoppingBag, Utensils } from "lucide-react";
+import { useToast } from "@/components/ui/toast";
+import { cn } from "@/lib/utils";
+import { LanguageSelector, setLocaleCookie } from "./language-selector";
 import { RatingModal } from "./rating-modal";
 import { MenuView } from "./menu-view";
 import { CartModal } from "./cart-modal";
 import { OrderStatusView } from "./order-status-view";
 import { CartProvider, useCart } from "./cart-context";
+import type { GuestSettings, MenuData } from "./types";
+
+type CallType = "CALL_WAITER" | "REQUEST_BILL";
 
 interface OpenCall {
   id: string;
-  type: "CALL_WAITER" | "REQUEST_BILL";
+  type: CallType;
   created_at: string;
 }
 
 interface PendingRating {
   id: string;
-  type: "CALL_WAITER" | "REQUEST_BILL";
+  type: CallType;
   resolved_at: string;
 }
 
 interface ClientTablePageProps {
-  tableId: string;
+  token: string;
   tableLabel: string;
+  restaurantName: string;
+  initialSettings: Omit<GuestSettings, "currency">;
 }
 
-type View = "main" | "menu" | "cart" | "orders";
+type View = "main" | "menu" | "orders";
 
-function ClientTablePageContent({ tableId, tableLabel }: ClientTablePageProps) {
+const AUTO_LOCALE_KEY = "aifood-locale-auto";
+
+function ClientTablePageContent({ token, tableLabel, restaurantName, initialSettings }: ClientTablePageProps) {
   const t = useTranslations("client");
+  const tErr = useTranslations("errors");
   const locale = useLocale();
+  const router = useRouter();
+  const toast = useToast();
   const { itemCount, setCurrency } = useCart();
-  const { resolvedTheme } = useTheme();
 
+  const [menu, setMenu] = useState<MenuData | null>(null);
+  const [menuError, setMenuError] = useState(false);
   const [openCalls, setOpenCalls] = useState<OpenCall[]>([]);
-  const [loading, setLoading] = useState<"waiter" | "bill" | null>(null);
-  const [cooldown, setCooldown] = useState<{ waiter: number; bill: number }>({
-    waiter: 0,
-    bill: 0,
-  });
-  const [success, setSuccess] = useState<"waiter" | "bill" | null>(null);
-  const [pendingRating, setPendingRating] = useState<PendingRating | null>(
-    null,
-  );
-  const [showRatingModal, setShowRatingModal] = useState(false);
-  const [currentView, setCurrentView] = useState<View>("main");
+  const [loading, setLoading] = useState<CallType | null>(null);
+  const [cooldown, setCooldown] = useState<Record<CallType, number>>({ CALL_WAITER: 0, REQUEST_BILL: 0 });
+  const [pendingRating, setPendingRating] = useState<PendingRating | null>(null);
+  const [view, setView] = useState<View>("main");
   const [showCart, setShowCart] = useState(false);
-  const [currentTime, setCurrentTime] = useState<Date | null>(null);
 
-  // Render the clock only after mount (avoids SSR/client hydration mismatch)
+  const settings = menu?.settings ?? initialSettings;
+  const ordering = settings.ordering_enabled;
+  const name = menu?.restaurant.name || restaurantName;
+
+  const loadMenu = useCallback(async () => {
+    setMenuError(false);
+    try {
+      const res = await fetch(`/api/menu?table=${encodeURIComponent(token)}`);
+      if (!res.ok) throw new Error(String(res.status));
+      const data: MenuData = await res.json();
+      setMenu(data);
+      setCurrency(data.settings.currency || "EUR");
+    } catch {
+      setMenuError(true);
+    }
+  }, [token, setCurrency]);
+
   useEffect(() => {
-    setCurrentTime(new Date());
-    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
-    return () => clearInterval(timer);
-  }, []);
+    loadMenu();
+  }, [loadMenu]);
+
+  // A guest whose language the restaurant does not offer gets the closest
+  // offered one, once per session (the flag also stops a refresh loop).
+  useEffect(() => {
+    const enabled = settings.enabled_locales;
+    if (enabled.length === 0 || enabled.includes(locale)) return;
+    try {
+      if (sessionStorage.getItem(AUTO_LOCALE_KEY)) return;
+      sessionStorage.setItem(AUTO_LOCALE_KEY, "1");
+    } catch {
+      return;
+    }
+    const preferred = navigator.languages
+      .map((l) => l.slice(0, 2).toLowerCase())
+      .find((l) => enabled.includes(l));
+    setLocaleCookie(preferred ?? settings.default_locale);
+    router.refresh();
+  }, [settings.enabled_locales, settings.default_locale, locale, router]);
 
   // Calls the guest already rated or skipped (so the prompt does not come back on reload)
-  const ratedKey = `aifood-rated-${tableId}`;
-  const getRated = (): string[] => {
+  const ratedKey = `aifood-rated-${token}`;
+  const getRated = useCallback((): string[] => {
     try {
       return JSON.parse(localStorage.getItem(ratedKey) || "[]");
     } catch {
       return [];
     }
-  };
+  }, [ratedKey]);
   const markRated = (id: string) => {
     try {
       localStorage.setItem(ratedKey, JSON.stringify([...getRated(), id].slice(-50)));
@@ -86,385 +113,246 @@ function ClientTablePageContent({ tableId, tableLabel }: ClientTablePageProps) {
     }
   };
 
-  // Currency comes with the public menu response
-  useEffect(() => {
-    fetch(`/api/menu?tableId=${tableId}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => {
-        if (d && !Array.isArray(d) && d.currency) setCurrency(d.currency);
-      })
-      .catch(() => {});
-  }, [tableId, setCurrency]);
-
-  // Check open calls and pending ratings
-  const checkOpenCalls = useCallback(async () => {
+  const checkStatus = useCallback(async () => {
     try {
-      const res = await fetch(`/api/tables/${tableId}/status`);
-      if (res.ok) {
-        const data = await res.json();
-        setOpenCalls(data.openCalls || []);
-
-        // Only bill requests are rated, and only once
-        const pr = data.pendingRating;
-        if (pr && pr.type === "REQUEST_BILL" && !getRated().includes(pr.id)) {
-          setPendingRating(pr);
-          setShowRatingModal(true);
-        }
-      }
-    } catch (err) {
-      console.error("Error checking open calls:", err);
+      const res = await fetch(`/api/tables/status?table=${encodeURIComponent(token)}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setOpenCalls(data.openCalls || []);
+      // Only bill requests are rated, and only once
+      const pr = data.pendingRating;
+      if (pr && pr.type === "REQUEST_BILL" && !getRated().includes(pr.id)) setPendingRating(pr);
+    } catch {
+      // next poll retries
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tableId]);
+  }, [token, getRated]);
 
   useEffect(() => {
-    checkOpenCalls();
-  }, [checkOpenCalls]);
+    checkStatus();
+  }, [checkStatus]);
 
-  // Poll every 10s while a call is pending (waiter may resolve it)
-  const hasPending = openCalls.length > 0;
+  // Poll every 10s while a call is open (the waiter may resolve it)
+  const hasOpenCall = openCalls.length > 0;
   useEffect(() => {
-    if (!hasPending) return;
-    const timer = setInterval(checkOpenCalls, 10000);
+    if (!hasOpenCall) return;
+    const timer = setInterval(checkStatus, 10000);
     return () => clearInterval(timer);
-  }, [hasPending, checkOpenCalls]);
+  }, [hasOpenCall, checkStatus]);
 
-  // Cooldown timer
   useEffect(() => {
+    if (!cooldown.CALL_WAITER && !cooldown.REQUEST_BILL) return;
     const timer = setInterval(() => {
       setCooldown((prev) => ({
-        waiter: Math.max(0, prev.waiter - 1),
-        bill: Math.max(0, prev.bill - 1),
+        CALL_WAITER: Math.max(0, prev.CALL_WAITER - 1),
+        REQUEST_BILL: Math.max(0, prev.REQUEST_BILL - 1),
       }));
     }, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [cooldown.CALL_WAITER, cooldown.REQUEST_BILL]);
 
-  // Clear success message after 3 seconds
   useEffect(() => {
-    if (success) {
-      const timer = setTimeout(() => setSuccess(null), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [success]);
+    window.scrollTo({ top: 0 });
+  }, [view]);
 
-  const hasOpenCall = (type: "CALL_WAITER" | "REQUEST_BILL") => {
-    return openCalls.some((call) => call.type === type);
-  };
-
-  const handleCall = async (type: "CALL_WAITER" | "REQUEST_BILL") => {
-    const loadingKey = type === "CALL_WAITER" ? "waiter" : "bill";
-    setLoading(loadingKey);
-
+  const handleCall = async (type: CallType) => {
+    setLoading(type);
     try {
       const res = await fetch("/api/calls", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tableId, type }),
+        body: JSON.stringify({ table: token, type }),
       });
-
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
 
       if (res.status === 429) {
-        // Rate limited
-        setCooldown((prev) => ({
-          ...prev,
-          [loadingKey]: data.waitTime || 30,
-        }));
+        const seconds = Number(data.waitTime) || 30;
+        setCooldown((prev) => ({ ...prev, [type]: seconds }));
+        toast(t("waitBeforeNewCall", { seconds }), "info");
       } else if (res.ok) {
-        // Success
         setOpenCalls((prev) => [...prev, data]);
-        setSuccess(loadingKey);
+        toast(type === "CALL_WAITER" ? t("waiterCalled") : t("billOnTheWay"), "success");
+      } else {
+        toast(tErr("generic"), "error");
       }
-    } catch (err) {
-      console.error("Error creating call:", err);
+    } catch {
+      toast(tErr("generic"), "error");
     } finally {
       setLoading(null);
     }
   };
 
-  const waiterDisabled =
-    loading === "waiter" || cooldown.waiter > 0 || hasOpenCall("CALL_WAITER");
-  const billDisabled =
-    loading === "bill" || cooldown.bill > 0 || hasOpenCall("REQUEST_BILL");
+  const cart = showCart && ordering && (
+    <CartModal
+      token={token}
+      fallbackLocale={settings.default_locale}
+      onClose={() => setShowCart(false)}
+      onOrderSuccess={() => {
+        setShowCart(false);
+        setView("orders");
+      }}
+    />
+  );
 
-  // Show menu view
-  if (currentView === "menu") {
+  if (view === "menu") {
     return (
       <>
         <MenuView
-          tableId={tableId}
-          onBack={() => setCurrentView("main")}
+          menu={menu}
+          error={menuError}
+          onRetry={loadMenu}
+          restaurantName={name}
+          onBack={() => setView("main")}
           onOpenCart={() => setShowCart(true)}
         />
-        {/* Cart Modal - also available in the menu view */}
-        {showCart && (
-          <CartModal
-            tableId={tableId}
-            onClose={() => setShowCart(false)}
-            onOrderSuccess={() => {
-              setShowCart(false);
-              setCurrentView("orders");
-            }}
-          />
-        )}
+        {cart}
       </>
     );
   }
 
-  // Show orders view
-  if (currentView === "orders") {
+  if (view === "orders" && ordering) {
     return (
       <OrderStatusView
-        tableId={tableId}
-        onBack={() => setCurrentView("main")}
-        onNewOrder={() => setCurrentView("menu")}
+        token={token}
+        fallbackLocale={settings.default_locale}
+        onBack={() => setView("main")}
+        onNewOrder={() => setView("menu")}
       />
     );
   }
 
-  // Format time
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString(locale, {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
+  const services: { type: CallType; icon: typeof Bell; label: string; hint: string; done: string }[] = [
+    { type: "CALL_WAITER", icon: Bell, label: t("callWaiter"), hint: t("callWaiterHint"), done: t("waiterOnTheWay") },
+    { type: "REQUEST_BILL", icon: Receipt, label: t("requestBill"), hint: t("requestBillHint"), done: t("billRequested") },
+  ];
 
   return (
-    <div className="min-h-screen bg-animated flex flex-col">
-      {/* Cart Modal */}
-      {showCart && (
-        <CartModal
-          tableId={tableId}
-          onClose={() => setShowCart(false)}
-          onOrderSuccess={() => {
-            setShowCart(false);
-            setCurrentView("orders");
-          }}
-        />
-      )}
-
-      {/* Decorative elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-primary/3 rounded-full blur-3xl" />
-      </div>
-
-      {/* Header */}
-      <header className="relative z-10 pt-6 pb-4 px-6">
-        <div className="flex items-center justify-between max-w-md mx-auto">
-          <div className="flex items-center gap-3">
-            <Image
-              src={resolvedTheme === "dark" ? "/logo-light.svg" : "/logo.svg"}
-              alt="aiFood Logo"
-              width={44}
-              height={44}
-              className="object-contain"
-              priority
-            />
-            <div>
-              <span className="text-xl font-bold text-gold block leading-tight">
-                aiFood
-              </span>
-              <span className="text-xs text-muted-foreground flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                {currentTime ? formatTime(currentTime) : "--:--"}
-              </span>
-            </div>
-          </div>
-          <LanguageSelector />
+    <div className="flex min-h-[100dvh] flex-col bg-background">
+      <header className="mx-auto flex w-full max-w-md items-start justify-between gap-4 px-5 pt-[max(1.5rem,env(safe-area-inset-top))]">
+        <div className="min-w-0 pt-1">
+          <p className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
+            <Utensils aria-hidden className="h-4 w-4" />
+            {tableLabel}
+          </p>
         </div>
+        <LanguageSelector locales={settings.enabled_locales} />
       </header>
 
-      {/* Main Content */}
-      <main className="relative z-10 flex-1 flex flex-col p-4 pb-6">
-        <div className="w-full max-w-md mx-auto flex-1 flex flex-col gap-4">
-          {/* Table Header Card */}
-          <div className="card-premium rounded-2xl p-5 text-center">
-            <div className="flex items-center justify-center gap-3">
-              <div
-                className="w-14 h-14 rounded-xl flex items-center justify-center glow-gold"
-                style={{
-                  background:
-                    "linear-gradient(145deg, hsl(173 72% 44% / 0.15), hsl(173 72% 44% / 0.05))",
-                }}
-              >
-                <ChefHat className="h-7 w-7 text-primary" />
-              </div>
-              <div className="text-left">
-                <h1 className="text-2xl font-bold text-gold">{tableLabel}</h1>
-                <p className="text-sm text-muted-foreground">
-                  {t("welcomeMessage")}
-                </p>
-              </div>
-            </div>
-          </div>
+      <main className="mx-auto flex w-full max-w-md flex-1 flex-col px-5 pb-8">
+        <h1 className="mt-6 text-balance text-[2.25rem] font-semibold leading-[1.05] tracking-[-0.025em] text-foreground">
+          {name}
+        </h1>
+        <p className="mt-3 max-w-[32ch] text-[0.9375rem] leading-relaxed text-muted-foreground">
+          {ordering ? t("introOrdering") : t("introLite")}
+        </p>
 
-          {/* Primary Action - View Menu */}
+        <button
+          type="button"
+          onClick={() => setView("menu")}
+          className="mt-8 flex min-h-[4.75rem] w-full items-center gap-4 rounded-2xl bg-primary px-4 text-left text-primary-foreground shadow-[0_10px_30px_-12px_hsl(var(--primary)/0.7)] transition-colors hover:bg-primary/95 active:scale-[0.99]"
+        >
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-foreground/15">
+            <BookOpen aria-hidden className="h-5 w-5" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[1.0625rem] font-semibold leading-tight">
+              {ordering ? t("menuAndOrder") : t("seeMenu")}
+            </span>
+            <span className="mt-0.5 block text-sm opacity-90">
+              {ordering && itemCount > 0 ? t("inYourOrder", { count: itemCount }) : t("browseMenuHint")}
+            </span>
+          </span>
+          <ChevronRight aria-hidden className="h-5 w-5 shrink-0 opacity-80" />
+        </button>
+
+        {ordering && (
           <button
-            onClick={() => setCurrentView("menu")}
-            aria-label={`${t("viewMenuOrder")}. ${t("browseAndOrder")}`}
-            className="relative overflow-hidden w-full rounded-2xl p-6 text-left group bg-primary text-primary-foreground shadow-lg shadow-primary/30 hover:scale-[1.02] transition-all duration-300"
+            type="button"
+            onClick={() => setView("orders")}
+            className="mt-3 flex min-h-[3.5rem] w-full items-center gap-3 rounded-2xl border border-border bg-card px-4 text-left hover:bg-foreground/[0.06]"
           >
-            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-2xl -mr-10 -mt-10 group-hover:bg-primary/20 transition-colors" />
-            <div className="relative flex items-center gap-4">
-              <div className="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center">
-                <BookOpen className="h-7 w-7 text-primary-foreground" />
-              </div>
-              <div className="flex-1">
-                <h2 className="text-xl font-bold flex items-center gap-2">
-                  {t("viewMenuOrder")}
-                  <Sparkles className="h-4 w-4" />
-                </h2>
-                <p className="text-sm opacity-90">
-                  {t("browseAndOrder")}
-                </p>
-              </div>
-              {itemCount > 0 && (
-                <div className="absolute top-0 right-0 w-6 h-6 rounded-full bg-white text-primary text-xs font-bold flex items-center justify-center animate-bounce">
-                  {itemCount}
-                </div>
-              )}
-            </div>
+            <ShoppingBag aria-hidden className="h-5 w-5 shrink-0 text-muted-foreground" />
+            <span className="flex-1 font-medium text-foreground">{t("myOrders")}</span>
+            <ChevronRight aria-hidden className="h-5 w-5 shrink-0 text-muted-foreground" />
           </button>
+        )}
 
-          {/* My Orders Button */}
-          <button
-            onClick={() => setCurrentView("orders")}
-            aria-label={`${t("myOrders")}. ${t("trackYourOrders")}`}
-            className="card-premium rounded-2xl p-5 text-left group hover:scale-[1.01] transition-all duration-300"
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center group-hover:bg-secondary/80 transition-colors">
-                <ShoppingBag className="h-6 w-6 text-foreground" />
-              </div>
-              <div className="flex-1">
-                <h2 className="text-base font-semibold text-foreground">
-                  {t("myOrders")}
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  {t("trackYourOrders")}
-                </p>
-              </div>
-            </div>
-          </button>
-
-          {/* Service Buttons Section */}
-          <div className="card-premium rounded-2xl p-5 mt-auto">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">
-              {t("needAssistance")}
-            </h3>
-
-            <div className="grid grid-cols-2 gap-3">
-              {/* Call Waiter Button */}
-              <button
-                onClick={() => handleCall("CALL_WAITER")}
-                disabled={waiterDisabled}
-                className={`
-                  flex flex-col items-center justify-center gap-2 p-4 rounded-xl font-medium
-                  transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed
-                  ${
-                    hasOpenCall("CALL_WAITER")
-                      ? "status-waiting pulse-gold"
-                      : "bg-secondary hover:bg-secondary/80 active:scale-95"
-                  }
-                `}
-              >
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center ${hasOpenCall("CALL_WAITER") ? "bg-primary/20" : "bg-primary/10"}`}
-                >
-                  {loading === "waiter" ? (
-                    <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                  ) : hasOpenCall("CALL_WAITER") ? (
-                    <Check className="h-5 w-5 text-primary" />
-                  ) : (
-                    <Bell className="h-5 w-5 text-primary" />
+        <section aria-labelledby="service-title" className="mt-10">
+          <h2 id="service-title" className="text-base font-semibold text-foreground">
+            {t("needAssistance")}
+          </h2>
+          <div className="mt-3 grid grid-cols-2 gap-3">
+            {services.map(({ type, icon: Icon, label, hint, done }) => {
+              const open = openCalls.some((c) => c.type === type);
+              const busy = loading === type;
+              const wait = cooldown[type];
+              return (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => handleCall(type)}
+                  disabled={busy || open || wait > 0}
+                  className={cn(
+                    "flex min-h-[8.5rem] flex-col items-start justify-between gap-4 rounded-2xl border p-4 text-left transition-colors disabled:cursor-not-allowed",
+                    open
+                      ? "border-success/60 bg-success/10"
+                      : "border-border bg-card hover:bg-foreground/[0.06] active:scale-[0.98]",
                   )}
-                </div>
-                <span className="text-sm text-center leading-tight">
-                  {hasOpenCall("CALL_WAITER")
-                    ? t("waiterOnTheWay")
-                    : cooldown.waiter > 0
-                      ? `${cooldown.waiter}s`
-                      : t("callWaiter")}
-                </span>
-              </button>
-
-              {/* Request Bill Button */}
-              <button
-                onClick={() => handleCall("REQUEST_BILL")}
-                disabled={billDisabled}
-                className={`
-                  flex flex-col items-center justify-center gap-2 p-4 rounded-xl font-medium
-                  transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed
-                  ${
-                    hasOpenCall("REQUEST_BILL")
-                      ? "status-waiting pulse-gold"
-                      : "bg-secondary hover:bg-secondary/80 active:scale-95"
-                  }
-                `}
-              >
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center ${hasOpenCall("REQUEST_BILL") ? "bg-primary/20" : "bg-primary/10"}`}
                 >
-                  {loading === "bill" ? (
-                    <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                  ) : hasOpenCall("REQUEST_BILL") ? (
-                    <Check className="h-5 w-5 text-primary" />
-                  ) : (
-                    <Receipt className="h-5 w-5 text-primary" />
-                  )}
-                </div>
-                <span className="text-sm text-center leading-tight">
-                  {hasOpenCall("REQUEST_BILL")
-                    ? t("billRequested")
-                    : cooldown.bill > 0
-                      ? `${cooldown.bill}s`
-                      : t("requestBill")}
-                </span>
-              </button>
-            </div>
-
-            {/* Status Messages */}
-            {success && (
-              <div className="mt-4 p-3 rounded-xl text-center status-waiting text-sm">
-                <Check className="h-4 w-4 inline-block mr-2" />
-                <span className="font-medium">{t("callSent")}</span>
-              </div>
-            )}
-
-            {(hasOpenCall("CALL_WAITER") || hasOpenCall("REQUEST_BILL")) &&
-              !success && (
-                <div className="mt-4 flex items-center justify-center gap-2 text-muted-foreground">
-                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                  <span className="text-xs">{t("pleaseWait")}</span>
-                </div>
-              )}
+                  <span
+                    className={cn(
+                      "flex h-10 w-10 items-center justify-center rounded-full",
+                      open ? "bg-success text-success-foreground" : "bg-primary/10 text-price",
+                    )}
+                  >
+                    {busy ? (
+                      <Loader2 aria-hidden className="h-5 w-5 animate-spin" />
+                    ) : open ? (
+                      <Check aria-hidden className="h-5 w-5" />
+                    ) : (
+                      <Icon aria-hidden className="h-5 w-5" />
+                    )}
+                  </span>
+                  <span>
+                    <span className="block text-[0.9375rem] font-semibold leading-tight text-foreground">
+                      {open ? done : label}
+                    </span>
+                    <span className="mt-1 block text-[0.8125rem] leading-snug text-muted-foreground tabular-nums">
+                      {open ? t("pleaseWait") : wait > 0 ? t("againIn", { seconds: wait }) : hint}
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
           </div>
-        </div>
+          <p aria-live="polite" className="sr-only">
+            {hasOpenCall ? t("pleaseWait") : ""}
+          </p>
+        </section>
       </main>
 
-      {/* Footer */}
-      <footer className="relative z-10 py-4 text-center">
-        <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground/60">
-          <span>Powered by</span>
-          <span className="text-gold font-semibold">aiFood</span>
-        </div>
+      <footer className="mx-auto flex w-full max-w-md items-center justify-between gap-4 border-t border-border px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 text-sm text-muted-foreground">
+        <nav aria-label={t("legal")} className="-ml-2 flex">
+          <Link href="/privacy" className="flex min-h-[44px] items-center px-2 underline-offset-4 hover:text-foreground hover:underline">
+            {t("privacy")}
+          </Link>
+          <Link href="/cookies" className="flex min-h-[44px] items-center px-2 underline-offset-4 hover:text-foreground hover:underline">
+            {t("cookies")}
+          </Link>
+        </nav>
+        <span className="text-xs">{t("poweredBy")}</span>
       </footer>
 
-      {/* Rating Modal */}
-      {showRatingModal && pendingRating && (
+      {cart}
+
+      {pendingRating && (
         <RatingModal
           callId={pendingRating.id}
           onClose={() => {
             markRated(pendingRating.id);
-            setShowRatingModal(false);
             setPendingRating(null);
           }}
           onSuccess={() => {
             markRated(pendingRating.id);
-            setShowRatingModal(false);
             setPendingRating(null);
           }}
         />
@@ -473,11 +361,10 @@ function ClientTablePageContent({ tableId, tableLabel }: ClientTablePageProps) {
   );
 }
 
-// Wrapper with CartProvider
-export function ClientTablePage({ tableId, tableLabel }: ClientTablePageProps) {
+export function ClientTablePage(props: ClientTablePageProps) {
   return (
     <CartProvider>
-      <ClientTablePageContent tableId={tableId} tableLabel={tableLabel} />
+      <ClientTablePageContent {...props} />
     </CartProvider>
   );
 }

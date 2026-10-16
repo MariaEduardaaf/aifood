@@ -6,6 +6,7 @@ import { ChefHat, LayoutGrid, List } from "lucide-react";
 import { KitchenPanel } from "./kitchen-panel";
 import { KitchenKanban } from "./kitchen-kanban";
 import { cn } from "@/lib/utils";
+import { useWakeLock } from "@/components/providers/staff-alerts";
 
 interface KitchenPageProps {
   userId: string;
@@ -17,19 +18,21 @@ type ViewMode = "kanban" | "list";
 export function KitchenPage({ userId, userName }: KitchenPageProps) {
   const t = useTranslations("kitchen");
   const [viewMode, setViewMode] = useState<ViewMode>("kanban");
+  useWakeLock();
 
   return (
     <div className="min-h-screen">
       {/* Title + view toggle (sound, theme and logout live in the nav header) */}
       <div className="container mx-auto px-4 sm:px-6 pt-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <ChefHat className="h-5 w-5 text-primary" />
+          <ChefHat aria-hidden className="h-5 w-5 text-price" />
           <h1 className="font-semibold text-lg">{t("title")}</h1>
         </div>
         <div className="flex items-center gap-1 p-1 rounded-lg bg-secondary/50 border border-border/50">
           <button
             onClick={() => setViewMode("kanban")}
-            aria-label="Kanban"
+            aria-label={t("boardView")}
+            aria-pressed={viewMode === "kanban"}
             className={cn(
               "p-2.5 rounded-md transition-all duration-200 min-w-[44px] min-h-[44px] flex items-center justify-center",
               viewMode === "kanban"
@@ -42,6 +45,7 @@ export function KitchenPage({ userId, userName }: KitchenPageProps) {
           <button
             onClick={() => setViewMode("list")}
             aria-label={t("listView")}
+            aria-pressed={viewMode === "list"}
             className={cn(
               "p-2.5 rounded-md transition-all duration-200 min-w-[44px] min-h-[44px] flex items-center justify-center",
               viewMode === "list"

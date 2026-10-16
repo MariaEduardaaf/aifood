@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Star, Loader2, X, ExternalLink } from "lucide-react";
 import { isHttpUrl } from "@/lib/utils";
+import { useToast } from "@/components/ui/toast";
 
 interface RatingModalProps {
   callId: string;
@@ -14,6 +15,7 @@ interface RatingModalProps {
 export function RatingModal({ callId, onClose, onSuccess }: RatingModalProps) {
   const t = useTranslations("client");
   const tErr = useTranslations("errors");
+  const toast = useToast();
 
   const [stars, setStars] = useState(0);
   const [hoveredStar, setHoveredStar] = useState(0);
@@ -46,15 +48,18 @@ export function RatingModal({ callId, onClose, onSuccess }: RatingModalProps) {
         if (isHttpUrl(data.redirect)) {
           setGoogleUrl(data.redirect);
         } else {
+          toast(t("ratingSent"), "success");
           onSuccess();
         }
       } else {
         const data = await res.json().catch(() => ({}));
         setError(typeof data.error === "string" ? data.error : tErr("generic"));
+        toast(tErr("generic"), "error");
       }
     } catch (err) {
       console.error("Error submitting rating:", err);
       setError(tErr("generic"));
+      toast(tErr("generic"), "error");
     } finally {
       setLoading(false);
     }
@@ -69,7 +74,7 @@ export function RatingModal({ callId, onClose, onSuccess }: RatingModalProps) {
         <button
           onClick={googleUrl ? onSuccess : onClose}
           aria-label={t("skipRating")}
-          className="absolute top-4 right-4 p-2 rounded-lg hover:bg-secondary/50 transition-colors text-muted-foreground"
+          className="absolute top-3 right-3 flex h-11 w-11 items-center justify-center rounded-full hover:bg-secondary/50 transition-colors text-muted-foreground"
         >
           <X className="h-5 w-5" />
         </button>
@@ -104,7 +109,7 @@ export function RatingModal({ callId, onClose, onSuccess }: RatingModalProps) {
             {/* Header */}
             <div className="text-center mb-8">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
-                <span className="text-3xl">⭐</span>
+                <Star aria-hidden className="h-8 w-8 fill-primary text-primary" />
               </div>
               <h3 className="text-2xl font-bold text-gold mb-2">
                 {t("rateExperience")}
@@ -118,10 +123,11 @@ export function RatingModal({ callId, onClose, onSuccess }: RatingModalProps) {
                 <button
                   key={star}
                   onClick={() => setStars(star)}
-                  aria-label={`${star}`}
+                  aria-label={t("starLabel", { count: star })}
+                  aria-pressed={star <= stars}
                   onMouseEnter={() => setHoveredStar(star)}
                   onMouseLeave={() => setHoveredStar(0)}
-                  className="p-1 transition-transform hover:scale-110"
+                  className="flex h-12 w-12 items-center justify-center rounded-full transition-transform hover:scale-110"
                 >
                   <Star
                     className={`h-10 w-10 transition-colors ${

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { getPeriodRange, SALE_EXCLUDED_STATUSES } from "@/lib/metrics";
+import { getSettings } from "@/lib/settings";
+import { getPeriodRange, SALE_EXCLUDED_STATUSES, zonedParts } from "@/lib/metrics";
 
 export const dynamic = "force-dynamic";
 
@@ -30,7 +31,8 @@ export async function GET(request: NextRequest) {
         ? restaurantIdParam
         : session.user.restaurant_id;
 
-    const { start: startDate, end: endDate } = getPeriodRange(period);
+    const settings = await getSettings(restaurantId);
+    const { start: startDate, end: endDate } = getPeriodRange(period, settings.timezone);
 
     // Fetch orders for the period
     const orders = await prisma.order.findMany({
@@ -58,7 +60,7 @@ export async function GET(request: NextRequest) {
 
     // Fill in with real data
     orders.forEach((order) => {
-      const hour = new Date(order.created_at).getHours();
+      const hour = zonedParts(order.created_at, settings.timezone).hour;
       const current = hourMap.get(hour)!;
       hourMap.set(hour, {
         quantity: current.quantity + 1,

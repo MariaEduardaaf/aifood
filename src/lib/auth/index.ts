@@ -1,4 +1,4 @@
-import NextAuth from "next-auth";
+import NextAuth, { CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
 import type { Role } from "@prisma/client";
@@ -35,6 +35,15 @@ declare module "@auth/core/jwt" {
 // How often the JWT is re-validated against the database (ms)
 const RECHECK_INTERVAL_MS = 5 * 60 * 1000;
 
+// Login throttling: max failed attempts per email inside the window
+const MAX_FAILED_LOGINS = 5;
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+
+// Surfaces as `?error=CredentialsSignin&code=rate_limited` on the login page
+class TooManyAttempts extends CredentialsSignin {
+  code = "rate_limited";
+}
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
     Credentials({
@@ -51,8 +60,30 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         // Dynamic import to avoid build-time database connection
         const { prisma } = await import("@/lib/db");
 
+        const email = String(credentials.email).trim().toLowerCase();
+        const windowStart = new Date(Date.now() - LOGIN_WINDOW_MS);
+
+        const failedAttempts = await prisma.loginAttempt.count({
+          where: { email, created_at: { gte: windowStart } },
+        });
+        if (failedAttempts >= MAX_FAILED_LOGINS) {
+          throw new TooManyAttempts();
+        }
+
+        const fail = async () => {
+          // ponytail: prunes expired rows on every failure; fine while the
+          // table stays small, move to a cron if it ever grows
+          await prisma.$transaction([
+            prisma.loginAttempt.deleteMany({
+              where: { created_at: { lt: windowStart } },
+            }),
+            prisma.loginAttempt.create({ data: { email } }),
+          ]);
+          return null;
+        };
+
         const user = await prisma.user.findUnique({
-          where: { email: (credentials.email as string).trim().toLowerCase() },
+          where: { email },
           include: { restaurant: { select: { active: true } } },
         });
 
@@ -61,17 +92,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           !user.active ||
           (user.role !== "SUPER_ADMIN" && !user.restaurant.active)
         ) {
-          return null;
+          return fail();
         }
 
         const isPasswordValid = await compare(
-          credentials.password as string,
+          String(credentials.password),
           user.password_hash,
         );
 
         if (!isPasswordValid) {
-          return null;
+          return fail();
         }
+
+        await prisma.loginAttempt.deleteMany({ where: { email } });
 
         return {
           id: user.id,

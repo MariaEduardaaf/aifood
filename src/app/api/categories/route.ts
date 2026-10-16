@@ -2,12 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { z } from "zod";
-import { validationError } from "@/lib/api";
+import {
+  validationError,
+  localeTextMap,
+  missingDefaultLocale,
+} from "@/lib/api";
+import { getSettings } from "@/lib/settings";
 
 const categorySchema = z.object({
-  name_pt: z.string().min(1),
-  name_es: z.string().min(1),
-  name_en: z.string().min(1),
+  names: localeTextMap(120),
   order: z.number().int().min(0).optional(),
   active: z.boolean().optional(),
   restaurantId: z.string().optional(),
@@ -101,6 +104,10 @@ export async function POST(request: NextRequest) {
 
     // restaurantId is input-only; the column is restaurant_id
     const { restaurantId: _restaurantId, ...data } = validation.data;
+
+    const { default_locale } = await getSettings(restaurantId);
+    const localeError = missingDefaultLocale(data.names, default_locale);
+    if (localeError) return localeError;
 
     const maxOrder = await prisma.category.aggregate({
       _max: { order: true },

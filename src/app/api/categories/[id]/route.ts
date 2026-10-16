@@ -2,12 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { z } from "zod";
-import { validationError } from "@/lib/api";
+import {
+  validationError,
+  localeTextMap,
+  missingDefaultLocale,
+} from "@/lib/api";
+import { getSettings } from "@/lib/settings";
 
 const categoryUpdateSchema = z.object({
-  name_pt: z.string().min(1).optional(),
-  name_es: z.string().min(1).optional(),
-  name_en: z.string().min(1).optional(),
+  names: localeTextMap(120).optional(),
   order: z.number().int().min(0).optional(),
   active: z.boolean().optional(),
 });
@@ -92,6 +95,17 @@ export async function PUT(
         { error: "Category not found" },
         { status: 404 },
       );
+    }
+
+    if (validation.data.names) {
+      const { default_locale } = await getSettings(
+        existingCategory.restaurant_id,
+      );
+      const localeError = missingDefaultLocale(
+        validation.data.names,
+        default_locale,
+      );
+      if (localeError) return localeError;
     }
 
     const category = await prisma.category.update({

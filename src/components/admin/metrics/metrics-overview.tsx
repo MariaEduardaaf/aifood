@@ -66,7 +66,7 @@ function KPICard({ title, value, subtitle, icon, trend, color }: KPICardProps) {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+    <div className="bg-card rounded-lg shadow-sm border border-border p-6">
       <div className="flex items-center justify-between">
         <div className={`p-3 rounded-lg ${colorClasses[color]}`}>{icon}</div>
         {trend && (
@@ -81,12 +81,12 @@ function KPICard({ title, value, subtitle, icon, trend, color }: KPICardProps) {
         )}
       </div>
       <div className="mt-4">
-        <p className="text-sm text-gray-500 dark:text-gray-400">{title}</p>
-        <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+        <p className="text-sm text-muted-foreground">{title}</p>
+        <p className="text-2xl font-bold text-foreground mt-1">
           {value}
         </p>
         {subtitle && (
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             {subtitle}
           </p>
         )}
@@ -154,14 +154,14 @@ export function MetricsOverview({
         {[...Array(8)].map((_, i) => (
           <div
             key={i}
-            className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 animate-pulse"
+            className="bg-card rounded-lg shadow-sm border border-border p-6 animate-pulse"
           >
             <div className="flex items-center justify-between">
-              <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-lg" />
+              <div className="w-12 h-12 bg-muted rounded-lg" />
             </div>
             <div className="mt-4">
-              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24" />
-              <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-32 mt-2" />
+              <div className="h-4 bg-muted rounded w-24" />
+              <div className="h-8 bg-muted rounded w-32 mt-2" />
             </div>
           </div>
         ))}
@@ -183,7 +183,7 @@ export function MetricsOverview({
     <div className="space-y-6">
       {/* Orders */}
       <div>
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+        <h3 className="text-lg font-semibold text-foreground mb-4">
           {t("orders")}
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -219,7 +219,7 @@ export function MetricsOverview({
 
       {/* Times */}
       <div>
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+        <h3 className="text-lg font-semibold text-foreground mb-4">
           {t("times")}
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -253,7 +253,7 @@ export function MetricsOverview({
 
       {/* Calls and satisfaction */}
       <div>
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+        <h3 className="text-lg font-semibold text-foreground mb-4">
           {t("callsAndSatisfaction")}
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

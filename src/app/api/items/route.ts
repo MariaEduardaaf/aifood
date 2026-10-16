@@ -2,16 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { z } from "zod";
-import { validationError } from "@/lib/api";
+import {
+  validationError,
+  localeTextMap,
+  allergensSchema,
+  missingDefaultLocale,
+} from "@/lib/api";
+import { getSettings } from "@/lib/settings";
 
 const menuItemSchema = z.object({
   category_id: z.string(),
-  name_pt: z.string().min(1),
-  name_es: z.string().min(1),
-  name_en: z.string().min(1),
-  description_pt: z.string().optional().nullable(),
-  description_es: z.string().optional().nullable(),
-  description_en: z.string().optional().nullable(),
+  names: localeTextMap(120),
+  descriptions: localeTextMap(500).optional(),
+  allergens: allergensSchema.optional(),
   price: z.number().min(0).max(99999.99),
   image_url: z.string().url().optional().nullable(),
   order: z.number().int().min(0).optional(),
@@ -102,6 +105,13 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       );
     }
+
+    const { default_locale } = await getSettings(restaurantId);
+    const localeError = missingDefaultLocale(
+      validation.data.names,
+      default_locale,
+    );
+    if (localeError) return localeError;
 
     const category = await prisma.category.findFirst({
       where: {

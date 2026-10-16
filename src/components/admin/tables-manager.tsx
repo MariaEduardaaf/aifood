@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
+import { useConfirm } from "@/components/ui/confirm-dialog";
+import { useToast } from "@/components/ui/toast";
 import {
   Button,
   Card,
@@ -45,6 +47,8 @@ export function TablesManager({ restaurantId }: TablesManagerProps) {
   const t = useTranslations("admin");
   const tCommon = useTranslations("common");
   const tErr = useTranslations("errors");
+  const toast = useToast();
+  const { confirm, dialog } = useConfirm();
 
   const [tables, setTables] = useState<Table[]>([]);
   const [loading, setLoading] = useState(true);
@@ -125,14 +129,18 @@ export function TablesManager({ restaurantId }: TablesManagerProps) {
       });
 
       if (res.ok) {
+        toast(t("toast.saved"), "success");
         await fetchTables();
         closeModal();
       } else {
         const data = await res.json().catch(() => ({}));
-        setError(typeof data.error === "string" ? data.error : t("tablesPage.saveError"));
+        const msg = typeof data.error === "string" ? data.error : t("tablesPage.saveError");
+        setError(msg);
+        toast(msg, "error");
       }
     } catch (err) {
       setError(t("tablesPage.saveTableError"));
+      toast(t("tablesPage.saveTableError"), "error");
     } finally {
       setSaving(false);
     }
@@ -146,13 +154,16 @@ export function TablesManager({ restaurantId }: TablesManagerProps) {
         body: JSON.stringify({ active: !table.active }),
       });
       if (res.ok) {
+        toast(t("toast.updated"), "success");
         await fetchTables();
       } else {
         setListError(tErr("generic"));
+        toast(tErr("generic"), "error");
       }
     } catch (err) {
       console.error("Error toggling table:", err);
       setListError(tErr("generic"));
+      toast(tErr("generic"), "error");
     }
   };
 
@@ -168,15 +179,19 @@ export function TablesManager({ restaurantId }: TablesManagerProps) {
   }, []);
 
   const handleDelete = async (table: Table) => {
-    if (!confirm(t("confirmDelete"))) return;
+    if (!(await confirm({ message: t("confirmDelete") }))) return;
 
     try {
       const res = await fetch(`/api/tables/${table.id}`, { method: "DELETE" });
       if (res.ok) {
+        toast(t("toast.deleted"), "success");
         await fetchTables();
+      } else {
+        toast(tErr("generic"), "error");
       }
     } catch (err) {
       console.error("Error deleting table:", err);
+      toast(tErr("generic"), "error");
     }
   };
 
@@ -212,6 +227,7 @@ export function TablesManager({ restaurantId }: TablesManagerProps) {
 
   return (
     <div className="space-y-6">
+      {dialog}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">{t("tables")}</h1>
         <Button onClick={openCreateModal}>

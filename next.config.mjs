@@ -21,6 +21,8 @@ const securityHeaders = [
 const nextConfig = {
   // Lets parallel dev servers from the same checkout keep separate build dirs
   distDir: process.env.NEXT_DIST_DIR || ".next",
+  // Self-contained server bundle for the Docker image (node server.js)
+  output: "standalone",
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },

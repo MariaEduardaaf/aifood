@@ -127,13 +127,13 @@ export function RealTimePanel({
 
   if (loading) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-        <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-48 mb-4 animate-pulse" />
+      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+        <div className="h-6 bg-muted rounded w-48 mb-4 animate-pulse" />
         <div className="space-y-4">
           {[...Array(4)].map((_, i) => (
             <div
               key={i}
-              className="h-16 bg-gray-100 dark:bg-gray-700 rounded animate-pulse"
+              className="h-16 bg-muted rounded animate-pulse"
             />
           ))}
         </div>
@@ -152,12 +152,12 @@ export function RealTimePanel({
   if (!data) return null;
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+    <div className="bg-card rounded-lg shadow-sm border border-border p-6">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+        <h3 className="text-lg font-semibold text-foreground">
           {t("realTime")}
         </h3>
-        <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <RefreshCw className="w-4 h-4" />
           {t("lastUpdate")}: {formatTime(lastUpdate.toISOString())}
         </div>
@@ -201,24 +201,24 @@ export function RealTimePanel({
 
       {/* Quick indicators */}
       <div className="grid grid-cols-2 gap-4 mb-6">
-        <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+        <div className="flex items-center gap-3 p-3 bg-secondary/40 rounded-lg">
           <Bell className="w-5 h-5 text-yellow-500" />
           <div>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-muted-foreground">
               {t("openCalls")}
             </p>
-            <p className="text-lg font-semibold text-gray-900 dark:text-white">
+            <p className="text-lg font-semibold text-foreground">
               {data.openCalls}
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+        <div className="flex items-center gap-3 p-3 bg-secondary/40 rounded-lg">
           <Users className="w-5 h-5 text-blue-500" />
           <div>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-muted-foreground">
               {t("occupiedTables")}
             </p>
-            <p className="text-lg font-semibold text-gray-900 dark:text-white">
+            <p className="text-lg font-semibold text-foreground">
               {data.occupiedTables}
             </p>
           </div>
@@ -228,7 +228,7 @@ export function RealTimePanel({
       {/* Alerts */}
       {data.alerts.length > 0 && (
         <div className="mb-6">
-          <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+          <h4 className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 text-red-500" />
             {t("alerts")}
           </h4>
@@ -255,7 +255,7 @@ export function RealTimePanel({
 
       {/* Recent orders */}
       <div>
-        <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+        <h4 className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">
           <Utensils className="w-4 h-4" />
           {t("recentOrders")}
         </h4>
@@ -263,7 +263,7 @@ export function RealTimePanel({
           {data.recentOrders.map((order) => (
             <div
               key={order.id}
-              className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
+              className="flex items-center justify-between p-3 bg-secondary/40 rounded-lg"
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
@@ -272,10 +272,10 @@ export function RealTimePanel({
                   </span>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                  <p className="text-sm font-medium text-foreground">
                     {t("table")} {order.table}
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <p className="text-xs text-muted-foreground">
                     {formatTime(order.createdAt)}
                   </p>
                 </div>
@@ -286,7 +286,7 @@ export function RealTimePanel({
                 >
                   {getStatusLabel(order.status)}
                 </span>
-                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                <span className="text-sm font-medium text-foreground">
                   {formatCurrency(order.total)}
                 </span>
               </div>

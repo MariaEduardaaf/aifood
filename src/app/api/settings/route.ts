@@ -3,6 +3,14 @@ import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { z } from "zod";
 import { validationError } from "@/lib/api";
+import {
+  CURRENCIES,
+  DEFAULT_SETTINGS,
+  SUPPORTED_LOCALES_SCHEMA,
+  enabledLocalesSchema,
+  invalidDefaultLocale,
+  timezoneSchema,
+} from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +23,11 @@ const settingsSchema = z.object({
     .nullable(),
   google_reviews_enabled: z.boolean().optional(),
   min_stars_redirect: z.number().int().min(1).max(5).optional(),
-  currency: z.enum(["EUR", "BRL", "USD", "GBP"]).optional(),
+  currency: z.enum(CURRENCIES).optional(),
+  enabled_locales: enabledLocalesSchema.optional(),
+  default_locale: SUPPORTED_LOCALES_SCHEMA.optional(),
+  ordering_enabled: z.boolean().optional(),
+  timezone: timezoneSchema.optional(),
   restaurantId: z.string().optional(),
 });
 
@@ -102,6 +114,20 @@ export async function PUT(request: NextRequest) {
 
     // restaurantId is input-only; the column is restaurant_id
     const { restaurantId: _restaurantId, ...data } = validation.data;
+
+    const existing = await prisma.settings.findUnique({
+      where: { restaurant_id: restaurantId },
+      select: { enabled_locales: true, default_locale: true },
+    });
+    const localeError = invalidDefaultLocale(
+      data.enabled_locales ??
+        existing?.enabled_locales ??
+        DEFAULT_SETTINGS.enabled_locales,
+      data.default_locale ??
+        existing?.default_locale ??
+        DEFAULT_SETTINGS.default_locale,
+    );
+    if (localeError) return localeError;
 
     const settings = await prisma.settings.upsert({
       where: { restaurant_id: restaurantId },

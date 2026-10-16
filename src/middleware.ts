@@ -20,29 +20,28 @@ export default async function middleware(req: NextRequest) {
   const userRole = token?.role;
 
   // Public routes - no auth required
-  const publicRoutes = ["/", "/login", "/table"];
+  const publicRoutes = ["/", "/login", "/table", "/privacy", "/cookies"];
   const isPublicRoute = publicRoutes.some(
     (route) => pathname === route || pathname.startsWith("/table/"),
   );
 
-  // API routes that are public
-  const publicApiPrefixes = ["/api/auth"];
+  // API routes that are public. Guest endpoints identify the table by its
+  // qr_token; staff-only methods on the same paths check the session in the
+  // route handler.
+  const publicApiPrefixes = ["/api/auth/"];
   const publicApiExact = [
     "/api/calls",
     "/api/menu",
     "/api/orders",
     "/api/review",
+    "/api/tables/status",
+    "/api/health",
   ];
   const isPublicApiRoute =
     publicApiPrefixes.some((route) => pathname.startsWith(route)) ||
     publicApiExact.includes(pathname);
 
-  // Special public routes for tables (token lookup and status)
-  const isPublicTableRoute =
-    pathname.startsWith("/api/tables/token/") ||
-    /^\/api\/tables\/[^/]+\/status$/.test(pathname);
-
-  if (isPublicRoute || isPublicApiRoute || isPublicTableRoute) {
+  if (isPublicRoute || isPublicApiRoute) {
     return NextResponse.next();
   }
 

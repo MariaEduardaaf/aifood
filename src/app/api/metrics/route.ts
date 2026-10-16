@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { getPeriodRange } from "@/lib/metrics";
+import { getSettings } from "@/lib/settings";
+import { getPeriodRange, zonedParts } from "@/lib/metrics";
 
 export const dynamic = "force-dynamic";
 
@@ -27,7 +28,8 @@ export async function GET(request: NextRequest) {
         ? restaurantIdParam
         : session.user.restaurant_id;
 
-    const { start: startDate } = getPeriodRange(period);
+    const settings = await getSettings(restaurantId);
+    const { start: startDate } = getPeriodRange(period, settings.timezone);
 
     // Total calls in period
     const totalCalls = await prisma.call.count({
@@ -103,7 +105,7 @@ export async function GET(request: NextRequest) {
       }
 
       todayCalls.forEach((call) => {
-        const hour = new Date(call.created_at).getHours();
+        const hour = zonedParts(call.created_at, settings.timezone).hour;
         callsByHour[hour]++;
       });
     }
