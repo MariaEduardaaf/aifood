@@ -13,6 +13,7 @@ import {
   Star,
 } from "lucide-react";
 import { useCurrency } from "@/components/providers/currency";
+import { formatPercent, formatNumber } from "../format";
 
 interface MetricsSummary {
   orders: {
@@ -54,6 +55,7 @@ interface KPICardProps {
 }
 
 function KPICard({ title, value, subtitle, icon, trend, color }: KPICardProps) {
+  const locale = useLocale();
   const colorClasses = {
     blue: "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400",
     green:
@@ -76,7 +78,7 @@ function KPICard({ title, value, subtitle, icon, trend, color }: KPICardProps) {
             <TrendingUp
               className={`w-4 h-4 mr-1 ${!trend.isPositive ? "rotate-180" : ""}`}
             />
-            {trend.value}%
+            {formatPercent(trend.value, locale)}
           </div>
         )}
       </div>
@@ -196,14 +198,14 @@ export function MetricsOverview({
           <KPICard
             title={t("confirmedOrders")}
             value={data.orders.confirmed}
-            subtitle={`${data.orders.total > 0 ? Math.round((data.orders.confirmed / data.orders.total) * 100) : 0}% ${t("ofTotal")}`}
+            subtitle={`${formatPercent(data.orders.total > 0 ? (data.orders.confirmed / data.orders.total) * 100 : 0, locale)} ${t("ofTotal")}`}
             icon={<CheckCircle className="w-6 h-6" />}
             color="green"
           />
           <KPICard
             title={t("canceledOrders")}
             value={data.orders.cancelled}
-            subtitle={`${data.orders.total > 0 ? Math.round((data.orders.cancelled / data.orders.total) * 100) : 0}% ${t("ofTotal")}`}
+            subtitle={`${formatPercent(data.orders.total > 0 ? (data.orders.cancelled / data.orders.total) * 100 : 0, locale)} ${t("ofTotal")}`}
             icon={<XCircle className="w-6 h-6" />}
             color="red"
           />
@@ -243,7 +245,7 @@ export function MetricsOverview({
           />
           <KPICard
             title={t("preparationSLA")}
-            value={`${data.times.preparationSla}%`}
+            value={formatPercent(data.times.preparationSla, locale)}
             subtitle={t("under30min")}
             icon={<TrendingUp className="w-6 h-6" />}
             color="green"
@@ -272,14 +274,14 @@ export function MetricsOverview({
           />
           <KPICard
             title={t("avgRating")}
-            value={data.satisfaction.averageRating.toFixed(1)}
+            value={formatNumber(data.satisfaction.averageRating, locale)}
             subtitle={`${data.satisfaction.totalReviews} ${t("reviews")}`}
             icon={<Star className="w-6 h-6" />}
             color="yellow"
           />
           <KPICard
             title={t("reviewRate")}
-            value={`${data.satisfaction.reviewRate}%`}
+            value={formatPercent(data.satisfaction.reviewRate, locale)}
             icon={<TrendingUp className="w-6 h-6" />}
             color="purple"
           />

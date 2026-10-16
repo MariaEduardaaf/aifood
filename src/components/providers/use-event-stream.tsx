@@ -16,9 +16,13 @@ const parse = (raw: string): unknown => {
   }
 };
 
-// SSE with visible connection state. Browser auto-reconnects while CONNECTING;
-// if the stream is CLOSED we reopen it ourselves, and reload the page after 3
-// failures in a row (a stale session then lands on the login page).
+// SSE with visible connection state. Never reloads the page (a reload while the
+// server is down lands on the browser's error page): it retries forever with
+// backoff (1s, 2s, 4s ... 15s) and shows the banner from the 2nd failure in a
+// row. Before each retry a session check runs; only a 401 leaves for /login.
+// The server says `event: bye` before its planned close: reconnect silently.
+// Every (re)connection gets a fresh `refresh` snapshot from the server, which
+// is the refetch after an outage.
 // Heartbeats are SSE comments: they keep the socket alive and fire no event.
 export function useEventStream(url: string, handlers: Handlers): { lost: boolean } {
   const [lost, setLost] = useState(false);
@@ -33,32 +37,50 @@ export function useEventStream(url: string, handlers: Handlers): { lost: boolean
     // Event names are read once per connection; callers pass a fixed set
     const names = Object.keys(handlersRef.current).filter((n) => n !== "open");
 
+    const fail = () => {
+      es?.close();
+      es = null;
+      if (stopped) return;
+      failures += 1;
+      if (failures >= 2) setLost(true);
+      timer = setTimeout(retry, Math.min(1000 * 2 ** (failures - 1), 15_000));
+    };
+
+    // Any staff role can read settings, so a 401 here means the session is gone
+    const retry = async () => {
+      try {
+        const res = await fetch("/api/settings", { cache: "no-store" });
+        if (stopped) return;
+        if (res.status === 401) {
+          window.location.assign("/login");
+          return;
+        }
+      } catch {
+        fail(); // server unreachable
+        return;
+      }
+      connect();
+    };
+
     const connect = () => {
+      if (stopped) return;
       es = new EventSource(url);
       es.onopen = () => {
         failures = 0;
         setLost(false);
         handlersRef.current.open?.(undefined);
       };
+      es.addEventListener("bye", () => {
+        es?.close();
+        connect();
+      });
       for (const name of names) {
         es.addEventListener(name, (e) => {
-          failures = 0;
-          setLost(false);
           handlersRef.current[name]?.(parse((e as MessageEvent).data));
         });
       }
-      es.onerror = () => {
-        failures += 1;
-        setLost(true);
-        if (failures >= 3) {
-          window.location.reload();
-          return;
-        }
-        if (es && es.readyState === EventSource.CLOSED && !stopped) {
-          es.close();
-          timer = setTimeout(connect, 3000);
-        }
-      };
+      // We manage reconnection ourselves (backoff + session check)
+      es.onerror = fail;
     };
     connect();
 

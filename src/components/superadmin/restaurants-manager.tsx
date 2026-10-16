@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
+import { readApiError } from "@/components/admin/api-errors";
 import { Plus, Pencil, Trash2, Loader2, X } from "lucide-react";
 import { Button, Card, CardContent, Input, Label, Badge } from "@/components/ui";
 import { useConfirm } from "@/components/ui/confirm-dialog";
@@ -37,6 +38,7 @@ export function RestaurantsManager() {
   const t = useTranslations("superadmin.restaurants");
   const tAdmin = useTranslations("admin");
   const tCommon = useTranslations("common");
+  const tRoot = useTranslations();
   const toast = useToast();
   const { confirm, dialog } = useConfirm();
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
@@ -162,8 +164,7 @@ export function RestaurantsManager() {
         await fetchRestaurants();
         closeModal();
       } else {
-        const data = await (res.ok ? settingsRes : res).json().catch(() => ({}));
-        const msg = typeof data.error === "string" ? data.error : t("saveError");
+        const msg = await readApiError(res.ok ? settingsRes : res, tRoot);
         setError(msg);
         toast(msg, "error");
       }
@@ -186,8 +187,7 @@ export function RestaurantsManager() {
         toast(tAdmin("toast.deleted"), "success");
         await fetchRestaurants();
       } else {
-        const data = await res.json().catch(() => ({}));
-        toast(typeof data.error === "string" ? data.error : t("deleteError"), "error");
+        toast(await readApiError(res, tRoot), "error");
       }
     } catch (err) {
       console.error("Error deleting restaurant:", err);
@@ -206,7 +206,7 @@ export function RestaurantsManager() {
         toast(tAdmin("toast.updated"), "success");
         await fetchRestaurants();
       } else {
-        toast(t("saveError"), "error");
+        toast(await readApiError(res, tRoot), "error");
       }
     } catch (err) {
       console.error("Error updating restaurant:", err);
@@ -298,7 +298,7 @@ export function RestaurantsManager() {
       )}
 
       {showModal && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center overflow-y-auto bg-black/50 p-4">
+        <div className="!mt-0 fixed inset-0 z-[60] flex items-center justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm">
           <div className="bg-background rounded-xl shadow-xl w-full max-w-lg my-8">
             <div className="flex items-center justify-between p-6 border-b">
               <h2 className="text-xl font-semibold">

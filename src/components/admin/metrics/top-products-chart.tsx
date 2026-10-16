@@ -110,7 +110,7 @@ export function TopProductsChart({
         {t("topProducts")}
       </h3>
       <div className="h-80">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 400, height: 320 }}>
           <BarChart
             data={data}
             layout="vertical"

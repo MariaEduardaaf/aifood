@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useTranslations, useLocale } from "next-intl";
+import { readApiError } from "./api-errors";
 import {
   Plus,
   Pencil,
@@ -69,6 +70,7 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
   const t = useTranslations("admin");
   const tCommon = useTranslations("common");
   const tErr = useTranslations("errors");
+  const tRoot = useTranslations();
   const tAllergens = useTranslations("allergens");
   const locale = useLocale();
   const toast = useToast();
@@ -153,10 +155,7 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
   const itemDescription = (i: MenuItem) =>
     localizedText(i.descriptions, locale, defaultLocale);
 
-  const apiError = async (res: Response) => {
-    const data = await res.json().catch(() => ({}));
-    return typeof data.error === "string" ? data.error : tErr("generic");
-  };
+  const apiError = (res: Response) => readApiError(res, tRoot);
 
   // Runs a mutation, reports through toasts, refreshes on success.
   const mutate = async (
@@ -566,7 +565,7 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
       )}
 
       {showCategoryModal && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+        <div className="!mt-0 fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
           <div role="dialog" aria-modal="true" className="card-premium w-full max-w-md rounded-2xl p-6">
             <div className="mb-6 flex items-center justify-between">
               <h3 className="text-xl font-bold text-foreground">
@@ -626,7 +625,7 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
       )}
 
       {showItemModal && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+        <div className="!mt-0 fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
           <div
             role="dialog"
             aria-modal="true"

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { z } from "zod";
-import { validationError } from "@/lib/api";
+import { validationError, restaurantIdForbidden } from "@/lib/api";
 
 const querySchema = z.object({
   stars: z.coerce.number().int().min(1).max(5).optional(),
@@ -38,6 +38,8 @@ export async function GET(request: NextRequest) {
 
   const { stars, limit } = query.data;
   const restaurantIdParam = searchParams.get("restaurantId");
+  const forbidden = restaurantIdForbidden(session.user.role, restaurantIdParam);
+  if (forbidden) return forbidden;
   const restaurantId =
     session.user.role === "SUPER_ADMIN"
       ? restaurantIdParam

@@ -33,6 +33,8 @@ export function Sheet({ title, onClose, media, children, footer }: SheetProps) {
   return (
     <dialog
       ref={ref}
+      role="dialog"
+      aria-modal="true"
       aria-label={title}
       className="sheet"
       onClose={onClose}

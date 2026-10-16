@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { Prisma } from "@prisma/client";
+import { Prisma, type Role } from "@prisma/client";
 import { z, type ZodError } from "zod";
 import { SUPPORTED_LOCALES } from "@/lib/i18n/locales";
 import { ALLERGEN_CODES } from "@/lib/allergens";
@@ -23,6 +23,14 @@ export function isUniqueViolation(error: unknown): boolean {
     error instanceof Prisma.PrismaClientKnownRequestError &&
     error.code === "P2002"
   );
+}
+
+// Only SUPER_ADMIN picks the restaurant. Other roles are pinned to their own,
+// so a `restaurantId` from them is refused (403) instead of silently ignored.
+export function restaurantIdForbidden(role: Role, requested: unknown) {
+  return role !== "SUPER_ADMIN" && requested != null && requested !== ""
+    ? NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    : null;
 }
 
 // 404 when a restaurant id (from a SUPER_ADMIN's input) does not exist, so

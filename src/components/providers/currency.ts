@@ -5,9 +5,10 @@ import { useEffect, useState } from "react";
 interface StaffSettings {
   currency: string;
   ordering_enabled: boolean;
+  defaultLocale: string;
 }
 
-const DEFAULTS: StaffSettings = { currency: "EUR", ordering_enabled: true };
+const DEFAULTS: StaffSettings = { currency: "EUR", ordering_enabled: true, defaultLocale: "es" };
 
 let cached: StaffSettings | null = null;
 let inflight: Promise<StaffSettings> | null = null;
@@ -29,6 +30,7 @@ function useStaffSettings(restaurantId?: string | null): StaffSettings | null {
               (d): StaffSettings => ({
                 currency: (d?.currency as string) || DEFAULTS.currency,
                 ordering_enabled: d?.ordering_enabled !== false,
+                defaultLocale: (d?.default_locale as string) || DEFAULTS.defaultLocale,
               }),
             )
             .catch(() => DEFAULTS);
@@ -50,4 +52,9 @@ export function useCurrency(restaurantId?: string | null): string {
 // Lite mode flag; null while loading so screens can avoid flashing order UI
 export function useOrderingEnabled(restaurantId?: string | null): boolean | null {
   return useStaffSettings(restaurantId)?.ordering_enabled ?? null;
+}
+
+// Restaurant default locale: fallback for menu texts missing in the UI locale
+export function useDefaultLocale(restaurantId?: string | null): string {
+  return useStaffSettings(restaurantId)?.defaultLocale ?? DEFAULTS.defaultLocale;
 }

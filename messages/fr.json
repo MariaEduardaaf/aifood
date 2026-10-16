@@ -164,7 +164,8 @@
     "orderDelivered": "Commande servie",
     "orderCancelled": "Commande annulée",
     "cancelOrderTitle": "Annuler cette commande ?",
-    "cancelOrder": "Annuler la commande"
+    "cancelOrder": "Annuler la commande",
+    "keepOrder": "Garder la commande"
   },
   "kitchen": {
     "title": "Écran cuisine",
@@ -336,7 +337,9 @@
       "emailPlaceholder": "email@exemple.fr",
       "keepPasswordHint": "laisser vide pour conserver l'actuel",
       "showPassword": "Afficher le mot de passe",
-      "hidePassword": "Masquer le mot de passe"
+      "hidePassword": "Masquer le mot de passe",
+      "editUser": "Modifier l'utilisateur",
+      "copyPassword": "Copier le mot de passe"
     },
     "menuPage": {
       "confirmDeleteCategory": "Êtes-vous sûr ? Tous les articles de cette catégorie seront supprimés.",
@@ -400,13 +403,13 @@
       "avgTime": "Délai moyen",
       "top5": "Top 5 des produits les plus vendus",
       "noProductsSold": "Aucun produit vendu sur cette période",
-      "soldCount": "{count} vendus",
+      "soldCount": "{count, plural, one {# vendu} other {# vendus}}",
       "noOrders": "Aucune commande sur la période choisie"
     },
     "settingsPage": {
       "googleReviewsSubtitle": "Configurer la redirection vers les avis Google",
       "urlTip": "Astuce : utilisez le format https://search.google.com/local/writereview?placeid=VOTRE_PLACE_ID",
-      "redirectDescription": "Redirige vers Google les clients qui donnent une bonne note",
+      "redirectDescription": "Chaque client est invité à laisser un avis sur Google après l'addition",
       "starsPlus": "{count}+ étoiles",
       "redirectHint": "Les clients qui donnent {count} étoiles ou plus seront redirigés vers les avis Google",
       "testUrl": "Tester l'URL",
@@ -446,10 +449,11 @@
       "orders": "Commandes",
       "revenue": "Chiffre d'affaires",
       "averageTicket": "Ticket moyen",
-      "cancellations": "Annulations",
-      "vsYesterday": "{value} vs hier",
-      "noBaseline": "Aucune donnée hier",
-      "loadError": "Impossible de charger les chiffres du jour"
+      "noBaseline": "Pas de données pour {weekday} dernier",
+      "loadError": "Impossible de charger les chiffres du jour",
+      "vsLastWeekday": "{value} vs {weekday} dernier",
+      "calls": "Appels",
+      "cancelledCount": "{count, plural, one {# annulée} other {# annulées}}"
     },
     "import": {
       "open": "Importer la carte",
@@ -466,7 +470,10 @@
       "itemsCreated": "Articles créés",
       "itemsUpdated": "Articles mis à jour",
       "rowErrors": "{count, plural, one {# ligne contient une erreur} other {# lignes contiennent des erreurs}}",
-      "row": "Ligne {row} :"
+      "row": "Ligne {row} :",
+      "pasteLabel": "Coller le texte CSV",
+      "pastePlaceholder": "category,name_es,name_en,price\nDrinks,Café,Coffee,2.20",
+      "templateHint": "Des colonnes facultatives comme category_en ou category_de traduisent les noms des catégories."
     }
   },
   "auth": {
@@ -495,7 +502,29 @@
     "unauthorized": "Non autorisé",
     "forbidden": "Accès refusé",
     "rateLimit": "Trop de requêtes. Veuillez réessayer dans quelques secondes.",
-    "reconnecting": "Connexion perdue. Reconnexion..."
+    "reconnecting": "Connexion perdue. Reconnexion...",
+    "invalidFields": "Vérifiez : {fields}",
+    "conflict": "Cela existe déjà. Utilisez une autre valeur.",
+    "tooLarge": "Le fichier est trop volumineux.",
+    "fields": {
+      "password": "Mot de passe",
+      "email": "E-mail",
+      "name": "Nom",
+      "names": "Nom",
+      "descriptions": "Description",
+      "price": "Prix",
+      "slug": "Slug",
+      "label": "Nom de la table",
+      "timezone": "Fuseau horaire",
+      "currency": "Devise",
+      "google_reviews_url": "Lien des avis Google",
+      "role": "Rôle",
+      "domain": "Domaine",
+      "url": "Lien",
+      "csv": "CSV",
+      "enabled_locales": "Langues de la carte",
+      "default_locale": "Langue par défaut"
+    }
   },
   "settings": {
     "title": "Paramètres",
@@ -530,7 +559,8 @@
       "menu": "Carte",
       "operations": "Exploitation",
       "metrics": "Indicateurs",
-      "feedbacks": "Avis"
+      "feedbacks": "Avis",
+      "settings": "Paramètres"
     },
     "restaurantRequired": {
       "title": "Choisissez un restaurant",

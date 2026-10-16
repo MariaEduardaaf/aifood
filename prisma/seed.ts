@@ -24,6 +24,7 @@ const ITEMS: {
   descriptions: Names;
   allergens: string[];
   price: number;
+  image_url?: string; // https, shown on the guest menu
 }[] = [
   {
     id: "item-tostada-tomate",
@@ -57,6 +58,7 @@ const ITEMS: {
     },
     allergens: ["gluten", "milk", "eggs"],
     price: 2.8,
+    image_url: "https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=800&q=80&auto=format&fit=crop",
   },
   {
     id: "item-desayuno-completo",
@@ -87,6 +89,7 @@ const ITEMS: {
     },
     allergens: ["milk"],
     price: 1.8,
+    image_url: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=800&q=80&auto=format&fit=crop",
   },
   {
     id: "item-cortado",
@@ -125,6 +128,7 @@ const ITEMS: {
     descriptions: {},
     allergens: [],
     price: 3.2,
+    image_url: "https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=800&q=80&auto=format&fit=crop",
   },
   {
     id: "item-horchata",
@@ -218,6 +222,7 @@ const ITEMS: {
     },
     allergens: ["milk", "eggs", "gluten"],
     price: 4.5,
+    image_url: "https://images.unsplash.com/photo-1533134242443-d4fd215305ad?w=800&q=80&auto=format&fit=crop",
   },
   {
     id: "item-churros",
@@ -229,6 +234,7 @@ const ITEMS: {
     },
     allergens: ["gluten", "milk", "soy"],
     price: 4.9,
+    image_url: "https://images.unsplash.com/photo-1624371414361-e670edf4898d?w=800&q=80&auto=format&fit=crop",
   },
   {
     id: "item-turron-helado",
@@ -345,6 +351,8 @@ async function main() {
       descriptions: item.descriptions,
       allergens: item.allergens,
       price: item.price,
+      // Only set when the demo has a photo, so re-running keeps uploaded ones
+      ...(item.image_url ? { image_url: item.image_url } : {}),
       order,
       active: true,
       restaurant_id: restaurant.id,
@@ -355,7 +363,7 @@ async function main() {
       create: { id: item.id, ...data },
     });
   }
-  console.log(`Menu items: ${ITEMS.length}`);
+  console.log(`Menu items: ${ITEMS.length} (${ITEMS.filter((i) => i.image_url).length} with photos)`);
 
   const firstTable = await prisma.table.findUnique({ where: { id: "table-1" } });
   console.log("\nSeeding completed!");

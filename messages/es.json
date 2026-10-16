@@ -164,7 +164,8 @@
     "orderDelivered": "Pedido entregado",
     "orderCancelled": "Pedido cancelado",
     "cancelOrderTitle": "¿Cancelar este pedido?",
-    "cancelOrder": "Cancelar pedido"
+    "cancelOrder": "Cancelar pedido",
+    "keepOrder": "Mantener pedido"
   },
   "kitchen": {
     "title": "Panel de Cocina",
@@ -239,7 +240,7 @@
       "quantity": "Cantidad",
       "category": "Categoría",
       "percentage": "Porcentaje",
-      "units": "un",
+      "units": "uds.",
       "revenueByCategory": "Ingresos por Categoría",
       "items": "artículos",
       "realTime": "Panel en Tiempo Real",
@@ -336,7 +337,9 @@
       "emailPlaceholder": "email@ejemplo.com",
       "keepPasswordHint": "déjalo vacío para mantenerla",
       "showPassword": "Mostrar contraseña",
-      "hidePassword": "Ocultar contraseña"
+      "hidePassword": "Ocultar contraseña",
+      "editUser": "Editar usuario",
+      "copyPassword": "Copiar contraseña"
     },
     "menuPage": {
       "confirmDeleteCategory": "¿Estás seguro? Se eliminarán todos los ítems de esta categoría.",
@@ -400,13 +403,13 @@
       "avgTime": "Tiempo medio",
       "top5": "Top 5 productos más vendidos",
       "noProductsSold": "Ningún producto vendido en el período",
-      "soldCount": "{count} vendidos",
+      "soldCount": "{count, plural, one {# vendido} other {# vendidos}}",
       "noOrders": "Ningún pedido en el período seleccionado"
     },
     "settingsPage": {
       "googleReviewsSubtitle": "Configura la redirección a Google Reviews",
       "urlTip": "Consejo: usa el formato https://search.google.com/local/writereview?placeid=TU_PLACE_ID",
-      "redirectDescription": "Redirige a Google a los clientes con notas altas",
+      "redirectDescription": "Se invita a todos los clientes a dejar una reseña en Google tras la cuenta",
       "starsPlus": "{count}+ estrellas",
       "redirectHint": "Los clientes que den {count} o más estrellas serán redirigidos a Google Reviews",
       "testUrl": "Probar URL",
@@ -446,10 +449,11 @@
       "orders": "Pedidos",
       "revenue": "Ingresos",
       "averageTicket": "Ticket medio",
-      "cancellations": "Cancelaciones",
-      "vsYesterday": "{value} vs ayer",
-      "noBaseline": "Sin datos de ayer",
-      "loadError": "No se pudieron cargar los números de hoy"
+      "noBaseline": "Sin datos del {weekday} pasado",
+      "loadError": "No se pudieron cargar los números de hoy",
+      "vsLastWeekday": "{value} vs. el {weekday} pasado",
+      "calls": "Llamadas",
+      "cancelledCount": "{count, plural, one {# cancelado} other {# cancelados}}"
     },
     "import": {
       "open": "Importar carta",
@@ -466,7 +470,10 @@
       "itemsCreated": "Platos creados",
       "itemsUpdated": "Platos actualizados",
       "rowErrors": "{count, plural, one {# fila tiene un error} other {# filas tienen errores}}",
-      "row": "Fila {row}:"
+      "row": "Fila {row}:",
+      "pasteLabel": "Pegar texto CSV",
+      "pastePlaceholder": "category,name_es,name_en,price\nDrinks,Café,Coffee,2.20",
+      "templateHint": "Columnas opcionales como category_en o category_de traducen los nombres de las categorías."
     }
   },
   "auth": {
@@ -495,7 +502,29 @@
     "unauthorized": "No autorizado",
     "forbidden": "Acceso denegado",
     "rateLimit": "Demasiadas solicitudes. Inténtelo de nuevo en unos segundos.",
-    "reconnecting": "Conexión perdida. Reconectando..."
+    "reconnecting": "Conexión perdida. Reconectando...",
+    "invalidFields": "Revisa: {fields}",
+    "conflict": "Eso ya existe. Usa otro valor.",
+    "tooLarge": "El archivo es demasiado grande.",
+    "fields": {
+      "password": "Contraseña",
+      "email": "Correo electrónico",
+      "name": "Nombre",
+      "names": "Nombre",
+      "descriptions": "Descripción",
+      "price": "Precio",
+      "slug": "Slug",
+      "label": "Nombre de la mesa",
+      "timezone": "Zona horaria",
+      "currency": "Moneda",
+      "google_reviews_url": "Enlace de reseñas de Google",
+      "role": "Rol",
+      "domain": "Dominio",
+      "url": "Enlace",
+      "csv": "CSV",
+      "enabled_locales": "Idiomas de la carta",
+      "default_locale": "Idioma principal"
+    }
   },
   "settings": {
     "title": "Configuraciones",
@@ -530,7 +559,8 @@
       "menu": "Carta",
       "operations": "Operación",
       "metrics": "Métricas",
-      "feedbacks": "Comentarios"
+      "feedbacks": "Comentarios",
+      "settings": "Ajustes"
     },
     "restaurantRequired": {
       "title": "Selecciona un restaurante",

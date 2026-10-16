@@ -164,7 +164,8 @@
     "orderDelivered": "Bestellung serviert",
     "orderCancelled": "Bestellung storniert",
     "cancelOrderTitle": "Diese Bestellung stornieren?",
-    "cancelOrder": "Bestellung stornieren"
+    "cancelOrder": "Bestellung stornieren",
+    "keepOrder": "Bestellung behalten"
   },
   "kitchen": {
     "title": "Küchenübersicht",
@@ -336,7 +337,9 @@
       "emailPlaceholder": "email@beispiel.de",
       "keepPasswordHint": "leer lassen, um das aktuelle zu behalten",
       "showPassword": "Passwort anzeigen",
-      "hidePassword": "Passwort verbergen"
+      "hidePassword": "Passwort verbergen",
+      "editUser": "Benutzer bearbeiten",
+      "copyPassword": "Passwort kopieren"
     },
     "menuPage": {
       "confirmDeleteCategory": "Sind Sie sicher? Alle Artikel dieser Kategorie werden gelöscht.",
@@ -406,7 +409,7 @@
     "settingsPage": {
       "googleReviewsSubtitle": "Weiterleitung zu Google Bewertungen einrichten",
       "urlTip": "Tipp: Verwenden Sie das Format https://search.google.com/local/writereview?placeid=IHRE_PLACE_ID",
-      "redirectDescription": "Leitet Gäste mit hohen Bewertungen zu Google weiter",
+      "redirectDescription": "Jeder Gast wird nach der Rechnung eingeladen, bei Google zu bewerten",
       "starsPlus": "{count}+ Sterne",
       "redirectHint": "Gäste, die {count} oder mehr Sterne vergeben, werden zu Google Bewertungen weitergeleitet",
       "testUrl": "URL testen",
@@ -446,10 +449,11 @@
       "orders": "Bestellungen",
       "revenue": "Umsatz",
       "averageTicket": "Durchschnittsbon",
-      "cancellations": "Stornierungen",
-      "vsYesterday": "{value} ggü. gestern",
-      "noBaseline": "Keine Daten von gestern",
-      "loadError": "Die heutigen Zahlen konnten nicht geladen werden"
+      "noBaseline": "Keine Daten für letzten {weekday}",
+      "loadError": "Die heutigen Zahlen konnten nicht geladen werden",
+      "vsLastWeekday": "{value} ggü. letztem {weekday}",
+      "calls": "Rufe",
+      "cancelledCount": "{count} storniert"
     },
     "import": {
       "open": "Speisekarte importieren",
@@ -466,7 +470,10 @@
       "itemsCreated": "Artikel erstellt",
       "itemsUpdated": "Artikel aktualisiert",
       "rowErrors": "{count, plural, one {# Zeile hat einen Fehler} other {# Zeilen haben Fehler}}",
-      "row": "Zeile {row}:"
+      "row": "Zeile {row}:",
+      "pasteLabel": "CSV-Text einfügen",
+      "pastePlaceholder": "category,name_es,name_en,price\nDrinks,Café,Coffee,2.20",
+      "templateHint": "Optionale Spalten wie category_en oder category_de übersetzen die Kategorienamen."
     }
   },
   "auth": {
@@ -495,7 +502,29 @@
     "unauthorized": "Nicht autorisiert",
     "forbidden": "Zugriff verweigert",
     "rateLimit": "Zu viele Anfragen. Bitte versuchen Sie es in einigen Sekunden erneut.",
-    "reconnecting": "Verbindung unterbrochen. Verbindung wird wiederhergestellt..."
+    "reconnecting": "Verbindung unterbrochen. Verbindung wird wiederhergestellt...",
+    "invalidFields": "Bitte prüfen: {fields}",
+    "conflict": "Das gibt es bereits. Bitte einen anderen Wert verwenden.",
+    "tooLarge": "Die Datei ist zu groß.",
+    "fields": {
+      "password": "Passwort",
+      "email": "E-Mail",
+      "name": "Name",
+      "names": "Name",
+      "descriptions": "Beschreibung",
+      "price": "Preis",
+      "slug": "Slug",
+      "label": "Tischname",
+      "timezone": "Zeitzone",
+      "currency": "Währung",
+      "google_reviews_url": "Link zu Google-Bewertungen",
+      "role": "Rolle",
+      "domain": "Domain",
+      "url": "Link",
+      "csv": "CSV",
+      "enabled_locales": "Sprachen der Speisekarte",
+      "default_locale": "Standardsprache"
+    }
   },
   "settings": {
     "title": "Einstellungen",
@@ -530,7 +559,8 @@
       "menu": "Speisekarte",
       "operations": "Betrieb",
       "metrics": "Kennzahlen",
-      "feedbacks": "Feedback"
+      "feedbacks": "Feedback",
+      "settings": "Einstellungen"
     },
     "restaurantRequired": {
       "title": "Restaurant auswählen",

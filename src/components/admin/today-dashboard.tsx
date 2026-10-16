@@ -14,11 +14,9 @@ interface RealTime {
   occupiedTables: number;
 }
 
-interface OrderTotals {
-  total: number;
-  cancelled: number;
-  averageTicket: number;
-  totalRevenue: number;
+interface Totals {
+  orders: { total: number; cancelled: number; averageTicket: number; totalRevenue: number };
+  calls?: { total: number };
 }
 
 const LIVE_REFRESH_MS = 15000;
@@ -32,20 +30,21 @@ async function getJson<T>(url: string): Promise<T | null> {
   }
 }
 
-// ponytail: the summary API has no "same weekday last week" period, so the
-// delta compares today with yesterday. Add the period server-side to upgrade.
-function Delta({ now, before, inverse = false }: { now: number; before: number; inverse?: boolean }) {
+function Delta({ now, before, weekday, inverse = false }: { now: number; before: number; weekday: string; inverse?: boolean }) {
   const t = useTranslations("admin.todayPage");
-  if (before === 0 && now === 0) {
-    return <p className="text-xs text-muted-foreground">{t("vsYesterday", { value: "0%" })}</p>;
+  const locale = useLocale();
+  if (before === 0 && now > 0) {
+    return <p className="text-xs text-muted-foreground">{t("noBaseline", { weekday })}</p>;
   }
-  if (before === 0) {
-    return <p className="text-xs text-muted-foreground">{t("noBaseline")}</p>;
-  }
-  const pct = Math.round(((now - before) / before) * 100);
-  const up = pct > 0;
-  const good = pct === 0 ? null : inverse ? !up : up;
-  const Icon = pct === 0 ? Minus : up ? ChevronUp : ChevronDown;
+  const ratio = before === 0 ? 0 : (now - before) / before;
+  const pct = new Intl.NumberFormat(locale, {
+    style: "percent",
+    maximumFractionDigits: 0,
+    signDisplay: "exceptZero",
+  }).format(ratio);
+  const up = ratio > 0;
+  const good = ratio === 0 ? null : inverse ? !up : up;
+  const Icon = ratio === 0 ? Minus : up ? ChevronUp : ChevronDown;
   return (
     <p
       className={`flex items-center gap-1 text-xs font-medium ${
@@ -53,7 +52,7 @@ function Delta({ now, before, inverse = false }: { now: number; before: number; 
       }`}
     >
       <Icon className="h-3.5 w-3.5" aria-hidden />
-      {t("vsYesterday", { value: `${up ? "+" : ""}${pct}%` })}
+      {t("vsLastWeekday", { value: pct, weekday })}
     </p>
   );
 }
@@ -63,8 +62,9 @@ export function TodayDashboard() {
   const locale = useLocale();
   const currency = useCurrency();
   const [live, setLive] = useState<RealTime | null>(null);
-  const [today, setToday] = useState<OrderTotals | null>(null);
-  const [yesterday, setYesterday] = useState<OrderTotals | null>(null);
+  const [today, setToday] = useState<Totals | null>(null);
+  const [lastWeek, setLastWeek] = useState<Totals | null>(null);
+  const weekday = new Intl.DateTimeFormat(locale, { weekday: "long" }).format(new Date());
   const [failed, setFailed] = useState(false);
 
   const loadLive = useCallback(async () => {
@@ -80,12 +80,12 @@ export function TodayDashboard() {
 
   useEffect(() => {
     Promise.all([
-      getJson<{ orders: OrderTotals }>("/api/admin/metrics/summary?period=today"),
-      getJson<{ orders: OrderTotals }>("/api/admin/metrics/summary?period=yesterday"),
+      getJson<Totals>("/api/admin/metrics/summary?period=today"),
+      getJson<Totals>("/api/admin/metrics/summary?period=lastweekday"),
     ]).then(([a, b]) => {
       if (!a) return setFailed(true);
-      setToday(a.orders);
-      setYesterday(b?.orders ?? null);
+      setToday(a);
+      setLastWeek(b);
     });
   }, []);
 
@@ -95,11 +95,19 @@ export function TodayDashboard() {
     { label: t("occupiedTables"), value: live?.occupiedTables, icon: Utensils, hot: false },
   ];
 
+  // The API already excludes cancelled orders from `total`; cancelled get their own stat.
+  const active = (x: Totals) => x.orders.total;
   const totals = today && [
-    { label: t("orders"), value: String(today.total), now: today.total, before: yesterday?.total },
-    { label: t("revenue"), value: formatMoney(today.totalRevenue, currency, locale), now: today.totalRevenue, before: yesterday?.totalRevenue },
-    { label: t("averageTicket"), value: formatMoney(today.averageTicket, currency, locale), now: today.averageTicket, before: yesterday?.averageTicket },
-    { label: t("cancellations"), value: String(today.cancelled), now: today.cancelled, before: yesterday?.cancelled, inverse: true },
+    {
+      label: t("orders"),
+      value: String(active(today)),
+      now: active(today),
+      before: lastWeek ? active(lastWeek) : undefined,
+      note: today.orders.cancelled > 0 ? t("cancelledCount", { count: today.orders.cancelled }) : null,
+    },
+    { label: t("revenue"), value: formatMoney(today.orders.totalRevenue, currency, locale), now: today.orders.totalRevenue, before: lastWeek?.orders.totalRevenue },
+    { label: t("averageTicket"), value: formatMoney(today.orders.averageTicket, currency, locale), now: today.orders.averageTicket, before: lastWeek?.orders.averageTicket },
+    { label: t("calls"), value: String(today.calls?.total ?? 0), now: today.calls?.total ?? 0, before: lastWeek ? (lastWeek.calls?.total ?? 0) : undefined },
   ];
 
   return (
@@ -133,9 +141,12 @@ export function TodayDashboard() {
                 <div key={c.label} className="card-premium rounded-2xl p-4">
                   <p className="text-sm text-muted-foreground">{c.label}</p>
                   <p className="my-1 text-2xl font-bold text-foreground">{c.value}</p>
-                  {c.before === undefined ? null : (
-                    <Delta now={c.now} before={c.before} inverse={c.inverse} />
+                  {c.before === undefined ? (
+                    <p className="text-xs text-muted-foreground">{t("noBaseline", { weekday })}</p>
+                  ) : (
+                    <Delta now={c.now} before={c.before} weekday={weekday} />
                   )}
+                  {"note" in c && c.note && <p className="mt-1 text-xs text-muted-foreground">{c.note}</p>}
                 </div>
               ) : (
                 <div key={i} className="card-premium h-[104px] animate-pulse rounded-2xl" />

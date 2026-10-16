@@ -5,13 +5,22 @@ aiFood runs as one long-running Node process (Docker image built from the
 Prisma migrations (`prisma migrate deploy`) and then starts the Next.js
 standalone server on `$PORT` (default 3000).
 
+The image sets `NEXT_OUTPUT_STANDALONE=1` in its build stage, which switches
+`next.config.mjs` to `output: "standalone"` (the self-contained `server.js`).
+Outside Docker leave it unset: `npm run build && npm start` (`next start`)
+does not run a standalone build.
+
+On `SIGTERM`/`SIGINT` (a redeploy) the server ends every open SSE stream with
+`event: bye`, so staff screens reconnect to the new instance on their own and
+the old process exits right away instead of waiting for those connections.
+
 ## Environment variables
 
 | Variable | Required | Notes |
 |---|---|---|
 | `DATABASE_URL` | yes | Postgres connection string. |
 | `AUTH_SECRET` | yes | `openssl rand -base64 32`. Changing it logs everyone out. |
-| `AUTH_TRUST_HOST` | yes | `true`. The app sits behind the platform's proxy. |
+| `AUTH_TRUST_HOST` | no | The app already sets `trustHost: true` (it always sits behind a proxy). Setting `true` is harmless. |
 | `NEXT_PUBLIC_APP_URL` | recommended | Public URL, e.g. `https://pedidos.cafesol.es`. Used in QR codes. Baked in at **build** time (build arg). Without it the QR URL is derived from the request host. |
 | `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | for photos | Menu photo uploads. Everything else works without them. |
 | `NEXT_PUBLIC_SHOW_DEMO_LOGINS` | no | Build arg. Keep `false` in production. |
@@ -30,7 +39,6 @@ the database is unreachable).
 3. In the app service → *Variables*:
    - `DATABASE_URL` = `${{Postgres.DATABASE_URL}}` (reference variable)
    - `AUTH_SECRET` = output of `openssl rand -base64 32`
-   - `AUTH_TRUST_HOST` = `true`
    - `NEXT_PUBLIC_APP_URL` = `https://<your-domain>` (Railway passes service
      variables to Docker builds as build args, so this reaches the build)
    - `CLOUDINARY_*` if you use photo uploads
@@ -76,7 +84,7 @@ the database is unreachable).
    (Or use any managed Postgres and `fly secrets set DATABASE_URL=...`.)
 3. **Secrets**:
    ```bash
-   fly secrets set AUTH_SECRET="$(openssl rand -base64 32)" AUTH_TRUST_HOST=true \
+   fly secrets set AUTH_SECRET="$(openssl rand -base64 32)" \
      CLOUDINARY_CLOUD_NAME=... CLOUDINARY_API_KEY=... CLOUDINARY_API_SECRET=...
    ```
 4. In `fly.toml` make sure of:
@@ -139,7 +147,7 @@ Only do this when the schema really matches `0001_init`; if later migrations
 docker build -t aifood --build-arg NEXT_PUBLIC_APP_URL=http://localhost:3000 .
 docker run --rm -p 3000:3000 \
   -e DATABASE_URL="postgresql://user:pass@host.docker.internal:5432/aifood" \
-  -e AUTH_SECRET=dev-secret -e AUTH_TRUST_HOST=true aifood
+  -e AUTH_SECRET=dev-secret aifood
 curl localhost:3000/api/health
 ```
 

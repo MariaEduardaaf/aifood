@@ -23,6 +23,7 @@ import {
   Package,
 } from "lucide-react";
 import { useCurrency } from "@/components/providers/currency";
+import { formatPercent } from "./format";
 
 interface Metrics {
   orders: {
@@ -326,7 +327,7 @@ export function MetricsDashboard({ restaurantId }: MetricsDashboardProps) {
                         : "text-red-500"
                   }`}
                 >
-                  {metrics?.times.preparationSla || 0}%
+                  {formatPercent(metrics?.times.preparationSla || 0, locale)}
                 </p>
               </div>
             </div>

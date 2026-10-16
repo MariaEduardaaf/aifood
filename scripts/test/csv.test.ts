@@ -29,6 +29,7 @@ test("parseMenuCsv builds locale maps, prices and allergens", () => {
   assert.deepEqual(result.rows[0], {
     row: 2,
     category: "Cafés",
+    categoryNames: { es: "Cafés" },
     names: { es: "Café con leche", en: "Coffee with milk" },
     descriptions: { es: "Con leche, o avena" },
     price: 1.8,
@@ -37,6 +38,21 @@ test("parseMenuCsv builds locale maps, prices and allergens", () => {
   });
   assert.deepEqual(result.rows[1].allergens, ["eggs", "gluten"]);
   assert.equal(result.rows[1].image_url, "https://example.com/b.jpg");
+});
+
+test("parseMenuCsv reads category_<locale> translations", () => {
+  const result = parseMenuCsv(
+    "category,category_en,category_xx,name_es,price\nBebidas,Drinks,Nope,Agua,1\nTapas,,,Bravas,5",
+    "es",
+  );
+  assert.ok(result.ok);
+  // Unsupported locales are ignored; `category` is the default-locale name
+  assert.deepEqual(result.rows[0].categoryNames, { en: "Drinks", es: "Bebidas" });
+  assert.deepEqual(result.rows[1].categoryNames, { es: "Tapas" });
+
+  const long = parseMenuCsv(`category,category_en,name_es,price\nA,${"x".repeat(121)},B,1`, "es");
+  assert.ok(long.ok);
+  assert.deepEqual(long.errors.map((e) => e.row), [2]);
 });
 
 test("parseMenuCsv rejects missing columns and reports bad rows by line number", () => {

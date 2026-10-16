@@ -11,6 +11,7 @@ import {
   Legend,
 } from "recharts";
 import { useCurrency } from "@/components/providers/currency";
+import { formatPercent } from "../format";
 
 interface CategoryData {
   id: string;
@@ -109,7 +110,7 @@ export function CategoriesChart({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Pie chart */}
         <div className="h-80">
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 400, height: 320 }}>
             <PieChart>
               <Pie
                 data={data as unknown as Record<string, unknown>[]}
@@ -171,7 +172,7 @@ export function CategoriesChart({
                     {category.name}
                   </p>
                   <p className="text-sm font-semibold text-foreground ml-2">
-                    {category.percentage}%
+                    {formatPercent(category.percentage, locale)}
                   </p>
                 </div>
                 <div className="flex items-center justify-between mt-1">
@@ -188,7 +189,7 @@ export function CategoriesChart({
                   <div
                     className="h-full rounded-full transition-all duration-500"
                     style={{
-                      width: `${category.percentage}%`,
+                      width: `${formatPercent(category.percentage, locale)}`,
                       backgroundColor: COLORS[index % COLORS.length],
                     }}
                   />

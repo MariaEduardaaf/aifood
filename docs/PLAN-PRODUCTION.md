@@ -128,3 +128,14 @@ Unknown or inactive table: 404 `{ error: "Table not found" }` **(change: inactiv
 ### Ops
 - `GET /api/health` (public) → 200 `{ status: "ok", db: "up" }` or 503.
 - `npm start` is `next start`; the Docker CMD runs `prisma migrate deploy` then `node server.js` **(change from plan item 11)**. See `docs/DEPLOY.md`.
+
+### Changes from the hardening and final fix rounds (2026-10-16)
+- Streams: `event: bye` / `data: {}` is sent right before a planned close (5-minute stream lifetime, or server shutdown on SIGTERM/SIGINT); clients reconnect silently. Streams end when the client stops reading (backpressure).
+- Guest `GET /api/orders?table=`: only orders since the table's last resolved bill request (max 3h), and only guest-facing fields (no `restaurant_id`, `confirmed_by`, `prepared_by`, `table_id`).
+- `restaurantId` sent by anyone but SUPER_ADMIN → 403 on every route that accepts it. Non-existent `restaurantId` → 404.
+- Wrong role → 403 everywhere; 401 only without a session. Oversized import body → 413.
+- Metrics: unknown `period` → 400 (allowed: today, yesterday, week, month, 30days, lastweekday). `orders.total` excludes cancelled orders; `orders.cancelled` is separate; `cancellationRate` is over all orders placed. `lastweekday` is DST-safe.
+- Login throttling: attempts are recorded before counting (no parallel bypass); limits per 15 min are 5 per email+IP, 30 per IP, 30 per email (`LoginAttempt.ip`, migration `0003_login_attempt_ip`). Unknown emails still run bcrypt (constant time). The login page shows `auth.rateLimited`.
+- Import: `allergens` are only written on update when the column exists in the file; `category_<locale>` columns add category translations; `image_url` must be https; price must match `^\d+([.,]\d{1,2})?$`; Google Sheets fetch follows at most 3 redirects to Google hosts, capped at 1MB.
+- `npm start` runs `next start`; standalone output is only built with `NEXT_OUTPUT_STANDALONE=1` (set by the Dockerfile). `auth()` returns null unless there is a real user, so every layout redirects to `/login` instead of crashing. `trustHost: true`.
+- `scripts/create-admin.ts`: password from `ADMIN_PASSWORD`; slug collision aborts unless `--attach`.

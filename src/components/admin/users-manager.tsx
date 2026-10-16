@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
+import { readApiError } from "./api-errors";
 import { useConfirm } from "@/components/ui/confirm-dialog";
 import { useToast } from "@/components/ui/toast";
 import {
@@ -9,6 +10,7 @@ import {
   Card,
   CardContent,
   Badge,
+  badgeVariants,
   Input,
   Label,
   Select,
@@ -53,6 +55,7 @@ export function UsersManager({
   const tCommon = useTranslations("common");
   const tAuth = useTranslations("auth");
   const tErr = useTranslations("errors");
+  const tRoot = useTranslations();
   const toast = useToast();
   const { confirm, dialog } = useConfirm();
 
@@ -172,8 +175,7 @@ export function UsersManager({
         await fetchUsers();
         closeModal();
       } else {
-        const data = await res.json().catch(() => ({}));
-        const msg = typeof data.error === "string" ? data.error : t("usersPage.saveError");
+        const msg = await readApiError(res, tRoot);
         setError(msg);
         toast(msg, "error");
       }
@@ -199,8 +201,7 @@ export function UsersManager({
         toast(t("toast.deleted"), "success");
         await fetchUsers();
       } else {
-        const data = await res.json().catch(() => ({}));
-        toast(typeof data.error === "string" ? data.error : t("usersPage.deleteError"), "error");
+        toast(await readApiError(res, tRoot), "error");
       }
     } catch (err) {
       console.error("Error deleting user:", err);
@@ -219,7 +220,7 @@ export function UsersManager({
         toast(t("toast.updated"), "success");
         await fetchUsers();
       } else {
-        toast(tErr("generic"), "error");
+        toast(await readApiError(res, tRoot), "error");
       }
     } catch (err) {
       console.error("Error toggling user active status:", err);
@@ -254,7 +255,7 @@ export function UsersManager({
         setGeneratedPassword(newPassword);
         setCopiedPassword(false);
       } else {
-        toast(t("usersPage.resetPasswordError"), "error");
+        toast(await readApiError(res, tRoot), "error");
       }
     } catch (err) {
       console.error("Error resetting password:", err);
@@ -350,15 +351,16 @@ export function UsersManager({
                       <Badge variant={getRoleVariant(user.role)}>
                         {getRoleLabel(user.role)}
                       </Badge>
-                      <Badge
-                        variant={user.active ? "success" : "secondary"}
-                        className="cursor-pointer"
-                        onClick={() =>
-                          user.id !== currentUserId && toggleActive(user)
-                        }
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={user.active}
+                        disabled={user.id === currentUserId}
+                        onClick={() => toggleActive(user)}
+                        className={`${badgeVariants({ variant: user.active ? "success" : "secondary" })} cursor-pointer disabled:cursor-not-allowed disabled:opacity-60`}
                       >
                         {user.active ? t("active") : t("inactive")}
-                      </Badge>
+                      </button>
                       {user._count && user._count.resolved_calls > 0 && (
                         <span className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">
                           {t("usersPage.calls", { count: user._count.resolved_calls })}
@@ -413,7 +415,7 @@ export function UsersManager({
 
       {/* Generated password modal */}
       {generatedPassword && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="!mt-0 fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <Card className="w-full max-w-sm mx-4">
             <CardContent className="pt-6">
               <div className="text-center">
@@ -434,6 +436,7 @@ export function UsersManager({
                     variant="ghost"
                     size="sm"
                     onClick={copyPassword}
+                    aria-label={t("usersPage.copyPassword")}
                     className="shrink-0"
                   >
                     {copiedPassword ? (
@@ -460,15 +463,14 @@ export function UsersManager({
 
       {/* Create/Edit modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="!mt-0 fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <Card className="w-full max-w-md mx-4">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold">
-                  {editingUser ? tCommon("edit") : tCommon("create")}{" "}
-                  {t("users")}
+                  {editingUser ? t("usersPage.editUser") : t("newUser")}
                 </h2>
-                <Button variant="ghost" size="icon" onClick={closeModal}>
+                <Button variant="ghost" size="icon" onClick={closeModal} aria-label={tCommon("close")}>
                   <X className="h-4 w-4" />
                 </Button>
               </div>

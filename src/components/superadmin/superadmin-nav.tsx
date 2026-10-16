@@ -15,6 +15,7 @@ import {
   BarChart3,
   Activity,
   MessageSquare,
+  Settings,
   LogOut,
 } from "lucide-react";
 import { ThemeToggleCompact } from "@/components/ui/theme-toggle";
@@ -103,6 +104,11 @@ export function SuperAdminNav({ user }: SuperAdminNavProps) {
         href: "/superadmin/feedbacks",
         label: t("nav.feedbacks"),
         icon: MessageSquare,
+      },
+      {
+        href: "/superadmin/settings",
+        label: t("nav.settings"),
+        icon: Settings,
       },
     ],
     [t],
@@ -197,7 +203,7 @@ export function SuperAdminNav({ user }: SuperAdminNavProps) {
               </Select>
             </div>
 
-            <nav className="hidden lg:flex items-center gap-1">
+            <nav className="hidden min-[1760px]:flex items-center gap-1">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive =
@@ -209,8 +215,6 @@ export function SuperAdminNav({ user }: SuperAdminNavProps) {
                   <Link
                     key={item.href}
                     href={buildHref(item.href)}
-                    aria-label={item.label}
-                    title={item.label}
                     className={cn(
                       "flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200",
                       isActive
@@ -219,7 +223,7 @@ export function SuperAdminNav({ user }: SuperAdminNavProps) {
                     )}
                   >
                     <Icon className="h-4 w-4" />
-                    <span className="hidden 2xl:inline">{item.label}</span>
+                    <span>{item.label}</span>
                   </Link>
                 );
               })}
@@ -254,7 +258,7 @@ export function SuperAdminNav({ user }: SuperAdminNavProps) {
           </div>
         </div>
 
-        <nav className="lg:hidden flex items-center gap-1 pb-3 overflow-x-auto scrollbar-hide">
+        <nav className="min-[1760px]:hidden flex items-center gap-1 pb-3 overflow-x-auto scrollbar-hide">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive =

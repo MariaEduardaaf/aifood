@@ -164,7 +164,8 @@
     "orderDelivered": "Pedido entregue",
     "orderCancelled": "Pedido cancelado",
     "cancelOrderTitle": "Cancelar este pedido?",
-    "cancelOrder": "Cancelar pedido"
+    "cancelOrder": "Cancelar pedido",
+    "keepOrder": "Manter pedido"
   },
   "kitchen": {
     "title": "Painel da Cozinha",
@@ -336,7 +337,9 @@
       "emailPlaceholder": "email@exemplo.com",
       "keepPasswordHint": "deixe vazio para manter",
       "showPassword": "Mostrar senha",
-      "hidePassword": "Ocultar senha"
+      "hidePassword": "Ocultar senha",
+      "editUser": "Editar usuário",
+      "copyPassword": "Copiar senha"
     },
     "menuPage": {
       "confirmDeleteCategory": "Tem certeza? Todos os itens desta categoria serão excluídos.",
@@ -400,13 +403,13 @@
       "avgTime": "Tempo Médio",
       "top5": "Top 5 Produtos Mais Vendidos",
       "noProductsSold": "Nenhum produto vendido no período",
-      "soldCount": "{count} vendidos",
+      "soldCount": "{count, plural, one {# vendido} other {# vendidos}}",
       "noOrders": "Nenhum pedido no período selecionado"
     },
     "settingsPage": {
       "googleReviewsSubtitle": "Configure o redirecionamento para Google Reviews",
       "urlTip": "Dica: Use o formato https://search.google.com/local/writereview?placeid=SEU_PLACE_ID",
-      "redirectDescription": "Redireciona clientes com notas altas para o Google",
+      "redirectDescription": "Todos os clientes são convidados a avaliar no Google depois da conta",
       "starsPlus": "{count}+ estrelas",
       "redirectHint": "Clientes que derem {count} ou mais estrelas serão redirecionados ao Google Reviews",
       "testUrl": "Testar URL",
@@ -446,10 +449,11 @@
       "orders": "Pedidos",
       "revenue": "Faturamento",
       "averageTicket": "Ticket médio",
-      "cancellations": "Cancelamentos",
-      "vsYesterday": "{value} vs ontem",
-      "noBaseline": "Sem dados de ontem",
-      "loadError": "Não foi possível carregar os números de hoje"
+      "noBaseline": "Sem dados de {weekday} da semana passada",
+      "loadError": "Não foi possível carregar os números de hoje",
+      "vsLastWeekday": "{value} vs. {weekday} da semana passada",
+      "calls": "Chamados",
+      "cancelledCount": "{count, plural, one {# cancelado} other {# cancelados}}"
     },
     "import": {
       "open": "Importar cardápio",
@@ -466,7 +470,10 @@
       "itemsCreated": "Itens criados",
       "itemsUpdated": "Itens atualizados",
       "rowErrors": "{count, plural, one {# linha com erro} other {# linhas com erro}}",
-      "row": "Linha {row}:"
+      "row": "Linha {row}:",
+      "pasteLabel": "Colar texto CSV",
+      "pastePlaceholder": "category,name_es,name_en,price\nDrinks,Café,Coffee,2.20",
+      "templateHint": "Colunas opcionais como category_en ou category_de traduzem os nomes das categorias."
     }
   },
   "auth": {
@@ -495,7 +502,29 @@
     "unauthorized": "Não autorizado",
     "forbidden": "Acesso negado",
     "rateLimit": "Muitas requisições. Tente novamente em alguns segundos.",
-    "reconnecting": "Conexão perdida. Reconectando..."
+    "reconnecting": "Conexão perdida. Reconectando...",
+    "invalidFields": "Confira: {fields}",
+    "conflict": "Isso já existe. Use outro valor.",
+    "tooLarge": "O arquivo é grande demais.",
+    "fields": {
+      "password": "Senha",
+      "email": "E-mail",
+      "name": "Nome",
+      "names": "Nome",
+      "descriptions": "Descrição",
+      "price": "Preço",
+      "slug": "Slug",
+      "label": "Nome da mesa",
+      "timezone": "Fuso horário",
+      "currency": "Moeda",
+      "google_reviews_url": "Link de avaliações do Google",
+      "role": "Função",
+      "domain": "Domínio",
+      "url": "Link",
+      "csv": "CSV",
+      "enabled_locales": "Idiomas do cardápio",
+      "default_locale": "Idioma padrão"
+    }
   },
   "settings": {
     "title": "Configurações",
@@ -530,7 +559,8 @@
       "menu": "Cardápio",
       "operations": "Operação",
       "metrics": "Métricas",
-      "feedbacks": "Feedbacks"
+      "feedbacks": "Feedbacks",
+      "settings": "Configurações"
     },
     "restaurantRequired": {
       "title": "Selecione um restaurante",

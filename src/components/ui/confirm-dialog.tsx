@@ -7,6 +7,8 @@ interface ConfirmOptions {
   message: string;
   title?: string;
   confirmLabel?: string;
+  // Defaults to "Cancel"; pass "Go back" when the action itself is a cancellation
+  cancelLabel?: string;
   destructive?: boolean;
 }
 
@@ -41,6 +43,7 @@ function ConfirmDialog({
   message,
   title,
   confirmLabel,
+  cancelLabel,
   destructive = true,
   onClose,
 }: ConfirmOptions & { onClose: (ok: boolean) => void }) {
@@ -57,7 +60,7 @@ function ConfirmDialog({
 
   return (
     <div
-      className="fixed inset-0 z-[90] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+      className="!mt-0 fixed inset-0 z-[90] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
       onClick={() => onClose(false)}
     >
       <div
@@ -81,7 +84,7 @@ function ConfirmDialog({
             onClick={() => onClose(false)}
             className="btn-secondary-premium min-h-[44px] flex-1 rounded-xl py-3 font-medium"
           >
-            {t("cancel")}
+            {cancelLabel ?? t("cancel")}
           </button>
           <button
             type="button"

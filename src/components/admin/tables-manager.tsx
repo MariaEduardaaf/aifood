@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
+import { readApiError } from "./api-errors";
 import { useConfirm } from "@/components/ui/confirm-dialog";
 import { useToast } from "@/components/ui/toast";
 import {
@@ -47,6 +48,7 @@ export function TablesManager({ restaurantId }: TablesManagerProps) {
   const t = useTranslations("admin");
   const tCommon = useTranslations("common");
   const tErr = useTranslations("errors");
+  const tRoot = useTranslations();
   const toast = useToast();
   const { confirm, dialog } = useConfirm();
 
@@ -133,8 +135,7 @@ export function TablesManager({ restaurantId }: TablesManagerProps) {
         await fetchTables();
         closeModal();
       } else {
-        const data = await res.json().catch(() => ({}));
-        const msg = typeof data.error === "string" ? data.error : t("tablesPage.saveError");
+        const msg = await readApiError(res, tRoot);
         setError(msg);
         toast(msg, "error");
       }
@@ -157,8 +158,9 @@ export function TablesManager({ restaurantId }: TablesManagerProps) {
         toast(t("toast.updated"), "success");
         await fetchTables();
       } else {
-        setListError(tErr("generic"));
-        toast(tErr("generic"), "error");
+        const msg = await readApiError(res, tRoot);
+        setListError(msg);
+        toast(msg, "error");
       }
     } catch (err) {
       console.error("Error toggling table:", err);
@@ -187,7 +189,7 @@ export function TablesManager({ restaurantId }: TablesManagerProps) {
         toast(t("toast.deleted"), "success");
         await fetchTables();
       } else {
-        toast(tErr("generic"), "error");
+        toast(await readApiError(res, tRoot), "error");
       }
     } catch (err) {
       console.error("Error deleting table:", err);
@@ -321,7 +323,7 @@ export function TablesManager({ restaurantId }: TablesManagerProps) {
 
       {/* Create/Edit modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="!mt-0 fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <Card className="w-full max-w-md mx-4">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between mb-4">
@@ -369,7 +371,7 @@ export function TablesManager({ restaurantId }: TablesManagerProps) {
 
       {/* QR code modal */}
       {showQRModal && qrData && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="!mt-0 fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <Card className="w-full max-w-sm mx-4">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between mb-4">

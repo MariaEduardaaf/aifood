@@ -6,6 +6,7 @@ import {
   validationError,
   localeTextMap,
   missingDefaultLocale,
+  restaurantIdForbidden,
 } from "@/lib/api";
 import { getSettings } from "@/lib/settings";
 
@@ -35,6 +36,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const activeOnly = searchParams.get("active") === "true";
     const restaurantIdParam = searchParams.get("restaurantId");
+    const forbidden = restaurantIdForbidden(session.user.role, restaurantIdParam);
+    if (forbidden) return forbidden;
     const restaurantId =
       session.user.role === "SUPER_ADMIN"
         ? restaurantIdParam
@@ -92,6 +95,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Get max order
+    const forbidden = restaurantIdForbidden(session.user.role, validation.data.restaurantId);
+    if (forbidden) return forbidden;
     const restaurantId =
       session.user.role === "SUPER_ADMIN"
         ? validation.data.restaurantId

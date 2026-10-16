@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { z } from "zod";
-import { validationError, isUniqueViolation } from "@/lib/api";
+import { validationError, isUniqueViolation, restaurantIdForbidden } from "@/lib/api";
 import { hash } from "bcryptjs";
 
 const createUserSchema = z.object({
@@ -31,6 +31,8 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const restaurantIdParam = searchParams.get("restaurantId");
+    const forbidden = restaurantIdForbidden(session.user.role, restaurantIdParam);
+    if (forbidden) return forbidden;
     const restaurantId =
       session.user.role === "SUPER_ADMIN"
         ? restaurantIdParam
@@ -115,6 +117,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const forbidden = restaurantIdForbidden(session.user.role, restaurantIdInput);
+    if (forbidden) return forbidden;
     const restaurantId =
       session.user.role === "SUPER_ADMIN"
         ? restaurantIdInput

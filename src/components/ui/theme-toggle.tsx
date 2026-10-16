@@ -28,6 +28,8 @@ export function ThemeToggle() {
               : "text-muted-foreground hover:text-foreground hover:bg-secondary",
           )}
           title={opt.label}
+          aria-label={opt.label}
+          aria-pressed={theme === opt.value}
         >
           <opt.icon className="h-4 w-4" />
         </button>
@@ -53,6 +55,7 @@ export function ThemeToggleCompact({ className }: { className?: string }) {
           "bg-secondary/50 border border-border/50 text-muted-foreground hover:text-foreground hover:bg-secondary",
       )}
       title={resolvedTheme === "dark" ? t("lightMode") : t("darkMode")}
+      aria-label={resolvedTheme === "dark" ? t("lightMode") : t("darkMode")}
     >
       {resolvedTheme === "dark" ? (
         <Sun className="h-5 w-5" />

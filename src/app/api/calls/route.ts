@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { z } from "zod";
-import { validationError } from "@/lib/api";
+import { validationError, restaurantIdForbidden } from "@/lib/api";
 import { findPublicTable } from "@/lib/public-table";
 import { emit, callInclude } from "@/lib/events";
 
@@ -48,6 +48,8 @@ export async function GET(request: NextRequest) {
 
     const status = statusValidation?.data;
     const restaurantIdParam = searchParams.get("restaurantId");
+    const forbidden = restaurantIdForbidden(session.user.role, restaurantIdParam);
+    if (forbidden) return forbidden;
     const restaurantId =
       session.user.role === "SUPER_ADMIN"
         ? restaurantIdParam

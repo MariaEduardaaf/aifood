@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { z } from "zod";
-import { restaurantNotFound, validationError } from "@/lib/api";
+import { restaurantNotFound, validationError, restaurantIdForbidden } from "@/lib/api";
 import {
   CURRENCIES,
   DEFAULT_SETTINGS,
@@ -43,6 +43,8 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const restaurantIdParam = searchParams.get("restaurantId");
+    const forbidden = restaurantIdForbidden(session.user.role, restaurantIdParam);
+    if (forbidden) return forbidden;
     const restaurantId =
       session.user.role === "SUPER_ADMIN"
         ? restaurantIdParam
@@ -105,6 +107,8 @@ export async function PUT(request: NextRequest) {
       return validationError(validation.error);
     }
 
+    const forbidden = restaurantIdForbidden(session.user.role, validation.data.restaurantId);
+    if (forbidden) return forbidden;
     const restaurantId =
       session.user.role === "SUPER_ADMIN"
         ? validation.data.restaurantId

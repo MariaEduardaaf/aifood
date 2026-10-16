@@ -14,7 +14,7 @@ import {
 import { cn, formatMoney, formatTime } from "@/lib/utils";
 import { localizedText } from "@/lib/i18n/text";
 import { useSound } from "@/components/providers/sound-provider";
-import { useCurrency } from "@/components/providers/currency";
+import { useCurrency, useDefaultLocale } from "@/components/providers/currency";
 import { useLiveRecords, ReconnectBanner } from "@/components/providers/use-event-stream";
 import { useStaffAlert } from "@/components/providers/staff-alerts";
 import { useToast } from "@/components/ui/toast";
@@ -70,7 +70,7 @@ function OrderCard({
   const t = useTranslations("waiter");
   const locale = useLocale();
   const currency = useCurrency();
-  const [expanded, setExpanded] = useState(false);
+  const defaultLocale = useDefaultLocale();
 
   const getUrgencyColor = (secs: number) => {
     if (secs >= 180) return "text-red-700 dark:text-red-300";
@@ -98,12 +98,7 @@ function OrderCard({
       )}
     >
       {/* Header */}
-      <button
-        type="button"
-        aria-expanded={expanded}
-        className="block w-full p-4 text-left"
-        onClick={() => setExpanded(!expanded)}
-      >
+      <div className="p-4">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="font-bold text-lg">{order.table.label}</h3>
@@ -123,34 +118,32 @@ function OrderCard({
             </div>
           </div>
         </div>
-      </button>
+      </div>
 
-      {/* Expanded Items */}
-      {expanded && (
-        <div className="px-4 pb-4 space-y-2 border-t border-border/30 pt-3">
-          {order.items.map((item) => (
-            <div key={item.id} className="flex items-start gap-3">
-              <span className="w-7 shrink-0 font-bold tabular-nums text-price">{item.quantity}×</span>
-              <div className="flex-1">
-                <p className="font-medium text-sm">
-                  {localizedText(item.menuItem.names, locale, locale)}
-                </p>
-                {item.notes && (
-                  <p className="mt-0.5 inline-block rounded bg-amber-200 px-1.5 text-xs font-semibold text-amber-950">{item.notes}</p>
-                )}
-              </div>
-            </div>
-          ))}
-
-          {order.notes && (
-            <div className="pt-2 mt-2 border-t border-border/30">
-              <p className="rounded-md bg-amber-200 px-2 py-1 text-sm font-semibold text-amber-950">
-                <span className="font-medium">{t("notes")}:</span> {order.notes}
+      {/* Items, always visible so the waiter reads the order without a tap */}
+      <div className="px-4 pb-4 space-y-2 border-t border-border/30 pt-3">
+        {order.items.map((item) => (
+          <div key={item.id} className="flex items-start gap-3">
+            <span className="w-7 shrink-0 font-bold tabular-nums text-price">{item.quantity}×</span>
+            <div className="flex-1">
+              <p className="font-medium text-sm">
+                {localizedText(item.menuItem.names, locale, defaultLocale)}
               </p>
+              {item.notes && (
+                <p className="mt-1 inline-block rounded-md bg-amber-200 px-2 py-1 text-sm font-semibold text-amber-950">{item.notes}</p>
+              )}
             </div>
-          )}
-        </div>
-      )}
+          </div>
+        ))}
+
+        {order.notes && (
+          <div className="pt-2 mt-2 border-t border-border/30">
+            <p className="rounded-md bg-amber-200 px-3 py-2 text-sm font-semibold text-amber-950">
+              <span className="font-medium">{t("notes")}:</span> {order.notes}
+            </p>
+          </div>
+        )}
+      </div>
 
       {/* Actions */}
       <div className="p-3 border-t border-border/30">
@@ -284,6 +277,7 @@ export function OrdersKanban({ onCount }: { onCount?: (count: number) => void })
       title: t("cancelOrderTitle"),
       message: t("confirmCancelOrder"),
       confirmLabel: t("cancelOrder"),
+      cancelLabel: t("keepOrder"),
     });
     if (ok) runAction(orderId, "cancel");
   };

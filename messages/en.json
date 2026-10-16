@@ -164,7 +164,8 @@
     "orderDelivered": "Order delivered",
     "orderCancelled": "Order cancelled",
     "cancelOrderTitle": "Cancel this order?",
-    "cancelOrder": "Cancel order"
+    "cancelOrder": "Cancel order",
+    "keepOrder": "Keep order"
   },
   "kitchen": {
     "title": "Kitchen Panel",
@@ -239,7 +240,7 @@
       "quantity": "Quantity",
       "category": "Category",
       "percentage": "Percentage",
-      "units": "un",
+      "units": "pcs",
       "revenueByCategory": "Revenue by Category",
       "items": "items",
       "realTime": "Real-Time Panel",
@@ -336,7 +337,9 @@
       "emailPlaceholder": "email@example.com",
       "keepPasswordHint": "leave empty to keep current",
       "showPassword": "Show password",
-      "hidePassword": "Hide password"
+      "hidePassword": "Hide password",
+      "editUser": "Edit user",
+      "copyPassword": "Copy password"
     },
     "menuPage": {
       "confirmDeleteCategory": "Are you sure? All items in this category will be deleted.",
@@ -400,13 +403,13 @@
       "avgTime": "Average Time",
       "top5": "Top 5 Best-Selling Products",
       "noProductsSold": "No products sold in this period",
-      "soldCount": "{count} sold",
+      "soldCount": "{count, plural, one {# sold} other {# sold}}",
       "noOrders": "No orders in the selected period"
     },
     "settingsPage": {
       "googleReviewsSubtitle": "Configure the redirect to Google Reviews",
       "urlTip": "Tip: Use the format https://search.google.com/local/writereview?placeid=YOUR_PLACE_ID",
-      "redirectDescription": "Redirects customers with high ratings to Google",
+      "redirectDescription": "Every guest is invited to review on Google after the bill",
       "starsPlus": "{count}+ stars",
       "redirectHint": "Customers who give {count} or more stars will be redirected to Google Reviews",
       "testUrl": "Test URL",
@@ -446,10 +449,11 @@
       "orders": "Orders",
       "revenue": "Revenue",
       "averageTicket": "Average ticket",
-      "cancellations": "Cancellations",
-      "vsYesterday": "{value} vs yesterday",
-      "noBaseline": "No data yesterday",
-      "loadError": "Could not load today's numbers"
+      "noBaseline": "No data for last {weekday}",
+      "loadError": "Could not load today's numbers",
+      "vsLastWeekday": "{value} vs last {weekday}",
+      "calls": "Calls",
+      "cancelledCount": "{count, plural, one {# cancelled} other {# cancelled}}"
     },
     "import": {
       "open": "Import menu",
@@ -466,7 +470,10 @@
       "itemsCreated": "Items created",
       "itemsUpdated": "Items updated",
       "rowErrors": "{count, plural, one {# row has an error} other {# rows have errors}}",
-      "row": "Row {row}:"
+      "row": "Row {row}:",
+      "pasteLabel": "Paste CSV text",
+      "pastePlaceholder": "category,name_es,name_en,price\nDrinks,Café,Coffee,2.20",
+      "templateHint": "Optional columns such as category_en or category_de translate the category names."
     }
   },
   "auth": {
@@ -495,7 +502,29 @@
     "unauthorized": "Unauthorized",
     "forbidden": "Access denied",
     "rateLimit": "Too many requests. Please try again in a few seconds.",
-    "reconnecting": "Connection lost. Reconnecting..."
+    "reconnecting": "Connection lost. Reconnecting...",
+    "invalidFields": "Check: {fields}",
+    "conflict": "That already exists. Use a different value.",
+    "tooLarge": "The file is too large.",
+    "fields": {
+      "password": "Password",
+      "email": "Email",
+      "name": "Name",
+      "names": "Name",
+      "descriptions": "Description",
+      "price": "Price",
+      "slug": "Slug",
+      "label": "Table name",
+      "timezone": "Time zone",
+      "currency": "Currency",
+      "google_reviews_url": "Google reviews link",
+      "role": "Role",
+      "domain": "Domain",
+      "url": "Link",
+      "csv": "CSV",
+      "enabled_locales": "Menu languages",
+      "default_locale": "Default language"
+    }
   },
   "settings": {
     "title": "Settings",
@@ -530,7 +559,8 @@
       "menu": "Menu",
       "operations": "Operations",
       "metrics": "Metrics",
-      "feedbacks": "Feedback"
+      "feedbacks": "Feedback",
+      "settings": "Settings"
     },
     "restaurantRequired": {
       "title": "Select a restaurant",

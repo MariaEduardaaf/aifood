@@ -2,12 +2,11 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import { Bell, BookOpen, Check, ChevronRight, Loader2, Receipt, ShoppingBag, Utensils } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
-import { LanguageSelector, setLocaleCookie } from "./language-selector";
+import { LanguageSelector } from "./language-selector";
 import { RatingModal } from "./rating-modal";
 import { MenuView } from "./menu-view";
 import { CartModal } from "./cart-modal";
@@ -38,13 +37,10 @@ interface ClientTablePageProps {
 
 type View = "main" | "menu" | "orders";
 
-const AUTO_LOCALE_KEY = "aifood-locale-auto";
-
 function ClientTablePageContent({ token, tableLabel, restaurantName, initialSettings }: ClientTablePageProps) {
   const t = useTranslations("client");
   const tErr = useTranslations("errors");
   const locale = useLocale();
-  const router = useRouter();
   const toast = useToast();
   const { itemCount, setCurrency } = useCart();
 
@@ -78,23 +74,13 @@ function ClientTablePageContent({ token, tableLabel, restaurantName, initialSett
     loadMenu();
   }, [loadMenu]);
 
-  // A guest whose language the restaurant does not offer gets the closest
-  // offered one, once per session (the flag also stops a refresh loop).
+  // The root layout sets <html lang> from the cookie/Accept-Language; this page
+  // renders in the restaurant-limited locale computed on the server.
+  // ponytail: corrected after hydration only; move into the root layout if the
+  // server HTML must carry it (needs the table token in request.ts).
   useEffect(() => {
-    const enabled = settings.enabled_locales;
-    if (enabled.length === 0 || enabled.includes(locale)) return;
-    try {
-      if (sessionStorage.getItem(AUTO_LOCALE_KEY)) return;
-      sessionStorage.setItem(AUTO_LOCALE_KEY, "1");
-    } catch {
-      return;
-    }
-    const preferred = navigator.languages
-      .map((l) => l.slice(0, 2).toLowerCase())
-      .find((l) => enabled.includes(l));
-    setLocaleCookie(preferred ?? settings.default_locale);
-    router.refresh();
-  }, [settings.enabled_locales, settings.default_locale, locale, router]);
+    document.documentElement.lang = locale;
+  }, [locale]);
 
   // Calls the guest already rated or skipped (so the prompt does not come back on reload)
   const ratedKey = `aifood-rated-${token}`;

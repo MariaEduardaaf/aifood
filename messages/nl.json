@@ -164,7 +164,8 @@
     "orderDelivered": "Bestelling geserveerd",
     "orderCancelled": "Bestelling geannuleerd",
     "cancelOrderTitle": "Deze bestelling annuleren?",
-    "cancelOrder": "Bestelling annuleren"
+    "cancelOrder": "Bestelling annuleren",
+    "keepOrder": "Bestelling behouden"
   },
   "kitchen": {
     "title": "Keukenscherm",
@@ -336,7 +337,9 @@
       "emailPlaceholder": "email@voorbeeld.nl",
       "keepPasswordHint": "leeg laten om het huidige te behouden",
       "showPassword": "Wachtwoord tonen",
-      "hidePassword": "Wachtwoord verbergen"
+      "hidePassword": "Wachtwoord verbergen",
+      "editUser": "Gebruiker bewerken",
+      "copyPassword": "Wachtwoord kopiëren"
     },
     "menuPage": {
       "confirmDeleteCategory": "Weet u het zeker? Alle artikelen in deze categorie worden verwijderd.",
@@ -406,7 +409,7 @@
     "settingsPage": {
       "googleReviewsSubtitle": "Stel het doorsturen naar Google-recensies in",
       "urlTip": "Tip: gebruik het formaat https://search.google.com/local/writereview?placeid=UW_PLACE_ID",
-      "redirectDescription": "Stuurt gasten met hoge beoordelingen door naar Google",
+      "redirectDescription": "Elke gast wordt na de rekening uitgenodigd om op Google een recensie te schrijven",
       "starsPlus": "{count}+ sterren",
       "redirectHint": "Gasten die {count} of meer sterren geven, worden doorgestuurd naar Google-recensies",
       "testUrl": "URL testen",
@@ -446,10 +449,11 @@
       "orders": "Bestellingen",
       "revenue": "Omzet",
       "averageTicket": "Gemiddelde bon",
-      "cancellations": "Annuleringen",
-      "vsYesterday": "{value} t.o.v. gisteren",
-      "noBaseline": "Geen gegevens van gisteren",
-      "loadError": "De cijfers van vandaag konden niet worden geladen"
+      "noBaseline": "Geen gegevens voor vorige {weekday}",
+      "loadError": "De cijfers van vandaag konden niet worden geladen",
+      "vsLastWeekday": "{value} t.o.v. vorige {weekday}",
+      "calls": "Oproepen",
+      "cancelledCount": "{count} geannuleerd"
     },
     "import": {
       "open": "Menukaart importeren",
@@ -466,7 +470,10 @@
       "itemsCreated": "Artikelen aangemaakt",
       "itemsUpdated": "Artikelen bijgewerkt",
       "rowErrors": "{count, plural, one {# rij bevat een fout} other {# rijen bevatten fouten}}",
-      "row": "Rij {row}:"
+      "row": "Rij {row}:",
+      "pasteLabel": "CSV-tekst plakken",
+      "pastePlaceholder": "category,name_es,name_en,price\nDrinks,Café,Coffee,2.20",
+      "templateHint": "Optionele kolommen zoals category_en of category_de vertalen de categorienamen."
     }
   },
   "auth": {
@@ -495,7 +502,29 @@
     "unauthorized": "Niet geautoriseerd",
     "forbidden": "Toegang geweigerd",
     "rateLimit": "Te veel verzoeken. Probeer het over enkele seconden opnieuw.",
-    "reconnecting": "Verbinding verbroken. Opnieuw verbinden..."
+    "reconnecting": "Verbinding verbroken. Opnieuw verbinden...",
+    "invalidFields": "Controleer: {fields}",
+    "conflict": "Dit bestaat al. Gebruik een andere waarde.",
+    "tooLarge": "Het bestand is te groot.",
+    "fields": {
+      "password": "Wachtwoord",
+      "email": "E-mail",
+      "name": "Naam",
+      "names": "Naam",
+      "descriptions": "Beschrijving",
+      "price": "Prijs",
+      "slug": "Slug",
+      "label": "Tafelnaam",
+      "timezone": "Tijdzone",
+      "currency": "Valuta",
+      "google_reviews_url": "Link naar Google-recensies",
+      "role": "Rol",
+      "domain": "Domein",
+      "url": "Link",
+      "csv": "CSV",
+      "enabled_locales": "Talen van de menukaart",
+      "default_locale": "Standaardtaal"
+    }
   },
   "settings": {
     "title": "Instellingen",
@@ -530,7 +559,8 @@
       "menu": "Menukaart",
       "operations": "Operatie",
       "metrics": "Statistieken",
-      "feedbacks": "Feedback"
+      "feedbacks": "Feedback",
+      "settings": "Instellingen"
     },
     "restaurantRequired": {
       "title": "Kies een restaurant",

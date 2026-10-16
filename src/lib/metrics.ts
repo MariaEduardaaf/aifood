@@ -5,6 +5,12 @@ export const SALE_EXCLUDED_STATUSES: OrderStatus[] = ["PENDING", "CANCELLED"];
 
 export const DEFAULT_TIMEZONE = "Europe/Madrid";
 
+// Values accepted by the `period` query param of the metrics routes
+export const PERIODS = ["today", "yesterday", "week", "month", "30days", "lastweekday"] as const;
+export function isPeriod(value: string): value is (typeof PERIODS)[number] {
+  return (PERIODS as readonly string[]).includes(value);
+}
+
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const formatters = new Map<string, Intl.DateTimeFormat>();
 

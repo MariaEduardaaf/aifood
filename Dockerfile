@@ -22,7 +22,8 @@ FROM base AS build
 ARG NEXT_PUBLIC_APP_URL
 ARG NEXT_PUBLIC_SHOW_DEMO_LOGINS=false
 ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL \
-    NEXT_PUBLIC_SHOW_DEMO_LOGINS=$NEXT_PUBLIC_SHOW_DEMO_LOGINS
+    NEXT_PUBLIC_SHOW_DEMO_LOGINS=$NEXT_PUBLIC_SHOW_DEMO_LOGINS \
+    NEXT_OUTPUT_STANDALONE=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 # Placeholder so Prisma can initialise during the build; never used at runtime

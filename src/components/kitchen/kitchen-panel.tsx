@@ -11,6 +11,7 @@ import {
 import { cn, formatTime } from "@/lib/utils";
 import { localizedText } from "@/lib/i18n/text";
 import { useSound } from "@/components/providers/sound-provider";
+import { useDefaultLocale } from "@/components/providers/currency";
 import { useLiveRecords, ReconnectBanner } from "@/components/providers/use-event-stream";
 import { useStaffAlert } from "@/components/providers/staff-alerts";
 import { useToast } from "@/components/ui/toast";
@@ -57,6 +58,7 @@ export function KitchenPanel() {
   const t = useTranslations("kitchen");
   const tErr = useTranslations("errors");
   const locale = useLocale();
+  const defaultLocale = useDefaultLocale();
   const { playSuccess } = useSound();
   const alert = useStaffAlert();
   const toast = useToast();
@@ -173,7 +175,7 @@ export function KitchenPanel() {
               </span>
               <div className="flex-1">
                 <p className="font-medium text-lg">
-                  {localizedText(item.menuItem.names, locale, locale)}
+                  {localizedText(item.menuItem.names, locale, defaultLocale)}
                 </p>
                 {item.notes && (
                   <p className="mt-1 inline-block rounded-md bg-amber-200 px-2 py-1 text-base font-semibold text-amber-950">{item.notes}</p>

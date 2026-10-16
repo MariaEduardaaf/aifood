@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { restaurantNotFound, validationError } from "@/lib/api";
+import { restaurantNotFound, validationError, restaurantIdForbidden } from "@/lib/api";
 import { parseMenuCsv } from "@/lib/csv";
 import { getSettings } from "@/lib/settings";
 
@@ -115,7 +115,7 @@ async function fetchCsv(raw: string): Promise<string | NextResponse> {
 // POST /api/admin/menu/import - Import menu items from CSV.
 // Body: multipart (file, restaurantId?) or JSON { url | csv, restaurantId? }.
 // Categories are matched by name in the default locale and created when
-// missing; items are matched by default-locale name inside their category and
+// missing (category_<locale> columns add or update their translations); items are matched by default-locale name inside their category and
 // updated, or created. Invalid rows are skipped and reported in `errors`;
 // file-level problems (missing column, empty file) are a 400.
 // Response: { created: { categories, items }, updated: { items }, errors: [{ row, message }] }
@@ -172,6 +172,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const forbidden = restaurantIdForbidden(session.user.role, restaurantIdInput);
+    if (forbidden) return forbidden;
     const restaurantId =
       session.user.role === "SUPER_ADMIN"
         ? restaurantIdInput
@@ -206,11 +208,14 @@ export async function POST(request: NextRequest) {
           where: { restaurant_id: restaurantId },
           select: { id: true, names: true, order: true },
         });
-        const categoryIds = new Map<string, string>();
+        const categoriesByKey = new Map<string, { id: string; names: Record<string, string> }>();
         let nextCategoryOrder = 0;
         for (const c of categories) {
-          const name = (c.names as Record<string, string>)[default_locale];
-          if (name && !categoryIds.has(key(name))) categoryIds.set(key(name), c.id);
+          const names = c.names as Record<string, string>;
+          const name = names[default_locale];
+          if (name && !categoriesByKey.has(key(name))) {
+            categoriesByKey.set(key(name), { id: c.id, names });
+          }
           nextCategoryOrder = Math.max(nextCategoryOrder, c.order + 1);
         }
 
@@ -230,19 +235,34 @@ export async function POST(request: NextRequest) {
         }
 
         for (const row of parsed.rows) {
-          let categoryId = categoryIds.get(key(row.category));
-          if (!categoryId) {
+          let category = categoriesByKey.get(key(row.category));
+          if (!category) {
             const created = await tx.category.create({
               data: {
                 restaurant_id: restaurantId,
-                names: { [default_locale]: row.category },
+                names: row.categoryNames,
                 order: nextCategoryOrder++,
               },
             });
-            categoryId = created.id;
-            categoryIds.set(key(row.category), categoryId);
+            category = { id: created.id, names: row.categoryNames };
+            categoriesByKey.set(key(row.category), category);
             result.categoriesCreated++;
+          } else if (
+            Object.entries(row.categoryNames).some(
+              ([locale, name]) => locale !== default_locale && category!.names[locale] !== name,
+            )
+          ) {
+            // New translations from category_<locale> columns; the
+            // default-locale name keeps its current spelling
+            const names = {
+              ...category.names,
+              ...row.categoryNames,
+              [default_locale]: category.names[default_locale],
+            };
+            await tx.category.update({ where: { id: category.id }, data: { names } });
+            category.names = names;
           }
+          const categoryId = category.id;
 
           const itemKey = `${categoryId}|${key(row.names[default_locale])}`;
           const existing = itemsByKey.get(itemKey);

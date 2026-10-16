@@ -47,3 +47,6 @@ prisma/*.db-journal
 
 # parallel dev build dirs
 .next-*
+
+# agent worktrees
+.claude/

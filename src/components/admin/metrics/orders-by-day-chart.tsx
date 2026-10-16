@@ -108,7 +108,7 @@ export function OrdersByDayChart({
         {t("ordersByDay")}
       </h3>
       <div className="h-80">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 400, height: 320 }}>
           <BarChart
             data={translatedData}
             margin={{ top: 20, right: 30, left: 20, bottom: 5 }}

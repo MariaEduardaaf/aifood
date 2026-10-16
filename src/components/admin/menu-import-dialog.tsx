@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Download, Upload, Loader2, X } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
+import { apiErrorMessage } from "./api-errors";
 
 interface ImportResult {
   created: { categories: number; items: number };
@@ -21,14 +22,16 @@ export function MenuImportDialog({ restaurantId, onClose, onImported }: Props) {
   const t = useTranslations("admin.import");
   const tCommon = useTranslations("common");
   const tErr = useTranslations("errors");
+  const tRoot = useTranslations();
   const toast = useToast();
   const [url, setUrl] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [csv, setCsv] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ImportResult | null>(null);
 
-  const canSubmit = !busy && (file !== null || url.trim() !== "");
+  const canSubmit = !busy && (file !== null || url.trim() !== "" || csv.trim() !== "");
 
   const submit = async () => {
     setBusy(true);
@@ -45,7 +48,7 @@ export function MenuImportDialog({ restaurantId, onClose, onImported }: Props) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            url: url.trim(),
+            ...(csv.trim() ? { csv } : { url: url.trim() }),
             ...(restaurantId ? { restaurantId } : {}),
           }),
         };
@@ -53,7 +56,7 @@ export function MenuImportDialog({ restaurantId, onClose, onImported }: Props) {
       const res = await fetch("/api/admin/menu/import", init);
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const msg = typeof data.error === "string" ? data.error : tErr("generic");
+        const msg = apiErrorMessage(res.status, data, tRoot);
         setError(msg);
         toast(msg, "error");
         return;
@@ -70,7 +73,7 @@ export function MenuImportDialog({ restaurantId, onClose, onImported }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm">
+    <div className="!mt-0 fixed inset-0 z-[60] flex items-center justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm">
       <div
         role="dialog"
         aria-modal="true"
@@ -137,6 +140,7 @@ export function MenuImportDialog({ restaurantId, onClose, onImported }: Props) {
               <Download className="h-4 w-4" />
               {t("downloadTemplate")}
             </a>
+            <p className="-mt-2 text-xs text-muted-foreground">{t("templateHint")}</p>
 
             <div>
               <label htmlFor="import-url" className="mb-2 block text-sm font-medium">
@@ -146,12 +150,31 @@ export function MenuImportDialog({ restaurantId, onClose, onImported }: Props) {
                 id="import-url"
                 type="url"
                 value={url}
-                disabled={file !== null}
+                disabled={file !== null || csv.trim() !== ""}
                 onChange={(e) => setUrl(e.target.value)}
                 placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?output=csv"
                 className="w-full rounded-xl border border-border/50 bg-secondary/50 px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
               />
               <p className="mt-1 text-xs text-muted-foreground">{t("urlHint")}</p>
+            </div>
+
+            <p className="text-center text-xs uppercase tracking-wide text-muted-foreground">
+              {t("or")}
+            </p>
+
+            <div>
+              <label htmlFor="import-csv" className="mb-2 block text-sm font-medium">
+                {t("pasteLabel")}
+              </label>
+              <textarea
+                id="import-csv"
+                rows={4}
+                value={csv}
+                disabled={file !== null}
+                onChange={(e) => setCsv(e.target.value)}
+                placeholder={t("pastePlaceholder")}
+                className="w-full rounded-xl border border-border/50 bg-secondary/50 px-4 py-3 font-mono text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
+              />
             </div>
 
             <p className="text-center text-xs uppercase tracking-wide text-muted-foreground">

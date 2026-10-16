@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { restaurantIdForbidden } from "@/lib/api";
 import { prisma } from "@/lib/db";
 import { getSettings } from "@/lib/settings";
-import { getPeriodRange, SALE_EXCLUDED_STATUSES } from "@/lib/metrics";
+import { getPeriodRange, SALE_EXCLUDED_STATUSES, isPeriod, PERIODS } from "@/lib/metrics";
 import { getLocale } from "next-intl/server";
 import { localizedText } from "@/lib/i18n/text";
 
@@ -27,8 +28,16 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const period = searchParams.get("period") || "month";
+    if (!isPeriod(period)) {
+      return NextResponse.json(
+        { error: `Invalid period (use: ${PERIODS.join(", ")})` },
+        { status: 400 },
+      );
+    }
     const limit = parseInt(searchParams.get("limit") || "10");
     const restaurantIdParam = searchParams.get("restaurantId");
+    const forbidden = restaurantIdForbidden(session.user.role, restaurantIdParam);
+    if (forbidden) return forbidden;
     const restaurantId =
       session.user.role === "SUPER_ADMIN"
         ? restaurantIdParam

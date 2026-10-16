@@ -183,6 +183,9 @@ test("order flow: create, confirm, prepare, ready, deliver, 409 on repeat", asyn
     const guestList = await api(`/api/orders?table=${token}`);
     assert.equal(guestList.status, 200);
     assert.ok(guestList.json.some((o: { id: string }) => o.id === orderId));
+    for (const field of ["restaurant_id", "confirmed_by", "prepared_by", "table_id"]) {
+      assert.ok(!(field in guestList.json[0]), `guest orders must not expose ${field}`);
+    }
 
     assert.equal((await api(`/api/orders/${orderId}/prepare`, { jar: waiter, method: "PATCH" })).status, 403);
 
@@ -293,9 +296,9 @@ test("menu import skips bad rows and upserts by default-locale name", async () =
   assert.match(missingColumn.json.error, /name_es/);
 
   const csv = [
-    "category,name_es,name_en,price,allergens",
-    `Smoke import,${name},Smoke EN,"2,50",milk;gluten`,
-    "Smoke import,,No default name,1,",
+    "category,category_en,name_es,name_en,price,allergens",
+    `Smoke import,Smoke import EN,${name},Smoke EN,"2,50",milk;gluten`,
+    "Smoke import,,,No default name,1,",
   ].join("\n");
   const first = await api("/api/admin/menu/import", { jar: admin, body: { csv } });
   assert.equal(first.status, 200, JSON.stringify(first.json));
@@ -314,7 +317,60 @@ test("menu import skips bad rows and upserts by default-locale name", async () =
   // Clean up the imported category (cascades to its item)
   const categories = await api("/api/categories", { jar: admin });
   const smoke = categories.json.find((c: { names: Record<string, string> }) => c.names.es === "Smoke import");
+  assert.deepEqual(smoke?.names, { es: "Smoke import", en: "Smoke import EN" }, "category_en is imported");
   if (smoke) await api(`/api/categories/${smoke.id}`, { jar: admin, method: "DELETE" });
+});
+
+test("only SUPER_ADMIN may pass restaurantId (403 for everyone else)", async () => {
+  const session = await api("/api/auth/session", { jar: admin });
+  const restaurantId = session.json.user.restaurant_id;
+  assert.ok(restaurantId);
+
+  for (const path of [
+    "/api/settings",
+    "/api/tables",
+    "/api/categories",
+    "/api/items",
+    "/api/users",
+    "/api/admin/metrics/summary",
+  ]) {
+    const res = await api(`${path}?restaurantId=${restaurantId}`, { jar: admin });
+    assert.equal(res.status, 403, path);
+  }
+  assert.equal((await api(`/api/orders?restaurantId=${restaurantId}`, { jar: waiter })).status, 403);
+
+  for (const [path, method, body] of [
+    ["/api/settings", "PUT", { restaurantId, ordering_enabled: true }],
+    ["/api/tables", "POST", { restaurantId, label: "Nope" }],
+    ["/api/categories", "POST", { restaurantId, names: { es: "Nope" } }],
+    ["/api/users", "POST", { restaurantId, email: "nope@example.com", password: "nope12345", name: "Nope", role: "WAITER" }],
+    ["/api/admin/menu/import", "POST", { restaurantId, csv: "category,name_es,price\nNope,Nope,1" }],
+  ] as const) {
+    const res = await api(path, { jar: admin, method, body });
+    assert.equal(res.status, 403, `${method} ${path}`);
+  }
+
+  // The super admin still picks the restaurant with it
+  assert.equal((await api(`/api/settings?restaurantId=${restaurantId}`, { jar: superadmin })).status, 200);
+});
+
+test("metrics: unknown period is 400, summary has calls and non-cancelled totals", async () => {
+  for (const path of ["/api/admin/metrics/summary", "/api/admin/metrics/orders/hourly", "/api/metrics"]) {
+    const res = await api(`${path}?period=decade`, { jar: admin });
+    assert.equal(res.status, 400, path);
+    assert.match(res.json.error, /period/);
+  }
+  assert.equal((await api("/api/admin/metrics/summary?period=today", { jar: waiter })).status, 403);
+
+  const res = await api("/api/admin/metrics/summary?period=today", { jar: admin });
+  assert.equal(res.status, 200);
+  for (const key of ["total", "waiter", "bill", "avgServiceTime"]) {
+    assert.equal(typeof res.json.calls[key], "number", `calls.${key}`);
+  }
+  for (const key of ["total", "confirmed", "cancelled", "cancellationRate"]) {
+    assert.equal(typeof res.json.orders[key], "number", `orders.${key}`);
+  }
+  assert.ok(res.json.calls.total >= 1, "the smoke call is counted today");
 });
 
 test("login is throttled after 5 failures", async () => {

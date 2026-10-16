@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
+import { restaurantIdForbidden } from "@/lib/api";
 import { prisma } from "@/lib/db";
 import { OrderStatus } from "@prisma/client";
 import { orderInclude } from "@/lib/events";
@@ -30,6 +31,8 @@ export async function GET(request: NextRequest) {
   }
 
   const restaurantIdParam = request.nextUrl.searchParams.get("restaurantId");
+  const forbidden = restaurantIdForbidden(session.user.role, restaurantIdParam);
+  if (forbidden) return forbidden;
   const restaurantId =
     userRole === "SUPER_ADMIN" ? restaurantIdParam : session.user.restaurant_id;
 

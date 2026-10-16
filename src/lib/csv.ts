@@ -51,7 +51,8 @@ export function parseCsv(text: string): string[][] {
 
 export type MenuCsvRow = {
   row: number; // 1-based line in the file, header = 1
-  category: string;
+  category: string; // default-locale name, used to match existing categories
+  categoryNames: Record<string, string>; // category + category_<locale> columns
   names: Record<string, string>;
   descriptions: Record<string, string>;
   price: number;
@@ -71,8 +72,10 @@ export type MenuCsvResult =
 export const MENU_CSV_MAX_ROWS = 500;
 
 // Turns a menu CSV into validated rows. Columns (case-insensitive):
-// category, name_<locale>..., description_<locale>..., price, allergens, image_url
-// `name_<defaultLocale>`, `category` and `price` are required. `allergens` is a
+// category, category_<locale>..., name_<locale>..., description_<locale>...,
+// price, allergens, image_url
+// `name_<defaultLocale>`, `category` and `price` are required. `category` is
+// the default-locale name; `category_<locale>` columns add translations. `allergens` is a
 // list of codes separated by ";" (also "|", "," or spaces).
 export function parseMenuCsv(text: string, defaultLocale: string): MenuCsvResult {
   const [header, ...body] = parseCsv(text);
@@ -102,7 +105,11 @@ export function parseMenuCsv(text: string, defaultLocale: string): MenuCsvResult
 
     const names: Record<string, string> = {};
     const descriptions: Record<string, string> = {};
+    const categoryNames: Record<string, string> = {};
     for (const locale of SUPPORTED_LOCALES) {
+      if (cell(`category_${locale}`)) {
+        categoryNames[locale] = cell(`category_${locale}`);
+      }
       if (cell(`name_${locale}`)) names[locale] = cell(`name_${locale}`);
       if (cell(`description_${locale}`)) {
         descriptions[locale] = cell(`description_${locale}`);
@@ -121,11 +128,12 @@ export function parseMenuCsv(text: string, defaultLocale: string): MenuCsvResult
       .filter(Boolean);
     const badAllergen = allergens.find((a) => !isAllergenCode(a));
     const image = cell("image_url");
+    categoryNames[defaultLocale] = cell("category");
 
     const error = !cell("category")
       ? "category is empty"
-      : cell("category").length > 120
-        ? "category is longer than 120 characters"
+      : Object.values(categoryNames).some((n) => n.length > 120)
+        ? "a category name is longer than 120 characters"
         : !names[defaultLocale]
           ? `name_${defaultLocale} is empty`
           : Object.values(names).some((n) => n.length > 120)
@@ -148,6 +156,7 @@ export function parseMenuCsv(text: string, defaultLocale: string): MenuCsvResult
     rows.push({
       row: line,
       category: cell("category"),
+      categoryNames,
       names,
       descriptions,
       price: Math.round(price * 100) / 100,

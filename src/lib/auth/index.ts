@@ -1,4 +1,4 @@
-import NextAuth, { CredentialsSignin } from "next-auth";
+import NextAuth, { CredentialsSignin, type Session } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
 import type { Role } from "@prisma/client";
@@ -60,7 +60,10 @@ class TooManyAttempts extends CredentialsSignin {
   code = "rate_limited";
 }
 
-export const { handlers, signIn, signOut, auth } = NextAuth({
+const nextAuth = NextAuth({
+  // Self-hosted behind a proxy: take the host from the request headers
+  // (AUTH_URL or AUTH_TRUST_HOST in the env also work, but are not needed)
+  trustHost: true,
   providers: [
     Credentials({
       name: "credentials",
@@ -198,3 +201,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     maxAge: 12 * 60 * 60, // 12h
   },
 });
+
+export const { handlers, signIn, signOut } = nextAuth;
+
+// Session or null. On a server-side Auth.js error, next-auth's auth() resolves
+// to the error body (an object without `user`); callers would then crash on
+// session.user, so that case is treated as logged out.
+export async function auth(): Promise<Session | null> {
+  const session = await nextAuth.auth();
+  return session?.user ? session : null;
+}

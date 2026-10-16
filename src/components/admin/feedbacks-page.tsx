@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { Star, Loader2, MessageSquare, Clock, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatNumber } from "./format";
 
 interface Rating {
   id: string;
@@ -131,7 +132,7 @@ export function FeedbacksPage({ restaurantId }: FeedbacksPageProps) {
             <p className="text-sm text-muted-foreground">{t("average")}</p>
             <div className="flex items-center gap-2 mt-1">
               <span className="text-2xl font-bold">
-                {stats.average.toFixed(1)}
+                {formatNumber(stats.average, locale)}
               </span>
               <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
             </div>
