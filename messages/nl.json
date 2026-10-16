@@ -506,6 +506,7 @@
     "invalidFields": "Controleer: {fields}",
     "conflict": "Dit bestaat al. Gebruik een andere waarde.",
     "tooLarge": "Het bestand is te groot.",
+    "uploadsNotConfigured": "Afbeeldingen uploaden is op deze server niet ingesteld",
     "fields": {
       "password": "Wachtwoord",
       "email": "E-mail",

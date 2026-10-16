@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useCallback } from 'react'
-import { Upload, X, Loader2, Image as ImageIcon } from 'lucide-react'
+import { Upload, X, Loader2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
 interface ImageUploadProps {
@@ -18,6 +18,7 @@ export function ImageUpload({
   disabled = false,
 }: ImageUploadProps) {
   const t = useTranslations('imageUpload')
+  const tErrors = useTranslations('errors')
   const [isUploading, setIsUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -37,6 +38,10 @@ export function ImageUpload({
           body: formData,
         })
 
+        if (response.status === 503) {
+          throw new Error(tErrors('uploadsNotConfigured'))
+        }
+
         if (!response.ok) {
           const data = await response.json()
           throw new Error(data.error || t('uploadFailed'))
@@ -50,7 +55,7 @@ export function ImageUpload({
         setIsUploading(false)
       }
     },
-    [onChange, t]
+    [onChange, t, tErrors]
   )
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -96,6 +101,7 @@ export function ImageUpload({
   if (value) {
     return (
       <div className="relative">
+        {/* eslint-disable-next-line @next/next/no-img-element -- user-provided URL of arbitrary origin, with onError fallback */}
         <img
           src={value}
           alt={t("preview")}

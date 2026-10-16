@@ -506,6 +506,7 @@
     "invalidFields": "Check: {fields}",
     "conflict": "That already exists. Use a different value.",
     "tooLarge": "The file is too large.",
+    "uploadsNotConfigured": "Image uploads are not configured on this server",
     "fields": {
       "password": "Password",
       "email": "Email",

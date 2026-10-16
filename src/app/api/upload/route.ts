@@ -19,6 +19,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    // Without Cloudinary credentials the SDK throws a generic error; say so up front
+    if (
+      !process.env.CLOUDINARY_CLOUD_NAME ||
+      !process.env.CLOUDINARY_API_KEY ||
+      !process.env.CLOUDINARY_API_SECRET
+    ) {
+      return NextResponse.json(
+        { error: "image_uploads_not_configured" },
+        { status: 503 },
+      );
+    }
+
     const formData = await request.formData().catch(() => null);
     const file = formData?.get("file") as File | null;
 

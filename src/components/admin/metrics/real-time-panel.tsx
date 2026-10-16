@@ -1,11 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import {
-  Clock,
   AlertTriangle,
-  CheckCircle,
   Utensils,
   Users,
   Bell,
@@ -54,7 +52,7 @@ export function RealTimePanel({
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const params = new URLSearchParams();
       if (restaurantId) {
@@ -74,13 +72,13 @@ export function RealTimePanel({
     } finally {
       setLoading(false);
     }
-  };
+  }, [restaurantId, t]);
 
   useEffect(() => {
     fetchData();
     const interval = setInterval(fetchData, refreshInterval);
     return () => clearInterval(interval);
-  }, [refreshInterval, restaurantId]);
+  }, [fetchData, refreshInterval]);
 
   const currency = useCurrency(restaurantId);
   const formatCurrency = (value: number) => {

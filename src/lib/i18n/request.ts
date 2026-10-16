@@ -1,6 +1,7 @@
 import { getRequestConfig } from 'next-intl/server'
 import { cookies, headers } from 'next/headers'
 import { SUPPORTED_LOCALES, isLocale, type Locale } from './locales'
+import { resolveGuestLocale } from './guest-locale'
 
 export const locales = SUPPORTED_LOCALES
 export type { Locale }
@@ -18,6 +19,17 @@ async function loadMessages(locale: Locale) {
 export default getRequestConfig(async () => {
   const cookieStore = await cookies()
   const headersList = await headers()
+
+  // Guest table page: the restaurant's enabled locales limit the choice
+  const tableToken = headersList.get('x-pathname')?.match(/^\/table\/([^/]+)/)?.[1]
+  if (tableToken) {
+    const guest = await resolveGuestLocale({
+      token: tableToken,
+      cookieLocale: cookieStore.get('locale')?.value,
+      acceptLanguage: headersList.get('accept-language'),
+    })
+    if (guest) return { locale: guest.locale, messages: await loadMessages(guest.locale) }
+  }
 
   // Try to get locale from cookie first
   let locale = cookieStore.get('locale')?.value

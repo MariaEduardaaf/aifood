@@ -15,7 +15,7 @@ interface KitchenPageProps {
 
 type ViewMode = "kanban" | "list";
 
-export function KitchenPage({ userId, userName }: KitchenPageProps) {
+export function KitchenPage(_props: KitchenPageProps) {
   const t = useTranslations("kitchen");
   const [viewMode, setViewMode] = useState<ViewMode>("kanban");
   useWakeLock();

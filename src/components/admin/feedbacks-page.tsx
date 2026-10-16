@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { Star, Loader2, MessageSquare, Clock, User } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -45,11 +45,7 @@ export function FeedbacksPage({ restaurantId }: FeedbacksPageProps) {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<number | null>(null);
 
-  useEffect(() => {
-    fetchFeedbacks();
-  }, [filter, restaurantId]);
-
-  const fetchFeedbacks = async () => {
+  const fetchFeedbacks = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -74,7 +70,11 @@ export function FeedbacksPage({ restaurantId }: FeedbacksPageProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filter, restaurantId]);
+
+  useEffect(() => {
+    fetchFeedbacks();
+  }, [fetchFeedbacks]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -222,7 +222,7 @@ export function FeedbacksPage({ restaurantId }: FeedbacksPageProps) {
                   <StarRating stars={rating.stars} />
 
                   {rating.feedback && (
-                    <p className="text-foreground">"{rating.feedback}"</p>
+                    <p className="text-foreground">&ldquo;{rating.feedback}&rdquo;</p>
                   )}
 
                   <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">

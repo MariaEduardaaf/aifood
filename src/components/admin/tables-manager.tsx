@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { readApiError } from "./api-errors";
 import { useConfirm } from "@/components/ui/confirm-dialog";
@@ -63,11 +64,7 @@ export function TablesManager({ restaurantId }: TablesManagerProps) {
   const [error, setError] = useState("");
   const [listError, setListError] = useState("");
 
-  useEffect(() => {
-    fetchTables();
-  }, [restaurantId]);
-
-  const fetchTables = async () => {
+  const fetchTables = useCallback(async () => {
     try {
       const query = restaurantId ? `?restaurantId=${restaurantId}` : "";
       const res = await fetch(`/api/tables${query}`);
@@ -80,7 +77,11 @@ export function TablesManager({ restaurantId }: TablesManagerProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [restaurantId]);
+
+  useEffect(() => {
+    fetchTables();
+  }, [fetchTables]);
 
   const openCreateModal = () => {
     setEditingTable(null);
@@ -139,7 +140,7 @@ export function TablesManager({ restaurantId }: TablesManagerProps) {
         setError(msg);
         toast(msg, "error");
       }
-    } catch (err) {
+    } catch {
       setError(t("tablesPage.saveTableError"));
       toast(t("tablesPage.saveTableError"), "error");
     } finally {
@@ -386,9 +387,12 @@ export function TablesManager({ restaurantId }: TablesManagerProps) {
                 </Button>
               </div>
               <div className="flex flex-col items-center space-y-4">
-                <img
+                <Image
                   src={qrData.qrCode}
                   alt={t("tablesPage.qrAlt", { label: qrData.label })}
+                  width={256}
+                  height={256}
+                  unoptimized
                   className="w-48 h-48 sm:w-64 sm:h-64 border rounded-lg"
                 />
                 <p className="text-sm text-muted-foreground text-center break-all">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Bell, Receipt, Utensils, ChevronDown, ChevronUp, Minus } from "lucide-react";
 import { formatMoney } from "@/lib/utils";
@@ -67,16 +67,15 @@ export function TodayDashboard() {
   const weekday = new Intl.DateTimeFormat(locale, { weekday: "long" }).format(new Date());
   const [failed, setFailed] = useState(false);
 
-  const loadLive = useCallback(async () => {
-    const data = await getJson<RealTime>("/api/admin/metrics/real-time");
-    if (data) setLive(data);
-  }, []);
-
   useEffect(() => {
+    const loadLive = () =>
+      getJson<RealTime>("/api/admin/metrics/real-time").then((data) => {
+        if (data) setLive(data);
+      });
     loadLive();
     const id = setInterval(loadLive, LIVE_REFRESH_MS);
     return () => clearInterval(id);
-  }, [loadLive]);
+  }, []);
 
   useEffect(() => {
     Promise.all([

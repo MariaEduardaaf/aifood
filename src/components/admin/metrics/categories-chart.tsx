@@ -8,7 +8,6 @@ import {
   Cell,
   Tooltip,
   ResponsiveContainer,
-  Legend,
 } from "recharts";
 import { useCurrency } from "@/components/providers/currency";
 import { formatPercent } from "../format";

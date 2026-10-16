@@ -19,6 +19,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   // Load saved theme on mount
   useEffect(() => {
+    // Hydration from localStorage must happen after mount to match the server render
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
     const saved = localStorage.getItem("visionary-theme") as Theme | null;
     if (saved && ["light", "dark", "system"].includes(saved)) {
@@ -43,6 +45,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
     root.classList.remove("light", "dark");
     root.classList.add(resolved);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- mirrors the class applied to <html> above
     setResolvedTheme(resolved);
     localStorage.setItem("visionary-theme", theme);
   }, [theme, mounted]);

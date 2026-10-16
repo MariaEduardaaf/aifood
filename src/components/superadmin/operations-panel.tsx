@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { Loader2, Clock, Bell, Receipt } from "lucide-react";
 import { Button, Card, CardContent, Badge } from "@/components/ui";
@@ -46,11 +46,7 @@ export function OperationsPanel({ restaurantId }: OperationsPanelProps) {
   const [activeTab, setActiveTab] = useState<"calls" | "orders">("calls");
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchData();
-  }, [restaurantId]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const [callsRes, ordersRes] = await Promise.all([
@@ -71,7 +67,11 @@ export function OperationsPanel({ restaurantId }: OperationsPanelProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [restaurantId]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   return (
     <div className="space-y-6">

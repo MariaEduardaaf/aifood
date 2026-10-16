@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
@@ -12,7 +12,6 @@ export default function LoginPage() {
   const t = useTranslations("auth");
   const tErrors = useTranslations("errors");
   const tClient = useTranslations("client");
-  const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = safeCallbackUrl(searchParams.get("callbackUrl"), "/waiter");
 

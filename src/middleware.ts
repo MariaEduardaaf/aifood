@@ -19,6 +19,13 @@ export default async function middleware(req: NextRequest) {
   const isLoggedIn = !!token;
   const userRole = token?.role;
 
+  // Lets getRequestConfig see the path (the guest table page needs the
+  // restaurant's locale for the first render). Always overwritten here, so a
+  // client-sent x-pathname is ignored.
+  const forwarded = new Headers(req.headers);
+  forwarded.set("x-pathname", pathname);
+  const next = () => NextResponse.next({ request: { headers: forwarded } });
+
   // Public routes - no auth required
   const publicRoutes = ["/", "/login", "/table", "/privacy", "/cookies"];
   const isPublicRoute = publicRoutes.some(
@@ -42,7 +49,7 @@ export default async function middleware(req: NextRequest) {
     publicApiExact.includes(pathname);
 
   if (isPublicRoute || isPublicApiRoute) {
-    return NextResponse.next();
+    return next();
   }
 
   // Protected API routes - JSON 401 instead of a redirect to the login page
@@ -103,7 +110,7 @@ export default async function middleware(req: NextRequest) {
     }
   }
 
-  return NextResponse.next();
+  return next();
 }
 
 export const config = {

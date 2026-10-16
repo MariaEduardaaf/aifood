@@ -53,7 +53,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
           const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
           const newFeedbacks =
             data.ratings?.filter(
-              (f: any) => new Date(f.created_at) > oneDayAgo,
+              (f: { created_at: string }) => new Date(f.created_at) > oneDayAgo,
             ).length || 0;
           setCounts((prev) => ({ ...prev, feedbacks: newFeedbacks }));
         }

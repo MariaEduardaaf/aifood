@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { readApiError } from "./api-errors";
 import { useConfirm } from "@/components/ui/confirm-dialog";
@@ -23,7 +23,6 @@ import {
   Loader2,
   Eye,
   EyeOff,
-  RefreshCw,
   Copy,
   Check,
   Key,
@@ -53,7 +52,6 @@ export function UsersManager({
 }: UsersManagerProps) {
   const t = useTranslations("admin");
   const tCommon = useTranslations("common");
-  const tAuth = useTranslations("auth");
   const tErr = useTranslations("errors");
   const tRoot = useTranslations();
   const toast = useToast();
@@ -81,11 +79,7 @@ export function UsersManager({
     null,
   );
 
-  useEffect(() => {
-    fetchUsers();
-  }, [restaurantId]);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       const query = restaurantId ? `?restaurantId=${restaurantId}` : "";
       const res = await fetch(`/api/users${query}`);
@@ -98,7 +92,11 @@ export function UsersManager({
     } finally {
       setLoading(false);
     }
-  };
+  }, [restaurantId]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   const openCreateModal = () => {
     setEditingUser(null);
@@ -179,7 +177,7 @@ export function UsersManager({
         setError(msg);
         toast(msg, "error");
       }
-    } catch (err) {
+    } catch {
       setError(t("usersPage.saveUserError"));
       toast(t("usersPage.saveUserError"), "error");
     } finally {

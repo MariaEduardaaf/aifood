@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { X } from "lucide-react";
 
@@ -20,19 +20,18 @@ interface SheetProps {
 // after the dialog has closed, so the parent unmounts it then.
 export function Sheet({ title, onClose, media, children, footer }: SheetProps) {
   const t = useTranslations("common");
-  const ref = useRef<HTMLDialogElement>(null);
+  const [dialog, setDialog] = useState<HTMLDialogElement | null>(null);
 
   useEffect(() => {
-    const dialog = ref.current;
     if (dialog && !dialog.open) dialog.showModal();
-  }, []);
+  }, [dialog]);
 
-  const close = () => ref.current?.close();
+  const close = () => dialog?.close();
   const render = (slot: Slot) => (typeof slot === "function" ? slot(close) : slot);
 
   return (
     <dialog
-      ref={ref}
+      ref={setDialog}
       role="dialog"
       aria-modal="true"
       aria-label={title}

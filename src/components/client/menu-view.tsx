@@ -20,6 +20,8 @@ function useHiddenAllergens() {
   useEffect(() => {
     try {
       const saved = JSON.parse(sessionStorage.getItem(HIDDEN_KEY) || "[]");
+      // Hydration from sessionStorage must happen after mount to match the server render
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (Array.isArray(saved)) setHidden(saved.filter(isAllergenCode));
     } catch {
       // storage unavailable: start with no filter
@@ -188,6 +190,7 @@ function ItemRow({
           <AllergenIcons codes={allergens} className="mt-2.5" />
         </div>
         {item.image_url && (
+          // eslint-disable-next-line @next/next/no-img-element -- admin-provided URL of arbitrary origin
           <img
             src={item.image_url}
             alt=""
@@ -247,6 +250,7 @@ function ItemSheet({
       onClose={onClose}
       media={
         item.image_url ? (
+          // eslint-disable-next-line @next/next/no-img-element -- admin-provided URL of arbitrary origin
           <img src={item.image_url} alt={text.name} className="aspect-[4/3] w-full bg-foreground/[0.07] object-cover" />
         ) : null
       }
@@ -416,7 +420,7 @@ export function MenuView({ menu, error, onRetry, restaurantName, onBack, onOpenC
   const locale = useLocale();
   const { items: cartItems, addItem, updateQuantity, itemCount, total, currency } = useCart();
 
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [pickedCategory, setSelectedCategory] = useState<string | null>(null);
   const [openItem, setOpenItem] = useState<MenuItemData | null>(null);
   const [showAllergens, setShowAllergens] = useState(false);
   const [hidden, setHidden] = useHiddenAllergens();
@@ -425,9 +429,8 @@ export function MenuView({ menu, error, onRetry, restaurantName, onBack, onOpenC
   const fallback = menu?.settings.default_locale ?? locale;
   const ordering = menu?.settings.ordering_enabled ?? false;
 
-  useEffect(() => {
-    if (!selectedCategory && categories.length > 0) setSelectedCategory(categories[0].id);
-  }, [categories, selectedCategory]);
+  // Until the guest picks one, the first category is selected
+  const selectedCategory = pickedCategory ?? categories[0]?.id ?? null;
 
   const textOf = (item: MenuItemData): ItemText => ({
     name: localizedText(item.names, locale, fallback),

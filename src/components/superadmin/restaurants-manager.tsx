@@ -168,7 +168,7 @@ export function RestaurantsManager() {
         setError(msg);
         toast(msg, "error");
       }
-    } catch (err) {
+    } catch {
       setError(t("saveError"));
       toast(t("saveError"), "error");
     } finally {

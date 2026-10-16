@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { AlertTriangle } from "lucide-react";
 
@@ -27,7 +27,9 @@ const parse = (raw: string): unknown => {
 export function useEventStream(url: string, handlers: Handlers): { lost: boolean } {
   const [lost, setLost] = useState(false);
   const handlersRef = useRef(handlers);
-  handlersRef.current = handlers;
+  useLayoutEffect(() => {
+    handlersRef.current = handlers;
+  });
 
   useEffect(() => {
     let es: EventSource | null = null;
@@ -125,7 +127,9 @@ export function useLiveRecords<T extends LiveRecord>({
   const byId = useRef(new Map<string, T>());
   const loaded = useRef(false);
   const opts = useRef({ keep, sort, onChange });
-  opts.current = { keep, sort, onChange };
+  useLayoutEffect(() => {
+    opts.current = { keep, sort, onChange };
+  });
 
   const commit = useCallback(() => {
     const list = Array.from(byId.current.values());
