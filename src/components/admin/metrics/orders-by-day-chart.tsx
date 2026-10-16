@@ -12,6 +12,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
+import { useCurrency } from "@/components/providers/currency";
 
 interface DayData {
   day: number;
@@ -34,6 +35,8 @@ export function OrdersByDayChart({
   const [data, setData] = useState<DayData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const currency = useCurrency(restaurantId);
 
   useEffect(() => {
     async function fetchData() {
@@ -61,9 +64,9 @@ export function OrdersByDayChart({
 
   if (loading) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-        <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-48 mb-4 animate-pulse" />
-        <div className="h-80 bg-gray-100 dark:bg-gray-700 rounded animate-pulse" />
+      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+        <div className="h-6 bg-muted rounded w-48 mb-4 animate-pulse" />
+        <div className="h-80 bg-muted rounded animate-pulse" />
       </div>
     );
   }
@@ -79,7 +82,7 @@ export function OrdersByDayChart({
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat(locale, {
       style: "currency",
-      currency: "BRL",
+      currency,
       minimumFractionDigits: 0,
     }).format(value);
   };
@@ -100,41 +103,41 @@ export function OrdersByDayChart({
   }));
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+    <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+      <h3 className="text-lg font-semibold text-foreground mb-4">
         {t("ordersByDay")}
       </h3>
       <div className="h-80">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 400, height: 320 }}>
           <BarChart
             data={translatedData}
             margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
           >
             <CartesianGrid
               strokeDasharray="3 3"
-              className="stroke-gray-200 dark:stroke-gray-700"
+              className="stroke-border"
             />
             <XAxis
               dataKey="displayName"
-              className="text-gray-600 dark:text-gray-400"
+              className="text-muted-foreground"
               tick={{ fill: "currentColor" }}
             />
             <YAxis
               yAxisId="left"
-              className="text-gray-600 dark:text-gray-400"
+              className="text-muted-foreground"
               tick={{ fill: "currentColor" }}
             />
             <YAxis
               yAxisId="right"
               orientation="right"
               tickFormatter={(value) => formatCurrency(value)}
-              className="text-gray-600 dark:text-gray-400"
+              className="text-muted-foreground"
               tick={{ fill: "currentColor" }}
             />
             <Tooltip
               contentStyle={{
-                backgroundColor: "var(--tooltip-bg, #fff)",
-                borderColor: "var(--tooltip-border, #e5e7eb)",
+                backgroundColor: "hsl(var(--card))",
+                borderColor: "hsl(var(--border))",
                 borderRadius: "8px",
               }}
               formatter={(value, name) => {

@@ -1,24 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { z } from "zod";
+import { validationError, isUniqueViolation } from "@/lib/api";
 
 const ratingSchema = z.object({
   callId: z.string(),
-  stars: z.number().min(1).max(5),
-  feedback: z.string().optional(),
+  stars: z.number().int().min(1).max(5),
+  feedback: z.string().max(500).optional(),
 });
 
 // POST /api/review - Create rating
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    const body = await request.json().catch(() => null);
     const validation = ratingSchema.safeParse(body);
 
     if (!validation.success) {
-      return NextResponse.json(
-        { error: "Invalid data", details: validation.error.issues },
-        { status: 400 },
-      );
+      return validationError(validation.error);
     }
 
     const { callId, stars, feedback } = validation.data;
@@ -26,11 +24,18 @@ export async function POST(request: NextRequest) {
     // Check that the call exists and is resolved
     const call = await prisma.call.findUnique({
       where: { id: callId },
-      include: { rating: true },
+      include: { rating: true, restaurant: { select: { active: true } } },
     });
 
     if (!call) {
       return NextResponse.json({ error: "Call not found" }, { status: 404 });
+    }
+
+    if (!call.restaurant.active) {
+      return NextResponse.json(
+        { error: "Restaurant is inactive" },
+        { status: 403 },
+      );
     }
 
     if (call.status !== "RESOLVED") {
@@ -43,7 +48,7 @@ export async function POST(request: NextRequest) {
     if (call.rating) {
       return NextResponse.json(
         { error: "Call already rated" },
-        { status: 400 },
+        { status: 409 },
       );
     }
 
@@ -52,18 +57,20 @@ export async function POST(request: NextRequest) {
       where: { restaurant_id: call.restaurant_id },
     });
 
-    const minStars = settings?.min_stars_redirect ?? 4;
+    // No review gating: every customer is offered the Google link
+    // (min_stars_redirect is kept in the DB but ignored). Only ever redirect
+    // to http(s) URLs (older rows may predate validation).
     const shouldRedirect =
-      stars >= minStars &&
       settings?.google_reviews_enabled &&
-      settings?.google_reviews_url;
+      settings?.google_reviews_url &&
+      /^https?:\/\//i.test(settings.google_reviews_url);
 
     // Create rating
     const rating = await prisma.rating.create({
       data: {
         call_id: callId,
         stars,
-        feedback: stars < minStars ? feedback : null,
+        feedback: feedback || null,
         redirected_google: shouldRedirect ? true : false,
         restaurant_id: call.restaurant_id,
       },
@@ -74,6 +81,13 @@ export async function POST(request: NextRequest) {
       redirect: shouldRedirect ? settings?.google_reviews_url : null,
     });
   } catch (error) {
+    // Two concurrent submissions for the same call (call_id is unique)
+    if (isUniqueViolation(error)) {
+      return NextResponse.json(
+        { error: "Call already rated" },
+        { status: 409 },
+      );
+    }
     console.error("Error creating rating:", error);
     return NextResponse.json(
       { error: "Internal server error" },

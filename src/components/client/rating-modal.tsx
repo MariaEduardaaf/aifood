@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Star, Loader2, X, ExternalLink } from "lucide-react";
+import { isHttpUrl } from "@/lib/utils";
+import { useToast } from "@/components/ui/toast";
 
 interface RatingModalProps {
   callId: string;
@@ -12,12 +14,16 @@ interface RatingModalProps {
 
 export function RatingModal({ callId, onClose, onSuccess }: RatingModalProps) {
   const t = useTranslations("client");
+  const tErr = useTranslations("errors");
+  const tCommon = useTranslations("common");
+  const toast = useToast();
 
   const [stars, setStars] = useState(0);
   const [hoveredStar, setHoveredStar] = useState(0);
   const [feedback, setFeedback] = useState("");
   const [loading, setLoading] = useState(false);
-  const [redirecting, setRedirecting] = useState(false);
+  const [googleUrl, setGoogleUrl] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async () => {
     if (stars === 0) return;
@@ -31,61 +37,87 @@ export function RatingModal({ callId, onClose, onSuccess }: RatingModalProps) {
         body: JSON.stringify({
           callId,
           stars,
-          feedback: stars < 4 ? feedback : undefined,
+          feedback: feedback.trim() || undefined,
         }),
       });
 
       if (res.ok) {
         const data = await res.json();
 
-        if (data.redirect) {
-          setRedirecting(true);
-          setTimeout(() => {
-            window.open(data.redirect, "_blank");
-            onSuccess();
-          }, 1500);
+        // Everyone gets the Google link (never gate it by stars: Google policy).
+        // Shown as a button, so the open happens inside a user tap (iOS popup blockers).
+        if (isHttpUrl(data.redirect)) {
+          setGoogleUrl(data.redirect);
         } else {
+          toast(t("ratingSent"), "success");
           onSuccess();
         }
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setError(typeof data.error === "string" ? data.error : tErr("generic"));
+        toast(tErr("generic"), "error");
       }
     } catch (err) {
       console.error("Error submitting rating:", err);
+      setError(tErr("generic"));
+      toast(tErr("generic"), "error");
     } finally {
       setLoading(false);
     }
   };
 
-  const showFeedback = stars > 0 && stars < 4;
+  const showFeedback = stars > 0;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="card-premium rounded-2xl p-8 w-full max-w-md relative animate-in fade-in zoom-in duration-300">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="rating-title"
+        className="card-premium rounded-2xl p-8 w-full max-w-md relative animate-in fade-in zoom-in duration-300"
+      >
         {/* Close button */}
         <button
-          onClick={onClose}
-          className="absolute top-4 right-4 p-2 rounded-lg hover:bg-secondary/50 transition-colors text-muted-foreground"
+          onClick={googleUrl ? onSuccess : onClose}
+          aria-label={tCommon("close")}
+          className="absolute top-3 right-3 flex h-11 w-11 items-center justify-center rounded-full hover:bg-secondary/50 transition-colors text-muted-foreground"
         >
           <X className="h-5 w-5" />
         </button>
 
-        {redirecting ? (
+        {googleUrl ? (
           <div className="text-center py-8">
             <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 mb-6">
               <ExternalLink className="h-10 w-10 text-primary animate-pulse" />
             </div>
-            <h3 className="text-xl font-bold text-gold mb-2">
+            <h3 id="rating-title" className="text-xl font-bold text-gold mb-2">
               {t("thankYouRating")}
             </h3>
-            <p className="text-muted-foreground">{t("redirectingGoogle")}</p>
+            <p className="text-muted-foreground mb-6">{t("googleReviewPrompt")}</p>
+            <a
+              href={googleUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={onSuccess}
+              className="block w-full py-3 px-4 rounded-xl btn-gold font-medium"
+            >
+              {t("leaveGoogleReview")}
+            </a>
+            <button
+              onClick={onSuccess}
+              className="mt-3 w-full py-3 px-4 rounded-xl btn-secondary-premium font-medium"
+            >
+              {t("skipRating")}
+            </button>
           </div>
         ) : (
           <>
             {/* Header */}
             <div className="text-center mb-8">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
-                <span className="text-3xl">⭐</span>
+                <Star aria-hidden className="h-8 w-8 fill-primary text-primary" />
               </div>
-              <h3 className="text-2xl font-bold text-gold mb-2">
+              <h3 id="rating-title" className="text-2xl font-bold text-gold mb-2">
                 {t("rateExperience")}
               </h3>
               <p className="text-muted-foreground text-sm">{t("ratePrompt")}</p>
@@ -97,9 +129,11 @@ export function RatingModal({ callId, onClose, onSuccess }: RatingModalProps) {
                 <button
                   key={star}
                   onClick={() => setStars(star)}
+                  aria-label={t("starLabel", { count: star })}
+                  aria-pressed={star <= stars}
                   onMouseEnter={() => setHoveredStar(star)}
                   onMouseLeave={() => setHoveredStar(0)}
-                  className="p-1 transition-transform hover:scale-110"
+                  className="flex h-12 w-12 items-center justify-center rounded-full transition-transform hover:scale-110"
                 >
                   <Star
                     className={`h-10 w-10 transition-colors ${
@@ -123,6 +157,12 @@ export function RatingModal({ callId, onClose, onSuccess }: RatingModalProps) {
                   rows={3}
                 />
               </div>
+            )}
+
+            {error && (
+              <p role="alert" className="mb-4 text-sm text-red-600 text-center">
+                {error}
+              </p>
             )}
 
             {/* Buttons */}

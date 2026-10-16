@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { restaurantIdForbidden } from "@/lib/api";
 import { prisma } from "@/lib/db";
+import { getSettings } from "@/lib/settings";
+import { getPeriodRange, SALE_EXCLUDED_STATUSES, isPeriod, PERIODS } from "@/lib/metrics";
 import { getLocale } from "next-intl/server";
-import { localizedName } from "@/lib/utils";
+import { localizedText } from "@/lib/i18n/text";
 
 export const dynamic = "force-dynamic";
 
@@ -25,34 +28,22 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const period = searchParams.get("period") || "month";
+    if (!isPeriod(period)) {
+      return NextResponse.json(
+        { error: `Invalid period (use: ${PERIODS.join(", ")})` },
+        { status: 400 },
+      );
+    }
     const restaurantIdParam = searchParams.get("restaurantId");
+    const forbidden = restaurantIdForbidden(session.user.role, restaurantIdParam);
+    if (forbidden) return forbidden;
     const restaurantId =
       session.user.role === "SUPER_ADMIN"
         ? restaurantIdParam
         : session.user.restaurant_id;
 
-    // Calculate dates based on the period
-    const now = new Date();
-    let startDate: Date;
-
-    switch (period) {
-      case "today":
-        startDate = new Date(now);
-        startDate.setHours(0, 0, 0, 0);
-        break;
-      case "week":
-        startDate = new Date(now);
-        startDate.setDate(startDate.getDate() - 7);
-        startDate.setHours(0, 0, 0, 0);
-        break;
-      case "30days":
-      case "month":
-      default:
-        startDate = new Date(now);
-        startDate.setMonth(startDate.getMonth() - 1);
-        startDate.setHours(0, 0, 0, 0);
-        break;
-    }
+    const settings = await getSettings(restaurantId);
+    const { start: startDate, end: now } = getPeriodRange(period, settings.timezone);
 
     // Fetch order items for the period
     const locale = await getLocale();
@@ -65,9 +56,7 @@ export async function GET(request: NextRequest) {
             lte: now,
           },
           ...(restaurantId ? { restaurant_id: restaurantId } : {}),
-          status: {
-            not: "CANCELLED",
-          },
+          status: { notIn: SALE_EXCLUDED_STATUSES },
         },
       },
       include: {
@@ -108,7 +97,7 @@ export async function GET(request: NextRequest) {
         orders.add(item.order_id);
         categoryMap.set(key, {
           id: item.menuItem.category_id,
-          name: localizedName(item.menuItem.category, locale),
+          name: localizedText(item.menuItem.category.names, locale, settings.default_locale),
           orders,
           items: item.quantity,
           revenue,

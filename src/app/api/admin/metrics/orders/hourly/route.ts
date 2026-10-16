@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { restaurantIdForbidden } from "@/lib/api";
 import { prisma } from "@/lib/db";
+import { getSettings } from "@/lib/settings";
+import { getPeriodRange, SALE_EXCLUDED_STATUSES, zonedParts, isPeriod, PERIODS } from "@/lib/metrics";
 
 export const dynamic = "force-dynamic";
 
@@ -23,35 +26,22 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const period = searchParams.get("period") || "today";
+    if (!isPeriod(period)) {
+      return NextResponse.json(
+        { error: `Invalid period (use: ${PERIODS.join(", ")})` },
+        { status: 400 },
+      );
+    }
     const restaurantIdParam = searchParams.get("restaurantId");
+    const forbidden = restaurantIdForbidden(session.user.role, restaurantIdParam);
+    if (forbidden) return forbidden;
     const restaurantId =
       session.user.role === "SUPER_ADMIN"
         ? restaurantIdParam
         : session.user.restaurant_id;
 
-    // Calculate dates based on the period
-    const now = new Date();
-    let startDate: Date;
-    let endDate: Date = now;
-
-    switch (period) {
-      case "week":
-        startDate = new Date(now);
-        startDate.setDate(startDate.getDate() - 7);
-        startDate.setHours(0, 0, 0, 0);
-        break;
-      case "30days":
-      case "month":
-        startDate = new Date(now);
-        startDate.setMonth(startDate.getMonth() - 1);
-        startDate.setHours(0, 0, 0, 0);
-        break;
-      case "today":
-      default:
-        startDate = new Date(now);
-        startDate.setHours(0, 0, 0, 0);
-        break;
-    }
+    const settings = await getSettings(restaurantId);
+    const { start: startDate, end: endDate } = getPeriodRange(period, settings.timezone);
 
     // Fetch orders for the period
     const orders = await prisma.order.findMany({
@@ -61,9 +51,7 @@ export async function GET(request: NextRequest) {
           lte: endDate,
         },
         ...(restaurantId ? { restaurant_id: restaurantId } : {}),
-        status: {
-          not: "CANCELLED",
-        },
+        status: { notIn: SALE_EXCLUDED_STATUSES },
       },
       select: {
         created_at: true,
@@ -81,7 +69,7 @@ export async function GET(request: NextRequest) {
 
     // Fill in with real data
     orders.forEach((order) => {
-      const hour = new Date(order.created_at).getHours();
+      const hour = zonedParts(order.created_at, settings.timezone).hour;
       const current = hourMap.get(hour)!;
       hourMap.set(hour, {
         quantity: current.quantity + 1,

@@ -1,9 +1,12 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { Bell, Receipt, Check, Loader2, Clock } from "lucide-react";
 import { cn, formatTime, getUrgencyClass } from "@/lib/utils";
+import { useLiveRecords, ReconnectBanner } from "@/components/providers/use-event-stream";
+import { useStaffAlert } from "@/components/providers/staff-alerts";
+import { useToast } from "@/components/ui/toast";
 
 interface Call {
   id: string;
@@ -18,112 +21,53 @@ interface Call {
 
 interface WaiterDashboardProps {
   userId: string;
+  onCount?: (count: number) => void;
 }
 
-export function WaiterDashboard({ userId }: WaiterDashboardProps) {
+export function WaiterDashboard({ onCount }: WaiterDashboardProps) {
   const t = useTranslations("waiter");
+  const tErr = useTranslations("errors");
+  const toast = useToast();
+  const alert = useStaffAlert();
 
-  const [calls, setCalls] = useState<Call[]>([]);
-  const [loading, setLoading] = useState(true);
   const [resolvingId, setResolvingId] = useState<string | null>(null);
-  const [timers, setTimers] = useState<Record<string, number>>({});
+  const [now, setNow] = useState(() => Date.now());
 
-  const previousCallsRef = useRef<string[]>([]);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const { records: calls, loading, lost, remove } = useLiveRecords<Call>({
+    streamUrl: "/api/calls/stream",
+    event: "call",
+    keep: (c) => c.status === "OPEN",
+    sort: (a, b) => a.created_at.localeCompare(b.created_at),
+    onChange: (call, previous) => {
+      if (!previous) alert();
+    },
+  });
 
-  // Initialize audio
   useEffect(() => {
-    audioRef.current = new Audio("/sounds/notification.mp3");
-    audioRef.current.volume = 0.5;
-  }, []);
+    onCount?.(calls.length);
+  }, [calls.length, onCount]);
 
-  // Play notification sound
-  const playNotification = useCallback(() => {
-    if (audioRef.current) {
-      audioRef.current.currentTime = 0;
-      audioRef.current.play().catch(() => {
-        // Autoplay blocked, ignore
-      });
-    }
-  }, []);
-
-  // Fetch calls with SSE
+  // One clock for every timer on the screen
   useEffect(() => {
-    const eventSource = new EventSource("/api/calls/stream");
-
-    eventSource.onmessage = (event) => {
-      try {
-        const newCalls: Call[] = JSON.parse(event.data);
-
-        // Check for new calls
-        const currentIds = newCalls.map((c) => c.id);
-        const previousIds = previousCallsRef.current;
-        const hasNewCall = currentIds.some((id) => !previousIds.includes(id));
-
-        if (hasNewCall && previousIds.length > 0) {
-          playNotification();
-        }
-
-        previousCallsRef.current = currentIds;
-        setCalls(newCalls);
-        setLoading(false);
-      } catch (err) {
-        console.error("Error parsing SSE data:", err);
-      }
-    };
-
-    eventSource.onerror = () => {
-      console.error("SSE connection error");
-      // Will auto-reconnect
-    };
-
-    return () => {
-      eventSource.close();
-    };
-  }, [playNotification]);
-
-  // Update timers every second
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const now = Date.now();
-      const newTimers: Record<string, number> = {};
-
-      calls.forEach((call) => {
-        const createdAt = new Date(call.created_at).getTime();
-        newTimers[call.id] = Math.floor((now - createdAt) / 1000);
-      });
-
-      setTimers(newTimers);
-    }, 1000);
-
+    const interval = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(interval);
-  }, [calls]);
+  }, []);
 
   const handleResolve = async (callId: string) => {
     setResolvingId(callId);
-
     try {
-      const res = await fetch(`/api/calls/${callId}/resolve`, {
-        method: "PATCH",
-      });
-
+      const res = await fetch(`/api/calls/${callId}/resolve`, { method: "PATCH" });
       if (res.ok) {
-        // Call will be removed on next SSE update
-        setCalls((prev) => prev.filter((c) => c.id !== callId));
+        remove(callId);
+        toast(t("callResolved"), "success");
+      } else {
+        toast(tErr("generic"), "error");
       }
-    } catch (err) {
-      console.error("Error resolving call:", err);
+    } catch {
+      toast(tErr("generic"), "error");
     } finally {
       setResolvingId(null);
     }
-  };
-
-  const getCallIcon = (type: Call["type"]) => {
-    return type === "CALL_WAITER" ? Bell : Receipt;
-  };
-
-  const getCallLabel = (type: Call["type"]) => {
-    return type === "CALL_WAITER" ? t("callWaiter") : t("requestBill");
   };
 
   if (loading) {
@@ -141,112 +85,95 @@ export function WaiterDashboard({ userId }: WaiterDashboardProps) {
 
   return (
     <div className="space-y-4">
-      {/* Calls List */}
+      <ReconnectBanner show={lost} />
       {calls.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 px-4">
           <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-            <Bell className="h-8 w-8 text-primary/50" />
+            <Bell className="h-8 w-8 text-primary" />
           </div>
-          <h3 className="text-lg font-medium text-foreground mb-1">
-            {t("noCalls")}
-          </h3>
-          <p className="text-sm text-muted-foreground text-center max-w-xs">
-            {t("newCallsHint")}
-          </p>
+          <h3 className="text-lg font-medium text-foreground mb-1">{t("noCalls")}</h3>
+          <p className="text-sm text-muted-foreground text-center max-w-xs">{t("newCallsHint")}</p>
         </div>
       ) : (
         <>
-          {/* Counter badge when there are calls */}
           <div className="flex items-center gap-2 mb-2">
-            <span className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-red-500/15 text-red-400 border border-red-500/20">
-              <span className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />
+            <span
+              aria-live="polite"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-red-500/15 text-red-700 dark:text-red-300 border border-red-500/20"
+            >
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
               {t("callsCount", { count: calls.length })}
             </span>
           </div>
           <div className="grid gap-4">
             {calls.map((call) => {
-              const Icon = getCallIcon(call.type);
-              const seconds = timers[call.id] || 0;
-              const urgencyClass = getUrgencyClass(seconds);
+              const Icon = call.type === "CALL_WAITER" ? Bell : Receipt;
+              const seconds = Math.max(0, Math.floor((now - new Date(call.created_at).getTime()) / 1000));
               const isResolving = resolvingId === call.id;
               const isUrgent = seconds >= 180;
               const isWarning = seconds >= 60 && seconds < 180;
+              const isWaiter = call.type === "CALL_WAITER";
 
               return (
                 <div
                   key={call.id}
                   className={cn(
                     "card-premium rounded-2xl p-4 sm:p-6 transition-all duration-300",
-                    urgencyClass,
+                    getUrgencyClass(seconds),
                     isUrgent && "pulse-gold",
                   )}
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="flex items-center gap-4 sm:gap-5">
-                      {/* Icon */}
                       <div
                         className={cn(
-                          "p-3 sm:p-4 rounded-xl flex-shrink-0",
-                          call.type === "CALL_WAITER"
-                            ? "bg-gradient-to-br from-blue-500/20 to-blue-600/10 border border-blue-500/30"
-                            : "bg-gradient-to-br from-green-500/20 to-green-600/10 border border-green-500/30",
+                          "p-3 sm:p-4 rounded-xl flex-shrink-0 border",
+                          isWaiter
+                            ? "bg-sky-500/15 border-sky-500/30 text-sky-800 dark:text-sky-300"
+                            : "bg-green-500/15 border-green-500/30 text-green-800 dark:text-green-300",
                         )}
                       >
-                        <Icon
-                          className={cn(
-                            "h-6 w-6 sm:h-7 sm:w-7",
-                            call.type === "CALL_WAITER"
-                              ? "text-blue-400"
-                              : "text-green-400",
-                          )}
-                        />
+                        <Icon className="h-6 w-6 sm:h-7 sm:w-7" />
                       </div>
-
-                      {/* Info */}
                       <div className="min-w-0">
                         <h3 className="font-bold text-lg sm:text-xl text-foreground truncate">
                           {call.table.label}
                         </h3>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span
-                            className={cn(
-                              "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
-                              call.type === "CALL_WAITER"
-                                ? "bg-blue-500/20 text-blue-400"
-                                : "bg-green-500/20 text-green-400",
-                            )}
-                          >
-                            {getCallLabel(call.type)}
-                          </span>
-                        </div>
+                        <span
+                          className={cn(
+                            "mt-1 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold",
+                            isWaiter
+                              ? "bg-sky-500/15 text-sky-800 dark:text-sky-300"
+                              : "bg-green-500/15 text-green-800 dark:text-green-300",
+                          )}
+                        >
+                          {isWaiter ? t("callWaiter") : t("requestBill")}
+                        </span>
                       </div>
                     </div>
 
                     <div className="flex items-center justify-between sm:justify-end gap-4 sm:gap-6">
-                      {/* Timer */}
                       <div className="text-left sm:text-right">
                         <div
                           className={cn(
-                            "flex items-center gap-2 text-2xl sm:text-3xl font-mono font-bold",
+                            "flex items-center gap-2 text-2xl sm:text-3xl font-bold tabular-nums",
                             isUrgent
-                              ? "text-red-400"
+                              ? "text-red-700 dark:text-red-300"
                               : isWarning
-                                ? "text-yellow-400"
-                                : "text-green-400",
+                                ? "text-amber-800 dark:text-amber-300"
+                                : "text-green-800 dark:text-green-300",
                           )}
                         >
-                          <Clock className="h-4 w-4 sm:h-5 sm:w-5 opacity-60" />
+                          <Clock className="h-4 w-4 sm:h-5 sm:w-5 opacity-70" />
                           {formatTime(seconds)}
                         </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {t("timeOpen")}
-                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">{t("timeOpen")}</p>
                       </div>
 
-                      {/* Resolve Button */}
                       <button
                         onClick={() => handleResolve(call.id)}
                         disabled={isResolving}
+                        aria-label={t("resolveCall", { table: call.table.label })}
                         className="btn-gold flex items-center gap-2 py-3 px-4 sm:px-6 disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
                       >
                         {isResolving ? (
@@ -254,9 +181,7 @@ export function WaiterDashboard({ userId }: WaiterDashboardProps) {
                         ) : (
                           <>
                             <Check className="h-5 w-5" />
-                            <span className="hidden sm:inline">
-                              {t("resolve")}
-                            </span>
+                            <span className="hidden sm:inline">{t("resolve")}</span>
                           </>
                         )}
                       </button>

@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { z } from "zod";
-import { generateToken } from "@/lib/utils";
+import { validationError, restaurantIdForbidden } from "@/lib/api";
+import { randomBytes } from "crypto";
 
 const createTableSchema = z.object({
   label: z.string().min(1).max(50),
@@ -14,17 +15,21 @@ export async function GET(request: NextRequest) {
   try {
     const session = await auth();
 
-    if (
-      !session ||
-      (session.user.role !== "ADMIN" &&
-        session.user.role !== "MANAGER" &&
-        session.user.role !== "SUPER_ADMIN")
-    ) {
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (
+      session.user.role !== "ADMIN" &&
+      session.user.role !== "MANAGER" &&
+      session.user.role !== "SUPER_ADMIN"
+    ) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const { searchParams } = new URL(request.url);
     const restaurantIdParam = searchParams.get("restaurantId");
+    const forbidden = restaurantIdForbidden(session.user.role, restaurantIdParam);
+    if (forbidden) return forbidden;
     const restaurantId =
       session.user.role === "SUPER_ADMIN"
         ? restaurantIdParam
@@ -66,26 +71,27 @@ export async function POST(request: NextRequest) {
   try {
     const session = await auth();
 
-    if (
-      !session ||
-      (session.user.role !== "ADMIN" &&
-        session.user.role !== "MANAGER" &&
-        session.user.role !== "SUPER_ADMIN")
-    ) {
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    if (
+      session.user.role !== "ADMIN" &&
+      session.user.role !== "MANAGER" &&
+      session.user.role !== "SUPER_ADMIN"
+    ) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
-    const body = await request.json();
+    const body = await request.json().catch(() => null);
     const validation = createTableSchema.safeParse(body);
 
     if (!validation.success) {
-      return NextResponse.json(
-        { error: validation.error.issues },
-        { status: 400 },
-      );
+      return validationError(validation.error);
     }
 
     const { label, restaurantId: restaurantIdInput } = validation.data;
+    const forbidden = restaurantIdForbidden(session.user.role, restaurantIdInput);
+    if (forbidden) return forbidden;
     const restaurantId =
       session.user.role === "SUPER_ADMIN"
         ? restaurantIdInput
@@ -101,7 +107,7 @@ export async function POST(request: NextRequest) {
     const table = await prisma.table.create({
       data: {
         label,
-        qr_token: generateToken(32),
+        qr_token: randomBytes(16).toString("hex"), // CSPRNG, not Math.random
         active: true,
         restaurant_id: restaurantId,
       },

@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { z } from "zod";
+import { validationError, restaurantIdForbidden } from "@/lib/api";
+
+const querySchema = z.object({
+  stars: z.coerce.number().int().min(1).max(5).optional(),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+});
 
 export const dynamic = "force-dynamic";
 
@@ -8,19 +15,31 @@ export const dynamic = "force-dynamic";
 export async function GET(request: NextRequest) {
   const session = await auth();
 
-  if (
-    !session ||
-    (session.user.role !== "ADMIN" &&
-      session.user.role !== "MANAGER" &&
-      session.user.role !== "SUPER_ADMIN")
-  ) {
+  if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (
+    session.user.role !== "ADMIN" &&
+    session.user.role !== "MANAGER" &&
+    session.user.role !== "SUPER_ADMIN"
+  ) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const { searchParams } = new URL(request.url);
-  const stars = searchParams.get("stars");
-  const limit = parseInt(searchParams.get("limit") || "50");
+  const query = querySchema.safeParse({
+    stars: searchParams.get("stars") || undefined,
+    limit: searchParams.get("limit") || undefined,
+  });
+
+  if (!query.success) {
+    return validationError(query.error);
+  }
+
+  const { stars, limit } = query.data;
   const restaurantIdParam = searchParams.get("restaurantId");
+  const forbidden = restaurantIdForbidden(session.user.role, restaurantIdParam);
+  if (forbidden) return forbidden;
   const restaurantId =
     session.user.role === "SUPER_ADMIN"
       ? restaurantIdParam
@@ -32,7 +51,7 @@ export async function GET(request: NextRequest) {
       : {};
 
     if (stars) {
-      where.stars = parseInt(stars);
+      where.stars = stars;
     }
 
     const ratings = await prisma.rating.findMany({

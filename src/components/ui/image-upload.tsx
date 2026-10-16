@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useCallback } from 'react'
-import { Upload, X, Loader2, Image as ImageIcon } from 'lucide-react'
+import { Upload, X, Loader2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
 interface ImageUploadProps {
@@ -96,10 +96,11 @@ export function ImageUpload({
   if (value) {
     return (
       <div className="relative">
+        {/* eslint-disable-next-line @next/next/no-img-element -- user-provided URL of arbitrary origin, with onError fallback */}
         <img
           src={value}
           alt={t("preview")}
-          className="w-full h-48 object-cover rounded-lg border border-gray-200"
+          className="w-full h-48 object-cover rounded-lg border border-border"
           onError={(e) => {
             e.currentTarget.src = '/placeholder-image.png'
           }}
@@ -109,7 +110,7 @@ export function ImageUpload({
           onClick={handleRemove}
           disabled={disabled}
           aria-label={t('remove')}
-          className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 disabled:opacity-50"
+          className="absolute top-2 right-2 p-1 bg-destructive text-destructive-foreground rounded-full hover:bg-destructive/90 disabled:opacity-50"
         >
           <X className="w-4 h-4" />
         </button>
@@ -128,7 +129,7 @@ export function ImageUpload({
           relative border-2 border-dashed rounded-lg p-6 cursor-pointer
           transition-colors flex flex-col items-center justify-center
           min-h-[180px]
-          ${isDragging ? 'border-orange-500 bg-orange-50' : 'border-gray-300 hover:border-orange-400'}
+          ${isDragging ? 'border-primary bg-primary/10' : 'border-border hover:border-primary'}
           ${disabled || isUploading ? 'opacity-50 cursor-not-allowed' : ''}
         `}
       >
@@ -143,21 +144,21 @@ export function ImageUpload({
 
         {isUploading ? (
           <>
-            <Loader2 className="w-10 h-10 text-orange-500 animate-spin mb-2" />
-            <p className="text-sm text-gray-600">{t('uploading')}</p>
+            <Loader2 className="w-10 h-10 text-primary animate-spin mb-2" />
+            <p className="text-sm text-muted-foreground">{t('uploading')}</p>
           </>
         ) : (
           <>
-            <div className="p-3 bg-orange-100 rounded-full mb-3">
-              <Upload className="w-6 h-6 text-orange-600" />
+            <div className="p-3 bg-primary/10 rounded-full mb-3">
+              <Upload className="w-6 h-6 text-primary" />
             </div>
-            <p className="text-sm font-medium text-gray-700 mb-1">
+            <p className="text-sm font-medium text-foreground mb-1">
               {t('clickToUpload')}
             </p>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted-foreground">
               {t('dragAndDrop')}
             </p>
-            <p className="text-xs text-gray-400 mt-2">
+            <p className="text-xs text-muted-foreground mt-2">
               {t('allowedFormats')}
             </p>
           </>
@@ -165,7 +166,7 @@ export function ImageUpload({
       </div>
 
       {error && (
-        <p className="text-sm text-red-500 flex items-center gap-1">
+        <p className="text-sm text-destructive flex items-center gap-1">
           <X className="w-4 h-4" />
           {error}
         </p>

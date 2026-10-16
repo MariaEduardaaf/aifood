@@ -2,15 +2,47 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { z } from "zod";
+import { validationError, isUniqueViolation } from "@/lib/api";
 import { hash } from "bcryptjs";
+import type { Prisma } from "@prisma/client";
+import type { Session } from "next-auth";
 
 const updateUserSchema = z.object({
-  email: z.string().email().optional(),
+  email: z.string().trim().toLowerCase().email().optional(),
   password: z.string().min(6).optional(),
   name: z.string().min(1).max(100).optional(),
   role: z.enum(["WAITER", "ADMIN", "MANAGER", "KITCHEN"]).optional(),
   active: z.boolean().optional(),
 });
+
+// Roles a MANAGER is allowed to create or manage
+const MANAGER_MANAGED_ROLES = ["WAITER", "KITCHEN"] as const;
+
+// Users the caller may see. Restaurant staff never see the SUPER_ADMIN.
+function viewableUser(
+  user: Session["user"],
+  id: string,
+): Prisma.UserWhereInput {
+  if (user.role === "SUPER_ADMIN") return { id };
+  return {
+    id,
+    restaurant_id: user.restaurant_id,
+    role: { not: "SUPER_ADMIN" },
+  };
+}
+
+// Users the caller may modify or delete. A MANAGER only manages WAITER and
+// KITCHEN users (plus their own profile, minus role/active).
+function manageableUser(
+  user: Session["user"],
+  id: string,
+): Prisma.UserWhereInput {
+  if (user.role !== "MANAGER") return viewableUser(user, id);
+  return {
+    ...viewableUser(user, id),
+    OR: [{ id: user.id }, { role: { in: [...MANAGER_MANAGED_ROLES] } }],
+  };
+}
 
 // GET /api/users/[id] - Get single user
 export async function GET(
@@ -20,20 +52,19 @@ export async function GET(
   try {
     const session = await auth();
 
-    if (
-      !session ||
-      (session.user.role !== "ADMIN" &&
-        session.user.role !== "MANAGER" &&
-        session.user.role !== "SUPER_ADMIN")
-    ) {
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (
+      session.user.role !== "ADMIN" &&
+      session.user.role !== "MANAGER" &&
+      session.user.role !== "SUPER_ADMIN"
+    ) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const user = await prisma.user.findFirst({
-      where:
-        session.user.role === "SUPER_ADMIN"
-          ? { id: params.id }
-          : { id: params.id, restaurant_id: session.user.restaurant_id },
+      where: viewableUser(session.user, params.id),
       select: {
         id: true,
         email: true,
@@ -66,26 +97,57 @@ export async function PATCH(
   try {
     const session = await auth();
 
-    if (
-      !session ||
-      (session.user.role !== "ADMIN" &&
-        session.user.role !== "MANAGER" &&
-        session.user.role !== "SUPER_ADMIN")
-    ) {
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    if (
+      session.user.role !== "ADMIN" &&
+      session.user.role !== "MANAGER" &&
+      session.user.role !== "SUPER_ADMIN"
+    ) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
-    const body = await request.json();
+    const body = await request.json().catch(() => null);
     const validation = updateUserSchema.safeParse(body);
 
     if (!validation.success) {
+      return validationError(validation.error);
+    }
+
+    const { password, ...data } = validation.data;
+
+    const existingUser = await prisma.user.findFirst({
+      where: manageableUser(session.user, params.id),
+    });
+
+    if (!existingUser) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // Nobody can change their own role or deactivate themselves
+    if (
+      existingUser.id === session.user.id &&
+      ((data.role !== undefined && data.role !== existingUser.role) ||
+        (data.active !== undefined && data.active !== existingUser.active))
+    ) {
       return NextResponse.json(
-        { error: validation.error.issues },
+        { error: "You cannot change your own role or active status" },
         { status: 400 },
       );
     }
 
-    const { password, ...data } = validation.data;
+    if (
+      session.user.role === "MANAGER" &&
+      data.role !== undefined &&
+      data.role !== existingUser.role &&
+      !(MANAGER_MANAGED_ROLES as readonly string[]).includes(data.role)
+    ) {
+      return NextResponse.json(
+        { error: "Managers can only assign the WAITER or KITCHEN role" },
+        { status: 403 },
+      );
+    }
 
     // If updating email, check if it's already in use
     if (data.email) {
@@ -99,7 +161,7 @@ export async function PATCH(
       if (existingUser) {
         return NextResponse.json(
           { error: "Email already registered" },
-          { status: 400 },
+          { status: 409 },
         );
       }
     }
@@ -108,17 +170,6 @@ export async function PATCH(
 
     if (password) {
       updateData.password_hash = await hash(password, 12);
-    }
-
-    const existingUser = await prisma.user.findFirst({
-      where:
-        session.user.role === "SUPER_ADMIN"
-          ? { id: params.id }
-          : { id: params.id, restaurant_id: session.user.restaurant_id },
-    });
-
-    if (!existingUser) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     const user = await prisma.user.update({
@@ -136,6 +187,12 @@ export async function PATCH(
 
     return NextResponse.json(user);
   } catch (error) {
+    if (isUniqueViolation(error)) {
+      return NextResponse.json(
+        { error: "Email already registered" },
+        { status: 409 },
+      );
+    }
     console.error("Error updating user:", error);
     return NextResponse.json(
       { error: "Internal server error" },
@@ -152,13 +209,15 @@ export async function DELETE(
   try {
     const session = await auth();
 
-    if (
-      !session ||
-      (session.user.role !== "ADMIN" &&
-        session.user.role !== "MANAGER" &&
-        session.user.role !== "SUPER_ADMIN")
-    ) {
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (
+      session.user.role !== "ADMIN" &&
+      session.user.role !== "MANAGER" &&
+      session.user.role !== "SUPER_ADMIN"
+    ) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     // Prevent self-deletion
@@ -170,10 +229,7 @@ export async function DELETE(
     }
 
     const existingUser = await prisma.user.findFirst({
-      where:
-        session.user.role === "SUPER_ADMIN"
-          ? { id: params.id }
-          : { id: params.id, restaurant_id: session.user.restaurant_id },
+      where: manageableUser(session.user, params.id),
     });
 
     if (!existingUser) {

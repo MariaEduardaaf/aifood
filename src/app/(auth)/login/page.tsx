@@ -1,18 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
+import { safeCallbackUrl } from "@/lib/safe-redirect";
 import { Loader2, Mail, Lock, ArrowRight, Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
   const t = useTranslations("auth");
   const tErrors = useTranslations("errors");
-  const router = useRouter();
+  const tClient = useTranslations("client");
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/waiter";
+  const callbackUrl = safeCallbackUrl(searchParams.get("callbackUrl"), "/waiter");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -32,10 +33,13 @@ export default function LoginPage() {
         redirect: false,
       });
 
-      console.log("Login result:", result);
 
       if (result?.error) {
-        setError(t("invalidCredentials"));
+        setError(
+          result.code === "rate_limited"
+            ? t("rateLimited")
+            : t("invalidCredentials"),
+        );
         setLoading(false);
       } else if (result?.ok) {
         window.location.href = callbackUrl;
@@ -67,6 +71,7 @@ export default function LoginPage() {
               alt="aiFood Logo"
               width={64}
               height={64}
+              style={{ width: 64, height: 64 }}
               className="object-contain"
               priority
             />
@@ -178,10 +183,10 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Divider */}
+          {/* Demo credentials (opt-in via NEXT_PUBLIC_SHOW_DEMO_LOGINS=true) */}
+          {process.env.NEXT_PUBLIC_SHOW_DEMO_LOGINS === "true" && (
+          <>
           <div className="divider-gold my-8" />
-
-          {/* Demo credentials */}
           <div className="text-center text-sm text-muted-foreground">
             <p className="mb-2">{t("demoCredentials")}</p>
             <div className="space-y-1 text-xs">
@@ -203,11 +208,22 @@ export default function LoginPage() {
               </p>
             </div>
           </div>
+          </>
+          )}
         </div>
 
         {/* Footer */}
         <p className="text-center text-sm text-muted-foreground/60 mt-6">
           Powered by <span className="text-gold font-semibold">aiFood</span>
+        </p>
+        <p className="text-center text-xs text-muted-foreground/60 mt-2">
+          <a href="/privacy" className="underline underline-offset-2 hover:text-foreground">
+            {tClient("privacy")}
+          </a>
+          {" · "}
+          <a href="/cookies" className="underline underline-offset-2 hover:text-foreground">
+            {tClient("cookies")}
+          </a>
         </p>
       </div>
     </div>

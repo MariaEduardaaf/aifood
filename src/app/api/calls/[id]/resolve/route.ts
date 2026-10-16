@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { emit, callInclude } from "@/lib/events";
 
 // PATCH /api/calls/[id]/resolve - Mark call as resolved
 export async function PATCH(
@@ -37,31 +38,41 @@ export async function PATCH(
     if (call.status === "RESOLVED") {
       return NextResponse.json(
         { error: "Call already resolved" },
-        { status: 400 },
+        { status: 409 },
       );
     }
 
-    const updatedCall = await prisma.call.update({
-      where: { id: params.id },
+    // Atomic transition: applies only if the call is still open
+    const { count } = await prisma.call.updateMany({
+      where: {
+        id: params.id,
+        restaurant_id: call.restaurant_id,
+        status: "OPEN",
+      },
       data: {
         status: "RESOLVED",
         resolved_at: new Date(),
         resolved_by: session.user.id,
       },
-      include: {
-        table: {
-          select: {
-            id: true,
-            label: true,
-          },
-        },
-        resolver: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
+    });
+
+    if (count === 0) {
+      return NextResponse.json(
+        { error: "Call already resolved" },
+        { status: 409 },
+      );
+    }
+
+    const updatedCall = await prisma.call.findUnique({
+      where: { id: params.id },
+      include: callInclude,
+    });
+
+    emit(call.restaurant_id, {
+      type: "call",
+      action: "updated",
+      id: params.id,
+      status: "RESOLVED",
     });
 
     return NextResponse.json(updatedCall);

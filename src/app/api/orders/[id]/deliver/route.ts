@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { emit, orderInclude } from "@/lib/events";
 
 // PATCH /api/orders/[id]/deliver - Mark order as delivered
 export async function PATCH(
@@ -38,36 +39,40 @@ export async function PATCH(
     if (order.status !== "READY") {
       return NextResponse.json(
         { error: "Order must be ready before delivery" },
-        { status: 400 },
+        { status: 409 },
       );
     }
 
-    const updatedOrder = await prisma.order.update({
-      where: { id: params.id },
+    // Atomic transition: applies only if the status is still the expected one
+    const { count } = await prisma.order.updateMany({
+      where: {
+        id: params.id,
+        restaurant_id: order.restaurant_id,
+        status: "READY",
+      },
       data: {
         status: "DELIVERED",
         delivered_at: new Date(),
       },
-      include: {
-        table: {
-          select: {
-            id: true,
-            label: true,
-          },
-        },
-        items: {
-          include: {
-            menuItem: {
-              select: {
-                id: true,
-                name_pt: true,
-                name_es: true,
-                name_en: true,
-              },
-            },
-          },
-        },
-      },
+    });
+
+    if (count === 0) {
+      return NextResponse.json(
+        { error: "Order status changed, refresh and try again" },
+        { status: 409 },
+      );
+    }
+
+    const updatedOrder = await prisma.order.findUnique({
+      where: { id: params.id },
+      include: orderInclude,
+    });
+
+    emit(order.restaurant_id, {
+      type: "order",
+      action: "updated",
+      id: params.id,
+      status: updatedOrder?.status ?? "UNKNOWN",
     });
 
     return NextResponse.json(updatedOrder);

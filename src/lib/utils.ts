@@ -26,12 +26,23 @@ export function generateToken(length: number = 32): string {
   return result
 }
 
-// Pick the menu item/category name for the active locale (falls back to pt)
-export function localizedName(
-  item: { name_pt: string; name_es?: string; name_en?: string },
-  locale: string,
+// Format a money amount (Prisma Decimals arrive as strings) in the restaurant currency
+export function formatMoney(
+  amount: number | string,
+  currency: string = 'EUR',
+  locale: string = 'en',
 ): string {
-  if (locale === 'es') return item.name_es || item.name_pt
-  if (locale === 'en') return item.name_en || item.name_pt
-  return item.name_pt
+  const n = Number(amount)
+  try {
+    return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(
+      Number.isFinite(n) ? n : 0,
+    )
+  } catch {
+    return `${currency} ${(Number.isFinite(n) ? n : 0).toFixed(2)}`
+  }
+}
+
+// Only http(s) URLs may be opened from user-configured links
+export function isHttpUrl(value: string | null | undefined): value is string {
+  return !!value && /^https?:\/\//i.test(value)
 }

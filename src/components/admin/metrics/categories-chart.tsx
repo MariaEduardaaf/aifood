@@ -8,8 +8,9 @@ import {
   Cell,
   Tooltip,
   ResponsiveContainer,
-  Legend,
 } from "recharts";
+import { useCurrency } from "@/components/providers/currency";
+import { formatPercent } from "../format";
 
 interface CategoryData {
   id: string;
@@ -46,6 +47,8 @@ export function CategoriesChart({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const currency = useCurrency(restaurantId);
+
   useEffect(() => {
     async function fetchData() {
       try {
@@ -72,9 +75,9 @@ export function CategoriesChart({
 
   if (loading) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-        <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-48 mb-4 animate-pulse" />
-        <div className="h-80 bg-gray-100 dark:bg-gray-700 rounded animate-pulse" />
+      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+        <div className="h-6 bg-muted rounded w-48 mb-4 animate-pulse" />
+        <div className="h-80 bg-muted rounded animate-pulse" />
       </div>
     );
   }
@@ -90,7 +93,7 @@ export function CategoriesChart({
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat(locale, {
       style: "currency",
-      currency: "BRL",
+      currency,
       minimumFractionDigits: 0,
     }).format(value);
   };
@@ -98,15 +101,15 @@ export function CategoriesChart({
   const totalRevenue = data.reduce((sum, cat) => sum + cat.revenue, 0);
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+    <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+      <h3 className="text-lg font-semibold text-foreground mb-4">
         {t("revenueByCategory")}
       </h3>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Pie chart */}
         <div className="h-80">
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 400, height: 320 }}>
             <PieChart>
               <Pie
                 data={data as unknown as Record<string, unknown>[]}
@@ -129,8 +132,8 @@ export function CategoriesChart({
               </Pie>
               <Tooltip
                 contentStyle={{
-                  backgroundColor: "var(--tooltip-bg, #fff)",
-                  borderColor: "var(--tooltip-border, #e5e7eb)",
+                  backgroundColor: "hsl(var(--card))",
+                  borderColor: "hsl(var(--border))",
                   borderRadius: "8px",
                 }}
                 formatter={(value) => [
@@ -145,10 +148,10 @@ export function CategoriesChart({
         {/* Category list */}
         <div className="space-y-3">
           <div className="text-center mb-4">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-muted-foreground">
               {t("totalRevenue")}
             </p>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">
+            <p className="text-2xl font-bold text-foreground">
               {formatCurrency(totalRevenue)}
             </p>
           </div>
@@ -156,7 +159,7 @@ export function CategoriesChart({
           {data.map((category, index) => (
             <div
               key={category.id}
-              className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
+              className="flex items-center gap-3 p-3 bg-secondary/40 rounded-lg"
             >
               <div
                 className="w-4 h-4 rounded-full flex-shrink-0"
@@ -164,28 +167,28 @@ export function CategoriesChart({
               />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                  <p className="text-sm font-medium text-foreground truncate">
                     {category.name}
                   </p>
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white ml-2">
-                    {category.percentage}%
+                  <p className="text-sm font-semibold text-foreground ml-2">
+                    {formatPercent(category.percentage, locale)}
                   </p>
                 </div>
                 <div className="flex items-center justify-between mt-1">
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <p className="text-xs text-muted-foreground">
                     {category.items} {t("items")} • {category.orders}{" "}
                     {t("orders")}
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <p className="text-xs text-muted-foreground">
                     {formatCurrency(category.revenue)}
                   </p>
                 </div>
                 {/* Progress bar */}
-                <div className="mt-2 h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
+                <div className="mt-2 h-1.5 bg-muted rounded-full overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all duration-500"
                     style={{
-                      width: `${category.percentage}%`,
+                      width: `${formatPercent(category.percentage, locale)}`,
                       backgroundColor: COLORS[index % COLORS.length],
                     }}
                   />

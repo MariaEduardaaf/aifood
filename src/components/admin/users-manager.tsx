@@ -1,12 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
+import { readApiError } from "./api-errors";
+import { useConfirm } from "@/components/ui/confirm-dialog";
+import { useToast } from "@/components/ui/toast";
 import {
   Button,
   Card,
   CardContent,
   Badge,
+  badgeVariants,
   Input,
   Label,
   Select,
@@ -19,7 +23,6 @@ import {
   Loader2,
   Eye,
   EyeOff,
-  RefreshCw,
   Copy,
   Check,
   Key,
@@ -49,7 +52,10 @@ export function UsersManager({
 }: UsersManagerProps) {
   const t = useTranslations("admin");
   const tCommon = useTranslations("common");
-  const tAuth = useTranslations("auth");
+  const tErr = useTranslations("errors");
+  const tRoot = useTranslations();
+  const toast = useToast();
+  const { confirm, dialog } = useConfirm();
 
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,11 +79,7 @@ export function UsersManager({
     null,
   );
 
-  useEffect(() => {
-    fetchUsers();
-  }, [restaurantId]);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       const query = restaurantId ? `?restaurantId=${restaurantId}` : "";
       const res = await fetch(`/api/users${query}`);
@@ -90,7 +92,11 @@ export function UsersManager({
     } finally {
       setLoading(false);
     }
-  };
+  }, [restaurantId]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   const openCreateModal = () => {
     setEditingUser(null);
@@ -163,14 +169,17 @@ export function UsersManager({
       });
 
       if (res.ok) {
+        toast(t("toast.saved"), "success");
         await fetchUsers();
         closeModal();
       } else {
-        const data = await res.json();
-        setError(data.error || t("usersPage.saveError"));
+        const msg = await readApiError(res, tRoot);
+        setError(msg);
+        toast(msg, "error");
       }
-    } catch (err) {
+    } catch {
       setError(t("usersPage.saveUserError"));
+      toast(t("usersPage.saveUserError"), "error");
     } finally {
       setSaving(false);
     }
@@ -178,22 +187,23 @@ export function UsersManager({
 
   const handleDelete = async (user: User) => {
     if (user.id === currentUserId) {
-      alert(t("usersPage.cannotDeleteSelf"));
+      toast(t("usersPage.cannotDeleteSelf"), "error");
       return;
     }
 
-    if (!confirm(t("confirmDelete"))) return;
+    if (!(await confirm({ message: t("confirmDelete") }))) return;
 
     try {
       const res = await fetch(`/api/users/${user.id}`, { method: "DELETE" });
       if (res.ok) {
+        toast(t("toast.deleted"), "success");
         await fetchUsers();
       } else {
-        const data = await res.json();
-        alert(data.error || t("usersPage.deleteError"));
+        toast(await readApiError(res, tRoot), "error");
       }
     } catch (err) {
       console.error("Error deleting user:", err);
+      toast(t("usersPage.deleteError"), "error");
     }
   };
 
@@ -205,10 +215,14 @@ export function UsersManager({
         body: JSON.stringify({ active: !user.active }),
       });
       if (res.ok) {
+        toast(t("toast.updated"), "success");
         await fetchUsers();
+      } else {
+        toast(await readApiError(res, tRoot), "error");
       }
     } catch (err) {
       console.error("Error toggling user active status:", err);
+      toast(tErr("generic"), "error");
     }
   };
 
@@ -239,11 +253,11 @@ export function UsersManager({
         setGeneratedPassword(newPassword);
         setCopiedPassword(false);
       } else {
-        alert(t("usersPage.resetPasswordError"));
+        toast(await readApiError(res, tRoot), "error");
       }
     } catch (err) {
       console.error("Error resetting password:", err);
-      alert(t("usersPage.resetPasswordError"));
+      toast(t("usersPage.resetPasswordError"), "error");
     } finally {
       setResettingPasswordId(null);
     }
@@ -296,6 +310,7 @@ export function UsersManager({
 
   return (
     <div className="space-y-6">
+      {dialog}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">{t("users")}</h1>
         <Button onClick={openCreateModal}>
@@ -334,15 +349,16 @@ export function UsersManager({
                       <Badge variant={getRoleVariant(user.role)}>
                         {getRoleLabel(user.role)}
                       </Badge>
-                      <Badge
-                        variant={user.active ? "success" : "secondary"}
-                        className="cursor-pointer"
-                        onClick={() =>
-                          user.id !== currentUserId && toggleActive(user)
-                        }
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={user.active}
+                        disabled={user.id === currentUserId}
+                        onClick={() => toggleActive(user)}
+                        className={`${badgeVariants({ variant: user.active ? "success" : "secondary" })} cursor-pointer disabled:cursor-not-allowed disabled:opacity-60`}
                       >
                         {user.active ? t("active") : t("inactive")}
-                      </Badge>
+                      </button>
                       {user._count && user._count.resolved_calls > 0 && (
                         <span className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">
                           {t("usersPage.calls", { count: user._count.resolved_calls })}
@@ -356,6 +372,7 @@ export function UsersManager({
                       size="sm"
                       onClick={() => openEditModal(user)}
                       title={tCommon("edit")}
+                      aria-label={tCommon("edit")}
                       className="min-w-[44px] min-h-[44px]"
                     >
                       <Pencil className="h-4 w-4" />
@@ -366,6 +383,7 @@ export function UsersManager({
                       onClick={() => handleResetPassword(user)}
                       disabled={resettingPasswordId === user.id}
                       title={t("usersPage.generateNewPassword")}
+                      aria-label={t("usersPage.generateNewPassword")}
                       className="min-w-[44px] min-h-[44px]"
                     >
                       {resettingPasswordId === user.id ? (
@@ -379,6 +397,7 @@ export function UsersManager({
                         variant="outline"
                         size="sm"
                         onClick={() => handleDelete(user)}
+                        aria-label={tCommon("delete")}
                         className="min-w-[44px] min-h-[44px]"
                       >
                         <Trash2 className="h-4 w-4 text-destructive" />
@@ -394,7 +413,7 @@ export function UsersManager({
 
       {/* Generated password modal */}
       {generatedPassword && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="!mt-0 fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <Card className="w-full max-w-sm mx-4">
             <CardContent className="pt-6">
               <div className="text-center">
@@ -415,6 +434,7 @@ export function UsersManager({
                     variant="ghost"
                     size="sm"
                     onClick={copyPassword}
+                    aria-label={t("usersPage.copyPassword")}
                     className="shrink-0"
                   >
                     {copiedPassword ? (
@@ -441,15 +461,14 @@ export function UsersManager({
 
       {/* Create/Edit modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="!mt-0 fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <Card className="w-full max-w-md mx-4">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold">
-                  {editingUser ? tCommon("edit") : tCommon("create")}{" "}
-                  {t("users")}
+                  {editingUser ? t("usersPage.editUser") : t("newUser")}
                 </h2>
-                <Button variant="ghost" size="icon" onClick={closeModal}>
+                <Button variant="ghost" size="icon" onClick={closeModal} aria-label={tCommon("close")}>
                   <X className="h-4 w-4" />
                 </Button>
               </div>

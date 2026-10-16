@@ -12,6 +12,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
+import { useCurrency } from "@/components/providers/currency";
 
 interface ProductData {
   id: string;
@@ -47,10 +48,13 @@ export function TopProductsChart({
   restaurantId,
 }: TopProductsChartProps) {
   const t = useTranslations("admin.metrics");
+  const tCommon = useTranslations("common");
   const locale = useLocale();
   const [data, setData] = useState<ProductData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const currency = useCurrency(restaurantId);
 
   useEffect(() => {
     async function fetchData() {
@@ -78,9 +82,9 @@ export function TopProductsChart({
 
   if (loading) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-        <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-48 mb-4 animate-pulse" />
-        <div className="h-80 bg-gray-100 dark:bg-gray-700 rounded animate-pulse" />
+      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+        <div className="h-6 bg-muted rounded w-48 mb-4 animate-pulse" />
+        <div className="h-80 bg-muted rounded animate-pulse" />
       </div>
     );
   }
@@ -96,18 +100,23 @@ export function TopProductsChart({
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat(locale, {
       style: "currency",
-      currency: "BRL",
+      currency,
       minimumFractionDigits: 0,
     }).format(value);
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+    <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+      <h3 className="text-lg font-semibold text-foreground mb-4">
         {t("topProducts")}
       </h3>
+      {data.length === 0 ? (
+        <div className="flex h-80 items-center justify-center text-sm text-muted-foreground">
+          {tCommon("noResults")}
+        </div>
+      ) : (
       <div className="h-80">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 400, height: 320 }}>
           <BarChart
             data={data}
             layout="vertical"
@@ -115,24 +124,24 @@ export function TopProductsChart({
           >
             <CartesianGrid
               strokeDasharray="3 3"
-              className="stroke-gray-200 dark:stroke-gray-700"
+              className="stroke-border"
             />
             <XAxis
               type="number"
-              className="text-gray-600 dark:text-gray-400"
+              className="text-muted-foreground"
               tick={{ fill: "currentColor" }}
             />
             <YAxis
               type="category"
               dataKey="name"
               width={90}
-              className="text-gray-600 dark:text-gray-400"
+              className="text-muted-foreground"
               tick={{ fill: "currentColor", fontSize: 12 }}
             />
             <Tooltip
               contentStyle={{
-                backgroundColor: "var(--tooltip-bg, #fff)",
-                borderColor: "var(--tooltip-border, #e5e7eb)",
+                backgroundColor: "hsl(var(--card))",
+                borderColor: "hsl(var(--border))",
                 borderRadius: "8px",
               }}
               formatter={(value, name, props) => {
@@ -156,13 +165,14 @@ export function TopProductsChart({
           </BarChart>
         </ResponsiveContainer>
       </div>
+      )}
 
       {/* Detail list */}
       <div className="mt-6 space-y-2">
         {data.slice(0, 5).map((product, index) => (
           <div
             key={product.id}
-            className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-0"
+            className="flex items-center justify-between py-2 border-b border-border last:border-0"
           >
             <div className="flex items-center gap-3">
               <div
@@ -170,19 +180,19 @@ export function TopProductsChart({
                 style={{ backgroundColor: COLORS[index % COLORS.length] }}
               />
               <div>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                <p className="text-sm font-medium text-foreground">
                   {product.name}
                 </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
+                <p className="text-xs text-muted-foreground">
                   {product.category}
                 </p>
               </div>
             </div>
             <div className="text-right">
-              <p className="text-sm font-medium text-gray-900 dark:text-white">
+              <p className="text-sm font-medium text-foreground">
                 {product.quantity} {t("units")}
               </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+              <p className="text-xs text-muted-foreground">
                 {formatCurrency(product.revenue)}
               </p>
             </div>

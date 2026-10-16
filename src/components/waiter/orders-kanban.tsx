@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import {
   ShoppingBag,
@@ -9,12 +9,16 @@ import {
   Check,
   X,
   Truck,
-  Image as ImageIcon,
-  AlertCircle,
   ChefHat,
 } from "lucide-react";
-import { cn, formatTime, localizedName } from "@/lib/utils";
+import { cn, formatMoney, formatTime } from "@/lib/utils";
+import { localizedText } from "@/lib/i18n/text";
 import { useSound } from "@/components/providers/sound-provider";
+import { useCurrency, useDefaultLocale } from "@/components/providers/currency";
+import { useLiveRecords, ReconnectBanner } from "@/components/providers/use-event-stream";
+import { useStaffAlert } from "@/components/providers/staff-alerts";
+import { useToast } from "@/components/ui/toast";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 interface OrderItem {
   id: string;
@@ -23,9 +27,7 @@ interface OrderItem {
   notes: string | null;
   menuItem: {
     id: string;
-    name_pt: string;
-    name_es: string;
-    name_en: string;
+    names: Record<string, string>;
     image_url: string | null;
   };
 }
@@ -45,8 +47,6 @@ interface Order {
   };
   items: OrderItem[];
 }
-
-type ColumnId = "PENDING" | "CONFIRMED" | "READY";
 
 interface OrderCardProps {
   order: Order;
@@ -69,12 +69,13 @@ function OrderCard({
 }: OrderCardProps) {
   const t = useTranslations("waiter");
   const locale = useLocale();
-  const [expanded, setExpanded] = useState(false);
+  const currency = useCurrency();
+  const defaultLocale = useDefaultLocale();
 
   const getUrgencyColor = (secs: number) => {
-    if (secs >= 180) return "text-red-400";
-    if (secs >= 60) return "text-yellow-400";
-    return "text-green-400";
+    if (secs >= 180) return "text-red-700 dark:text-red-300";
+    if (secs >= 60) return "text-amber-800 dark:text-amber-300";
+    return "text-green-800 dark:text-green-300";
   };
 
   const getBorderColor = () => {
@@ -97,21 +98,18 @@ function OrderCard({
       )}
     >
       {/* Header */}
-      <div
-        className="p-4 cursor-pointer"
-        onClick={() => setExpanded(!expanded)}
-      >
+      <div className="p-4">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="font-bold text-lg">{order.table.label}</h3>
             <p className="text-sm text-muted-foreground">
-              {t("itemCount", { count: order.items.length })} • R$ {Number(order.total).toFixed(2)}
+              {t("itemCount", { count: order.items.length })} • {formatMoney(order.total, currency, locale)}
             </p>
           </div>
           <div className="text-right">
             <div
               className={cn(
-                "flex items-center gap-1 font-mono font-bold",
+                "flex items-center gap-1 font-bold tabular-nums",
                 getUrgencyColor(seconds)
               )}
             >
@@ -122,57 +120,42 @@ function OrderCard({
         </div>
       </div>
 
-      {/* Expanded Items */}
-      {expanded && (
-        <div className="px-4 pb-4 space-y-2 border-t border-border/30 pt-3">
-          {order.items.map((item) => (
-            <div key={item.id} className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-secondary flex-shrink-0 overflow-hidden">
-                {item.menuItem.image_url ? (
-                  <img
-                    src={item.menuItem.image_url}
-                    alt={localizedName(item.menuItem, locale)}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <ImageIcon className="h-3 w-3 text-muted-foreground/30" />
-                  </div>
-                )}
-              </div>
-              <div className="flex-1">
-                <p className="font-medium text-sm">
-                  <span className="text-primary font-bold">{item.quantity}x</span>{" "}
-                  {localizedName(item.menuItem, locale)}
-                </p>
-                {item.notes && (
-                  <p className="text-xs text-yellow-500">{item.notes}</p>
-                )}
-              </div>
-            </div>
-          ))}
-
-          {order.notes && (
-            <div className="pt-2 mt-2 border-t border-border/30">
-              <p className="text-sm text-yellow-500">
-                <span className="font-medium">{t("notes")}:</span> {order.notes}
+      {/* Items, always visible so the waiter reads the order without a tap */}
+      <div className="px-4 pb-4 space-y-2 border-t border-border/30 pt-3">
+        {order.items.map((item) => (
+          <div key={item.id} className="flex items-start gap-3">
+            <span className="w-7 shrink-0 font-bold tabular-nums text-price">{item.quantity}×</span>
+            <div className="flex-1">
+              <p className="font-medium text-sm">
+                {localizedText(item.menuItem.names, locale, defaultLocale)}
               </p>
+              {item.notes && (
+                <p className="mt-1 inline-block rounded-md bg-amber-200 px-2 py-1 text-sm font-semibold text-amber-950">{item.notes}</p>
+              )}
             </div>
-          )}
-        </div>
-      )}
+          </div>
+        ))}
+
+        {order.notes && (
+          <div className="pt-2 mt-2 border-t border-border/30">
+            <p className="rounded-md bg-amber-200 px-3 py-2 text-sm font-semibold text-amber-950">
+              <span className="font-medium">{t("notes")}:</span> {order.notes}
+            </p>
+          </div>
+        )}
+      </div>
 
       {/* Actions */}
       <div className="p-3 border-t border-border/30">
         {type === "pending" && (
-          <div className="flex gap-2">
+          <div className="flex gap-4">
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 onCancel?.();
               }}
               disabled={isLoading}
-              className="flex-1 py-2.5 px-3 rounded-xl font-medium bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors flex items-center justify-center gap-2 text-sm"
+              className="py-2.5 px-3 min-h-[44px] rounded-xl font-medium text-muted-foreground hover:text-red-600 hover:bg-red-500/10 transition-colors flex items-center justify-center gap-1 text-sm"
             >
               <X className="h-4 w-4" />
               {t("cancel")}
@@ -183,7 +166,7 @@ function OrderCard({
                 onConfirm?.();
               }}
               disabled={isLoading}
-              className="flex-1 py-2.5 px-3 rounded-xl font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 text-sm"
+              className="flex-1 py-2.5 px-3 min-h-[44px] rounded-xl font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 text-sm"
             >
               {isLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -198,7 +181,7 @@ function OrderCard({
         )}
 
         {type === "confirmed" && (
-          <div className="flex items-center justify-center gap-2 py-2 text-blue-500">
+          <div className="flex items-center justify-center gap-2 py-2 text-sky-800 dark:text-sky-300">
             <ChefHat className="h-4 w-4" />
             <span className="text-sm font-medium">{t("waitingKitchen")}</span>
           </div>
@@ -211,7 +194,7 @@ function OrderCard({
               onDeliver?.();
             }}
             disabled={isLoading}
-            className="w-full py-3 px-4 rounded-xl font-medium bg-green-500 hover:bg-green-600 text-white transition-colors flex items-center justify-center gap-2"
+            className="w-full min-h-[44px] py-3 px-4 rounded-xl font-medium bg-green-700 hover:bg-green-800 text-white transition-colors flex items-center justify-center gap-2"
           >
             {isLoading ? (
               <Loader2 className="h-5 w-5 animate-spin" />
@@ -228,124 +211,75 @@ function OrderCard({
   );
 }
 
-export function OrdersKanban() {
+export function OrdersKanban({ onCount }: { onCount?: (count: number) => void }) {
   const t = useTranslations("waiter");
-  const { playNotification, playSuccess } = useSound();
+  const tErr = useTranslations("errors");
+  const { playSuccess } = useSound();
+  const alert = useStaffAlert();
+  const toast = useToast();
+  const { confirm, dialog } = useConfirm();
 
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [timers, setTimers] = useState<Record<string, number>>({});
+  const [now, setNow] = useState(() => Date.now());
 
-  const previousOrdersRef = useRef<string[]>([]);
-  const previousReadyRef = useRef<string[]>([]);
+  const { records: orders, loading, lost, remove } = useLiveRecords<Order>({
+    streamUrl: "/api/orders/stream",
+    event: "order",
+    keep: (o) => o.status === "PENDING" || o.status === "CONFIRMED" || o.status === "READY",
+    sort: (a, b) => b.created_at.localeCompare(a.created_at),
+    // New order to confirm, or an order the kitchen just finished
+    onChange: (order, previous) => {
+      if ((!previous && order.status === "PENDING") || order.status === "READY") alert();
+    },
+  });
 
-  // Fetch orders with SSE
+  // Orders that need the waiter: to confirm or to deliver
+  const actionable = orders.filter((o) => o.status === "PENDING" || o.status === "READY").length;
   useEffect(() => {
-    const eventSource = new EventSource("/api/orders/stream");
+    onCount?.(actionable);
+  }, [actionable, onCount]);
 
-    eventSource.onmessage = (event) => {
-      try {
-        const newOrders: Order[] = JSON.parse(event.data);
-
-        // Check for new orders
-        const currentIds = newOrders.map((o) => o.id);
-        const previousIds = previousOrdersRef.current;
-        const hasNewOrder = currentIds.some((id) => !previousIds.includes(id));
-
-        // Check for new READY orders
-        const readyIds = newOrders.filter((o) => o.status === "READY").map((o) => o.id);
-        const previousReadyIds = previousReadyRef.current;
-        const hasNewReady = readyIds.some((id) => !previousReadyIds.includes(id));
-
-        if ((hasNewOrder || hasNewReady) && previousIds.length > 0) {
-          playNotification();
-        }
-
-        previousOrdersRef.current = currentIds;
-        previousReadyRef.current = readyIds;
-        setOrders(newOrders);
-        setLoading(false);
-      } catch (err) {
-        console.error("Error parsing SSE data:", err);
-      }
-    };
-
-    eventSource.onerror = () => {
-      console.error("SSE connection error");
-    };
-
-    return () => {
-      eventSource.close();
-    };
-  }, [playNotification]);
-
-  // Update timers
   useEffect(() => {
-    const interval = setInterval(() => {
-      const now = Date.now();
-      const newTimers: Record<string, number> = {};
-
-      orders.forEach((order) => {
-        const createdAt = new Date(order.created_at).getTime();
-        newTimers[order.id] = Math.floor((now - createdAt) / 1000);
-      });
-
-      setTimers(newTimers);
-    }, 1000);
-
+    const interval = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(interval);
-  }, [orders]);
+  }, []);
 
-  const handleConfirm = async (orderId: string) => {
+  const timers: Record<string, number> = {};
+  for (const order of orders) {
+    timers[order.id] = Math.max(0, Math.floor((now - new Date(order.created_at).getTime()) / 1000));
+  }
+
+  const runAction = async (orderId: string, action: "confirm" | "cancel" | "deliver") => {
     setActionLoading(orderId);
     try {
-      const res = await fetch(`/api/orders/${orderId}/confirm`, {
-        method: "PATCH",
-      });
-      if (res.ok) {
-        playSuccess();
+      const res = await fetch(`/api/orders/${orderId}/${action}`, { method: "PATCH" });
+      if (!res.ok) {
+        toast(tErr("generic"), "error");
+        return;
       }
-    } catch (err) {
-      console.error("Error confirming order:", err);
+      if (action !== "confirm") remove(orderId);
+      if (action !== "cancel") playSuccess();
+      toast(
+        action === "confirm" ? t("orderConfirmed") : action === "deliver" ? t("orderDelivered") : t("orderCancelled"),
+        "success",
+      );
+    } catch {
+      toast(tErr("generic"), "error");
     } finally {
       setActionLoading(null);
     }
   };
 
+  const handleConfirm = (orderId: string) => runAction(orderId, "confirm");
+  const handleDeliver = (orderId: string) => runAction(orderId, "deliver");
   const handleCancel = async (orderId: string) => {
-    if (!confirm(t("confirmCancelOrder"))) return;
-
-    setActionLoading(orderId);
-    try {
-      const res = await fetch(`/api/orders/${orderId}/cancel`, {
-        method: "PATCH",
-      });
-      if (res.ok) {
-        setOrders((prev) => prev.filter((o) => o.id !== orderId));
-      }
-    } catch (err) {
-      console.error("Error cancelling order:", err);
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  const handleDeliver = async (orderId: string) => {
-    setActionLoading(orderId);
-    try {
-      const res = await fetch(`/api/orders/${orderId}/deliver`, {
-        method: "PATCH",
-      });
-      if (res.ok) {
-        playSuccess();
-        setOrders((prev) => prev.filter((o) => o.id !== orderId));
-      }
-    } catch (err) {
-      console.error("Error delivering order:", err);
-    } finally {
-      setActionLoading(null);
-    }
+    const ok = await confirm({
+      title: t("cancelOrderTitle"),
+      message: t("confirmCancelOrder"),
+      confirmLabel: t("cancelOrder"),
+      cancelLabel: t("keepOrder"),
+    });
+    if (ok) runAction(orderId, "cancel");
   };
 
   const pendingOrders = orders.filter((o) => o.status === "PENDING");
@@ -365,6 +299,7 @@ export function OrdersKanban() {
   if (totalOrders === 0) {
     return (
       <div className="card-premium rounded-2xl p-12 text-center">
+        <ReconnectBanner show={lost} />
         <ShoppingBag className="h-12 w-12 mx-auto text-muted-foreground/30 mb-4" />
         <h3 className="text-lg font-semibold text-foreground mb-2">
           {t("noOrders")}
@@ -376,27 +311,29 @@ export function OrdersKanban() {
 
   return (
     <div className="space-y-6">
+      {dialog}
+      <ReconnectBanner show={lost} />
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
         <div className={cn(
           "card-premium rounded-xl p-4 text-center relative",
           pendingOrders.length > 0 && "ring-2 ring-yellow-500/30"
         )}>
-          <p className="text-2xl font-bold text-yellow-500">{pendingOrders.length}</p>
+          <p className="text-2xl font-bold tabular-nums text-amber-800 dark:text-amber-300">{pendingOrders.length}</p>
           <p className="text-xs text-muted-foreground">{t("pending")}</p>
           {pendingOrders.length > 0 && (
             <span className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-500 rounded-full animate-pulse" />
           )}
         </div>
         <div className="card-premium rounded-xl p-4 text-center">
-          <p className="text-2xl font-bold text-blue-500">{confirmedOrders.length}</p>
+          <p className="text-2xl font-bold tabular-nums text-sky-800 dark:text-sky-300">{confirmedOrders.length}</p>
           <p className="text-xs text-muted-foreground">{t("confirmed")}</p>
         </div>
         <div className={cn(
           "card-premium rounded-xl p-4 text-center relative",
           readyOrders.length > 0 && "ring-2 ring-green-500/30"
         )}>
-          <p className="text-2xl font-bold text-green-500">{readyOrders.length}</p>
+          <p className="text-2xl font-bold tabular-nums text-green-800 dark:text-green-300">{readyOrders.length}</p>
           <p className="text-xs text-muted-foreground">{t("ready")}</p>
           {readyOrders.length > 0 && (
             <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse" />

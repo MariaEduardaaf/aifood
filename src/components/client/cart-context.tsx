@@ -1,16 +1,12 @@
 "use client";
 
 import { createContext, useContext, useState, useCallback, ReactNode } from "react";
+import type { LocaleMap } from "./types";
 
 export interface CartMenuItem {
   id: string;
-  name_pt: string;
-  name_es: string;
-  name_en: string;
-  description_pt: string | null;
-  description_es: string | null;
-  description_en: string | null;
-  price: number;
+  names: LocaleMap;
+  price: number | string;
   image_url: string | null;
 }
 
@@ -29,12 +25,15 @@ interface CartContextType {
   clearCart: () => void;
   total: number;
   itemCount: number;
+  currency: string;
+  setCurrency: (currency: string) => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [currency, setCurrency] = useState("EUR");
 
   const addItem = useCallback((menuItem: CartMenuItem, quantity: number = 1, notes?: string) => {
     setItems((prev) => {
@@ -102,6 +101,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         clearCart,
         total,
         itemCount,
+        currency,
+        setCurrency,
       }}
     >
       {children}

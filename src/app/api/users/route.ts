@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { z } from "zod";
+import { validationError, isUniqueViolation, restaurantIdForbidden } from "@/lib/api";
 import { hash } from "bcryptjs";
 
 const createUserSchema = z.object({
-  email: z.string().email(),
+  email: z.string().trim().toLowerCase().email(),
   password: z.string().min(6),
   name: z.string().min(1).max(100),
   role: z.enum(["WAITER", "ADMIN", "MANAGER", "KITCHEN"]),
@@ -17,24 +18,36 @@ export async function GET(request: NextRequest) {
   try {
     const session = await auth();
 
-    if (
-      !session ||
-      (session.user.role !== "ADMIN" &&
-        session.user.role !== "MANAGER" &&
-        session.user.role !== "SUPER_ADMIN")
-    ) {
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (
+      session.user.role !== "ADMIN" &&
+      session.user.role !== "MANAGER" &&
+      session.user.role !== "SUPER_ADMIN"
+    ) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const { searchParams } = new URL(request.url);
     const restaurantIdParam = searchParams.get("restaurantId");
+    const forbidden = restaurantIdForbidden(session.user.role, restaurantIdParam);
+    if (forbidden) return forbidden;
     const restaurantId =
       session.user.role === "SUPER_ADMIN"
         ? restaurantIdParam
         : session.user.restaurant_id;
 
     const users = await prisma.user.findMany({
-      where: restaurantId ? { restaurant_id: restaurantId } : undefined,
+      where:
+        session.user.role === "SUPER_ADMIN"
+          ? restaurantId
+            ? { restaurant_id: restaurantId }
+            : undefined
+          : {
+              restaurant_id: session.user.restaurant_id,
+              role: { not: "SUPER_ADMIN" },
+            },
       orderBy: { created_at: "desc" },
       select: {
         id: true,
@@ -66,23 +79,22 @@ export async function POST(request: NextRequest) {
   try {
     const session = await auth();
 
-    if (
-      !session ||
-      (session.user.role !== "ADMIN" &&
-        session.user.role !== "MANAGER" &&
-        session.user.role !== "SUPER_ADMIN")
-    ) {
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    if (
+      session.user.role !== "ADMIN" &&
+      session.user.role !== "MANAGER" &&
+      session.user.role !== "SUPER_ADMIN"
+    ) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
-    const body = await request.json();
+    const body = await request.json().catch(() => null);
     const validation = createUserSchema.safeParse(body);
 
     if (!validation.success) {
-      return NextResponse.json(
-        { error: validation.error.issues },
-        { status: 400 },
-      );
+      return validationError(validation.error);
     }
 
     const {
@@ -93,6 +105,20 @@ export async function POST(request: NextRequest) {
       restaurantId: restaurantIdInput,
     } = validation.data;
 
+    // Managers can only create waiter and kitchen staff
+    if (
+      session.user.role === "MANAGER" &&
+      role !== "WAITER" &&
+      role !== "KITCHEN"
+    ) {
+      return NextResponse.json(
+        { error: "Managers can only create WAITER or KITCHEN users" },
+        { status: 403 },
+      );
+    }
+
+    const forbidden = restaurantIdForbidden(session.user.role, restaurantIdInput);
+    if (forbidden) return forbidden;
     const restaurantId =
       session.user.role === "SUPER_ADMIN"
         ? restaurantIdInput
@@ -113,7 +139,7 @@ export async function POST(request: NextRequest) {
     if (existingUser) {
       return NextResponse.json(
         { error: "Email already registered" },
-        { status: 400 },
+        { status: 409 },
       );
     }
 
@@ -140,6 +166,12 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(user, { status: 201 });
   } catch (error) {
+    if (isUniqueViolation(error)) {
+      return NextResponse.json(
+        { error: "Email already registered" },
+        { status: 409 },
+      );
+    }
     console.error("Error creating user:", error);
     return NextResponse.json(
       { error: "Internal server error" },

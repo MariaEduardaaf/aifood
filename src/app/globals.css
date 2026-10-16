@@ -12,8 +12,10 @@
         --card-foreground: 0 0% 12%;
         --popover: 0 0% 100%;
         --popover-foreground: 0 0% 12%;
-        --primary: 28 88% 59%;
+        --primary: 24 90% 38%;
         --primary-foreground: 0 0% 100%;
+        /* Orange for text/prices: AA on cream and white */
+        --price: 24 90% 35%;
         --secondary: 156 25% 92%;
         --secondary-foreground: 0 0% 12%;
         --muted: 38 36% 90%;
@@ -28,8 +30,13 @@
         --warning-foreground: 0 0% 12%;
         --border: 35 31% 85%;
         --input: 38 36% 90%;
-        --ring: 28 88% 59%;
+        --ring: 24 90% 38%;
         --radius: 0.75rem;
+        /* Top navigation bars (staff and admin headers) */
+        --nav: 24 90% 30%;
+        --nav-foreground: 0 0% 100%;
+        --nav-muted-foreground: 32 80% 88%;
+        --nav-border: 24 90% 26%;
     }
 
     /* Dark theme */
@@ -42,6 +49,7 @@
         --popover-foreground: 37 44% 93%;
         --primary: 28 88% 59%;
         --primary-foreground: 36 14% 7%;
+        --price: 28 88% 59%;
         --secondary: 164 33% 18%;
         --secondary-foreground: 37 44% 93%;
         --muted: 45 8% 9%;
@@ -58,6 +66,11 @@
         --input: 38 11% 15%;
         --ring: 28 88% 59%;
         --radius: 0.75rem;
+        /* Dark bar with light text: white on the dark-theme orange was 2.4:1 */
+        --nav: 36 14% 11%;
+        --nav-foreground: 37 44% 93%;
+        --nav-muted-foreground: 36 15% 72%;
+        --nav-border: 38 11% 18%;
     }
 }
 
@@ -69,6 +82,21 @@
     body {
         @apply bg-background text-foreground antialiased;
         font-family: "Inter", system-ui, sans-serif;
+    }
+
+    :focus-visible {
+        outline: 2px solid hsl(var(--ring));
+        outline-offset: 2px;
+    }
+
+    ::selection {
+        background: hsl(var(--primary) / 0.25);
+        color: hsl(var(--foreground));
+    }
+
+    /* No page scroll behind an open sheet */
+    body:has(dialog[open]) {
+        overflow: hidden;
     }
 }
 
@@ -113,15 +141,25 @@
         @apply relative overflow-hidden font-semibold py-4 px-8 rounded-xl text-lg;
         background: linear-gradient(
             135deg,
-            hsl(28 88% 59%),
-            hsl(42 86% 63%),
-            hsl(28 88% 59%)
+            hsl(24 90% 38%),
+            hsl(26 90% 36%),
+            hsl(24 90% 38%)
         );
         color: hsl(0 0% 100%);
         box-shadow:
             0 4px 15px rgba(242, 143, 59, 0.4),
             inset 0 1px 0 rgba(255, 255, 255, 0.2);
         transition: all 0.3s ease;
+    }
+
+    .dark .btn-gold {
+        background: linear-gradient(
+            135deg,
+            hsl(28 88% 59%),
+            hsl(42 86% 63%),
+            hsl(28 88% 59%)
+        );
+        color: hsl(36 14% 7%);
     }
 
     .btn-gold:hover {
@@ -201,13 +239,28 @@
     .text-gold {
         background: linear-gradient(
             135deg,
+            hsl(24 90% 32%),
+            hsl(26 90% 32%),
+            hsl(24 90% 32%)
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .dark .text-gold {
+        background: linear-gradient(
+            135deg,
             hsl(28 88% 60%),
             hsl(42 86% 63%),
             hsl(28 88% 52%)
         );
         -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
         background-clip: text;
+    }
+
+    .text-price {
+        color: hsl(var(--price));
     }
 
     /* Premium badge - Amber */
@@ -291,7 +344,88 @@
     }
 }
 
+@layer components {
+    /* Bottom sheet on a native <dialog> (src/components/client/sheet.tsx) */
+    .sheet {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        max-width: 100vw;
+        max-height: 100dvh;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: hsl(var(--foreground));
+    }
+
+    .sheet[open] {
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+    }
+
+    .sheet::backdrop {
+        background: rgb(20 14 8 / 0.55);
+    }
+
+    .sheet-panel {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        max-width: 36rem;
+        max-height: 92dvh;
+        overflow: hidden;
+        border-radius: 1.5rem 1.5rem 0 0;
+        background: hsl(var(--card));
+        box-shadow: 0 -12px 40px -12px rgb(0 0 0 / 0.35);
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+        .sheet[open] .sheet-panel {
+            animation: sheet-up 320ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .sheet[open]::backdrop {
+            animation: sheet-fade 240ms ease-out;
+        }
+    }
+
+    @keyframes sheet-up {
+        from {
+            transform: translateY(100%);
+        }
+    }
+
+    @keyframes sheet-fade {
+        from {
+            opacity: 0;
+        }
+    }
+}
+
 @layer utilities {
+    .bg-nav {
+        background-color: hsl(var(--nav));
+    }
+    .text-nav-foreground {
+        color: hsl(var(--nav-foreground));
+    }
+    .text-nav-muted-foreground {
+        color: hsl(var(--nav-muted-foreground));
+    }
+    .border-nav {
+        border-color: hsl(var(--nav-border));
+    }
+
+    .scrollbar-hide {
+        scrollbar-width: none;
+    }
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+
     /* Urgency colors - Green for success */
     .urgency-green {
         border: 1px solid hsl(146 50% 36%);

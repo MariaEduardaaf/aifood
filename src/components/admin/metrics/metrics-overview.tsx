@@ -12,6 +12,8 @@ import {
   Bell,
   Star,
 } from "lucide-react";
+import { useCurrency } from "@/components/providers/currency";
+import { formatPercent, formatNumber } from "../format";
 
 interface MetricsSummary {
   orders: {
@@ -53,6 +55,7 @@ interface KPICardProps {
 }
 
 function KPICard({ title, value, subtitle, icon, trend, color }: KPICardProps) {
+  const locale = useLocale();
   const colorClasses = {
     blue: "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400",
     green:
@@ -65,7 +68,7 @@ function KPICard({ title, value, subtitle, icon, trend, color }: KPICardProps) {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+    <div className="bg-card rounded-lg shadow-sm border border-border p-6">
       <div className="flex items-center justify-between">
         <div className={`p-3 rounded-lg ${colorClasses[color]}`}>{icon}</div>
         {trend && (
@@ -75,17 +78,17 @@ function KPICard({ title, value, subtitle, icon, trend, color }: KPICardProps) {
             <TrendingUp
               className={`w-4 h-4 mr-1 ${!trend.isPositive ? "rotate-180" : ""}`}
             />
-            {trend.value}%
+            {formatPercent(trend.value, locale)}
           </div>
         )}
       </div>
       <div className="mt-4">
-        <p className="text-sm text-gray-500 dark:text-gray-400">{title}</p>
-        <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+        <p className="text-sm text-muted-foreground">{title}</p>
+        <p className="text-2xl font-bold text-foreground mt-1">
           {value}
         </p>
         {subtitle && (
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             {subtitle}
           </p>
         )}
@@ -94,10 +97,10 @@ function KPICard({ title, value, subtitle, icon, trend, color }: KPICardProps) {
   );
 }
 
-function formatCurrency(value: number, locale: string): string {
+function formatCurrency(value: number, locale: string, currency: string): string {
   return new Intl.NumberFormat(locale, {
     style: "currency",
-    currency: "BRL",
+    currency,
   }).format(value);
 }
 
@@ -118,6 +121,7 @@ export function MetricsOverview({
 }: MetricsOverviewProps) {
   const t = useTranslations("admin.metrics");
   const locale = useLocale();
+  const currency = useCurrency(restaurantId);
   const [data, setData] = useState<MetricsSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -152,14 +156,14 @@ export function MetricsOverview({
         {[...Array(8)].map((_, i) => (
           <div
             key={i}
-            className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 animate-pulse"
+            className="bg-card rounded-lg shadow-sm border border-border p-6 animate-pulse"
           >
             <div className="flex items-center justify-between">
-              <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-lg" />
+              <div className="w-12 h-12 bg-muted rounded-lg" />
             </div>
             <div className="mt-4">
-              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24" />
-              <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-32 mt-2" />
+              <div className="h-4 bg-muted rounded w-24" />
+              <div className="h-8 bg-muted rounded w-32 mt-2" />
             </div>
           </div>
         ))}
@@ -181,7 +185,7 @@ export function MetricsOverview({
     <div className="space-y-6">
       {/* Orders */}
       <div>
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+        <h3 className="text-lg font-semibold text-foreground mb-4">
           {t("orders")}
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -194,21 +198,21 @@ export function MetricsOverview({
           <KPICard
             title={t("confirmedOrders")}
             value={data.orders.confirmed}
-            subtitle={`${data.orders.total > 0 ? Math.round((data.orders.confirmed / data.orders.total) * 100) : 0}% ${t("ofTotal")}`}
+            subtitle={`${formatPercent(data.orders.total > 0 ? (data.orders.confirmed / data.orders.total) * 100 : 0, locale)} ${t("ofTotal")}`}
             icon={<CheckCircle className="w-6 h-6" />}
             color="green"
           />
           <KPICard
             title={t("canceledOrders")}
             value={data.orders.cancelled}
-            subtitle={`${data.orders.total > 0 ? Math.round((data.orders.cancelled / data.orders.total) * 100) : 0}% ${t("ofTotal")}`}
+            subtitle={`${formatPercent(data.orders.total > 0 ? (data.orders.cancelled / data.orders.total) * 100 : 0, locale)} ${t("ofTotal")}`}
             icon={<XCircle className="w-6 h-6" />}
             color="red"
           />
           <KPICard
             title={t("averageTicket")}
-            value={formatCurrency(data.orders.averageTicket, locale)}
-            subtitle={`${t("totalRevenue")}: ${formatCurrency(data.orders.totalRevenue, locale)}`}
+            value={formatCurrency(data.orders.averageTicket, locale, currency)}
+            subtitle={`${t("totalRevenue")}: ${formatCurrency(data.orders.totalRevenue, locale, currency)}`}
             icon={<DollarSign className="w-6 h-6" />}
             color="green"
           />
@@ -217,7 +221,7 @@ export function MetricsOverview({
 
       {/* Times */}
       <div>
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+        <h3 className="text-lg font-semibold text-foreground mb-4">
           {t("times")}
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -241,7 +245,7 @@ export function MetricsOverview({
           />
           <KPICard
             title={t("preparationSLA")}
-            value={`${data.times.preparationSla}%`}
+            value={formatPercent(data.times.preparationSla, locale)}
             subtitle={t("under30min")}
             icon={<TrendingUp className="w-6 h-6" />}
             color="green"
@@ -251,7 +255,7 @@ export function MetricsOverview({
 
       {/* Calls and satisfaction */}
       <div>
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+        <h3 className="text-lg font-semibold text-foreground mb-4">
           {t("callsAndSatisfaction")}
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -270,14 +274,14 @@ export function MetricsOverview({
           />
           <KPICard
             title={t("avgRating")}
-            value={data.satisfaction.averageRating.toFixed(1)}
+            value={formatNumber(data.satisfaction.averageRating, locale)}
             subtitle={`${data.satisfaction.totalReviews} ${t("reviews")}`}
             icon={<Star className="w-6 h-6" />}
             color="yellow"
           />
           <KPICard
             title={t("reviewRate")}
-            value={`${data.satisfaction.reviewRate}%`}
+            value={formatPercent(data.satisfaction.reviewRate, locale)}
             icon={<TrendingUp className="w-6 h-6" />}
             color="purple"
           />
