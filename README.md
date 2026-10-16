@@ -1,66 +1,61 @@
 # aiFood
 
-aiFood is a restaurant operations platform. Customers scan a QR code on their table to call a waiter, ask for the bill, browse the menu and place orders, without creating an account. Staff handle everything in real time from role-specific panels.
+aiFood is a QR-based service platform for cafes and restaurants. Guests scan the code on their table, browse the menu (with allergens), order, call the waiter and ask for the bill, with no account and no app. Staff work from real-time screens. Built to be sold standalone or bundled with a restaurant website.
 
-## Roles and main flows
+## What it does
 
-| Role | Access | What they do |
-|------|--------|--------------|
-| Customer (no login) | `/table/[token]` via the table QR code | Call a waiter, request the bill, browse the trilingual menu, order, track order status, rate the service |
-| Waiter | `/waiter` | Resolve calls, confirm/cancel/deliver orders (live via SSE) |
-| Kitchen | `/kitchen` | Kanban of confirmed, preparing and ready orders; start preparing, mark ready |
-| Admin / Manager | `/admin` | Manage tables (with QR codes), users, menu, settings, feedbacks and metrics |
-| Super Admin | `/superadmin` | Manage restaurants (multi-tenant), plus their users, tables, menu, operations and metrics |
+| Who | Where | What they do |
+|-----|-------|--------------|
+| Guest (no login) | `/table/[token]` (QR code on the table) | Browse the menu in the restaurant's languages, see allergen icons and filter them out, order, track order status, call the waiter, request the bill, rate the service |
+| Waiter | `/waiter` | Live calls and orders (SSE): resolve calls, confirm, cancel and deliver orders. Sound, vibration and screen wake lock on new items |
+| Kitchen | `/kitchen` | Kanban of confirmed, preparing and ready orders: start preparing, mark ready |
+| Admin / Manager | `/admin` (lands on `/admin/today`) | Today page (live strip, totals vs same weekday last week, orders per hour, top items), tables and QR codes, users, menu manager with CSV import, metrics, feedbacks, settings |
+| Super admin | `/superadmin` | Create and manage restaurants (multi-tenant), plus their users, tables, menu, feedbacks, operations and metrics |
 
-Order flow: `PENDING` (customer) → `CONFIRMED` (waiter) → `PREPARING` → `READY` (kitchen) → `DELIVERED` (waiter), with `CANCELLED` possible at any point. After a bill request is resolved, the customer rates the service: high scores redirect to Google Reviews, low scores become private feedback.
+Order flow: `PENDING` (guest) -> `CONFIRMED` (waiter) -> `PREPARING` -> `READY` (kitchen) -> `DELIVERED` (waiter); `CANCELLED` is possible along the way. After a bill request is resolved the guest rates the service: high scores are sent to Google Reviews, low scores become private feedback.
+
+### Per-restaurant settings (Admin > Settings)
+
+- **Languages**: choose from `es`, `en`, `pt`, `de`, `nl`, `fr`, plus a default (fallback) language. Guests only see the enabled ones. Menu content is stored per language.
+- **Lite mode** (`ordering_enabled` off): guests get menu, call waiter and request bill only; ordering endpoints return 403 and staff screens hide order columns.
+- **Currency**: `EUR`, `BRL`, `USD`, `GBP`.
+- **Timezone** (IANA name): metrics bucket days and hours in this zone.
+- **Google Reviews**: link, on/off, minimum stars that redirect to it.
+
+UI translation files exist for `en`, `es` and `pt`. `de`, `nl` and `fr` are accepted as menu languages, but their UI strings fall back to English until `messages/de.json`, `nl.json` and `fr.json` are added.
 
 ## Tech stack
 
 - Next.js 14 (App Router), React 18, TypeScript
-- PostgreSQL with Prisma 5
-- NextAuth.js v5 (credentials, JWT)
+- PostgreSQL with Prisma 5 (migrations in `prisma/migrations`)
+- NextAuth.js v5 (credentials, JWT), login throttling (5 failed attempts per email per 15 min)
 - Tailwind CSS 3, Lucide icons, Recharts, dnd-kit
-- next-intl (Portuguese, Spanish, English)
+- next-intl for UI translations
 - Zod for validation
-- Server-Sent Events for real time
-- Cloudinary for image uploads
-- `qrcode` for table QR codes
+- Server-Sent Events fed by an in-process event bus (single instance)
+- Cloudinary for menu photos, `qrcode` for table QR codes
+- `node --test` with tsx for tests
 
 ## Local setup
 
-Requirements: Node.js and a running PostgreSQL instance.
+Requirements: Node.js and a running PostgreSQL.
 
-1. Create an empty PostgreSQL database (for example `visionary`).
-2. Copy the environment file and fill it in:
+```bash
+createdb aifood                  # or create the database any other way
+cp .env.example .env             # then edit it (see below)
+npm install                      # also runs prisma generate
+npm run db:migrate               # prisma migrate deploy (use db:migrate:dev while changing the schema)
+npm run db:seed                  # demo restaurant, users, tables, menu
+npm run dev                      # http://localhost:3000
+```
 
-   ```bash
-   cp .env.example .env
-   ```
+Minimum `.env` values: `DATABASE_URL`, `AUTH_SECRET` (`openssl rand -base64 32`), `NEXT_PUBLIC_APP_URL` (`http://localhost:3000`). Cloudinary keys are only needed for photo uploads. Every variable is documented in `.env.example`.
 
-   | Variable | Purpose |
-   |----------|---------|
-   | `DATABASE_URL` | PostgreSQL connection string |
-   | `AUTH_SECRET` | NextAuth secret, generate with `openssl rand -base64 32` |
-   | `NEXT_PUBLIC_APP_URL` | Public base URL, used in table QR codes (`http://localhost:3000` locally) |
-   | `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | Cloudinary credentials, only needed for menu image uploads |
+Other scripts: `npm run build`, `npm run start`, `npm run lint`, `npm run db:studio`, `npm run db:generate`.
 
-3. Install, create the schema, seed and run:
+## Demo data
 
-   ```bash
-   npm install
-   npx prisma generate
-   npx prisma db push
-   npm run db:seed
-   npm run dev
-   ```
-
-The app runs at http://localhost:3000. Open `/login` to sign in.
-
-Other scripts: `npm run build`, `npm run start`, `npm run lint`, `npm run db:studio` (Prisma Studio), `npm run db:migrate`.
-
-## Demo logins
-
-Created by `npm run db:seed` (development only, change them anywhere else):
+`npm run db:seed` is idempotent and creates the restaurant **Café del Puerto** (slug `aifood`, languages `es` + `en`, default `es`, EUR, `Europe/Madrid`, ordering on), 8 tables (`Table 1` to `Table 8`), a Spanish/English menu with allergens, and these users:
 
 | Role | Email | Password |
 |------|-------|----------|
@@ -69,36 +64,56 @@ Created by `npm run db:seed` (development only, change them anywhere else):
 | Waiter | waiter@aifood.com | waiter123 |
 | Kitchen | kitchen@aifood.com | kitchen123 |
 
-The seed also creates a demo restaurant, tables, default settings and menu categories. Open a table's QR link from `/admin/tables` to see the customer view.
+Development only. Never seed a production database; use `create-admin` instead.
+
+**Open a table page:** the seed prints `Guest page for Table 1: /table/<token>` at the end. Otherwise log in as the admin, open `/admin/tables`, and use the QR / link of any table. Tokens are random per table, so there is no fixed URL.
+
+## Tests
+
+```bash
+npm run test                                       # unit tests (scripts/test/*.test.ts)
+BASE_URL=http://localhost:3000 npm run test:smoke  # API contract against a running, seeded server
+```
+
+The smoke test defaults to `http://localhost:3010` when `BASE_URL` is unset. It creates its own table and removes it at the end.
+
+## Production
+
+Runs as one long-running Node process (Docker image) plus Postgres, on Railway or Fly. Serverless hosts such as Vercel do not fit the realtime design (fine for previews only). Keep a single instance.
+
+- Step-by-step guide, env vars, Railway and Fly setup: [docs/DEPLOY.md](docs/DEPLOY.md).
+- Docker: `docker build --build-arg NEXT_PUBLIC_APP_URL=https://your-domain -t aifood .`. The container runs `prisma migrate deploy` and then the standalone server on `$PORT` (default 3000).
+- First admin (idempotent): `npm run create-admin -- --restaurant "Café Sol" --slug cafe-sol --email owner@cafesol.es --password '...'` (add `--role SUPER_ADMIN` for the studio account). In the image: `node scripts/create-admin.ts ...`.
+- Health check: `GET /api/health` returns `{"status":"ok","db":"up"}` (503 if the database is down).
+- `NEXT_PUBLIC_*` variables are baked in at build time, so pass them as build args.
 
 ## Project structure
 
 ```
-prisma/            schema.prisma and seed.ts
-messages/          translations (en.json, es.json, pt.json)
+prisma/            schema.prisma, migrations/, seed.ts
+messages/          UI translations (en, es, pt)
+public/            logos, sounds, menu-template.csv (CSV import template)
+scripts/           create-admin.ts, smoke.test.ts, test/ (unit tests)
 src/
-├── app/
-│   ├── (auth)/        login
-│   ├── (dashboard)/   admin, waiter, kitchen
-│   ├── (public)/      table/[token] (customer page)
-│   ├── superadmin/    multi-restaurant panel
-│   └── api/           REST routes (orders, calls, tables, menu, ...)
-├── components/        admin, client, kitchen, waiter, superadmin, ui
-├── lib/               auth, db, i18n
-├── services/
-└── middleware.ts      route protection
-docs/              product and implementation docs
+  app/
+    (auth)/        login
+    (dashboard)/   admin/*, waiter, kitchen
+    (public)/      table/[token] (guest page)
+    superadmin/    multi-restaurant panel
+    privacy, cookies   legal pages
+    api/           REST + SSE routes
+  components/      admin, client, kitchen, waiter, superadmin, providers, ui
+  lib/             auth, db, i18n, allergens, csv, events (SSE bus), metrics, settings
+  middleware.ts    route protection and role redirects
+docs/              product, plans and status docs
+Dockerfile         multi-stage standalone image
 ```
 
 ## Documentation
 
-See [`docs/`](docs/):
-
-- [brain.md](docs/brain.md): product vision and principles
-- [mvp.md](docs/mvp.md): development plan and progress
-- [PLAN-PHASE3-ORDERS.md](docs/PLAN-PHASE3-ORDERS.md)
-- [PLAN-PHASE4-KITCHEN.md](docs/PLAN-PHASE4-KITCHEN.md)
-- [PLAN-PHASE5-UX.md](docs/PLAN-PHASE5-UX.md)
-- [PLAN-PHASE6-METRICS.md](docs/PLAN-PHASE6-METRICS.md)
-- [SUPERADMIN-PLAN.md](docs/SUPERADMIN-PLAN.md)
-- [STATUS-REVIEW.md](docs/STATUS-REVIEW.md): current code status and deploy checklist
+- [docs/DEPLOY.md](docs/DEPLOY.md): deploy guide (Railway, Fly, Docker)
+- [docs/PLAN-PRODUCTION.md](docs/PLAN-PRODUCTION.md): production milestone decisions and the final API contract
+- [docs/STATUS-REVIEW.md](docs/STATUS-REVIEW.md): current routes, roles, files and API
+- [docs/brain.md](docs/brain.md): product vision and principles
+- [docs/mvp.md](docs/mvp.md): development plan and progress
+- [docs/PLAN-PHASE3-ORDERS.md](docs/PLAN-PHASE3-ORDERS.md), [PLAN-PHASE4-KITCHEN.md](docs/PLAN-PHASE4-KITCHEN.md), [PLAN-PHASE5-UX.md](docs/PLAN-PHASE5-UX.md), [PLAN-PHASE6-METRICS.md](docs/PLAN-PHASE6-METRICS.md), [SUPERADMIN-PLAN.md](docs/SUPERADMIN-PLAN.md): historical phase plans (written before the production milestone; the API contract in PLAN-PRODUCTION.md supersedes them)

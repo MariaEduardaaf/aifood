@@ -11,6 +11,7 @@ import { Loader2, Mail, Lock, ArrowRight, Eye, EyeOff } from "lucide-react";
 export default function LoginPage() {
   const t = useTranslations("auth");
   const tErrors = useTranslations("errors");
+  const tClient = useTranslations("client");
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = safeCallbackUrl(searchParams.get("callbackUrl"), "/waiter");
@@ -211,6 +212,15 @@ export default function LoginPage() {
         {/* Footer */}
         <p className="text-center text-sm text-muted-foreground/60 mt-6">
           Powered by <span className="text-gold font-semibold">aiFood</span>
+        </p>
+        <p className="text-center text-xs text-muted-foreground/60 mt-2">
+          <a href="/privacy" className="underline underline-offset-2 hover:text-foreground">
+            {tClient("privacy")}
+          </a>
+          {" · "}
+          <a href="/cookies" className="underline underline-offset-2 hover:text-foreground">
+            {tClient("cookies")}
+          </a>
         </p>
       </div>
     </div>

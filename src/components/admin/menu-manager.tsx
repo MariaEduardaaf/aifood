@@ -21,7 +21,7 @@ import { useToast } from "@/components/ui/toast";
 import { formatMoney } from "@/lib/utils";
 import { ALLERGEN_CODES, type AllergenCode } from "@/lib/allergens";
 import { localizedText } from "@/lib/i18n/text";
-import { ALLERGEN_ICONS } from "./allergen-icons";
+import { AllergenIcon } from "@/components/client/allergen-icon";
 import { MenuImportDialog } from "./menu-import-dialog";
 
 type TextMap = Record<string, string>;
@@ -500,15 +500,11 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
                             )}
                             {item.allergens.length > 0 && (
                               <div className="mt-1 flex flex-wrap gap-1.5 text-muted-foreground">
-                                {item.allergens.map((code) => {
-                                  const icon = ALLERGEN_ICONS[code as AllergenCode];
-                                  if (!icon) return null;
-                                  return (
-                                    <span key={code} role="img" aria-label={tAllergens(code)} title={tAllergens(code)} className="text-sm leading-none">
-                                      {icon}
-                                    </span>
-                                  );
-                                })}
+                                {item.allergens.map((code) => (
+                                  <span key={code} role="img" aria-label={tAllergens(code)} title={tAllergens(code)} className="leading-none">
+                                    <AllergenIcon code={code as AllergenCode} className="h-4 w-4" />
+                                  </span>
+                                ))}
                               </div>
                             )}
                             <p className="mt-1 text-sm font-bold text-price sm:hidden">
@@ -706,7 +702,7 @@ export function MenuManager({ restaurantId }: MenuManagerProps) {
                 <legend className="mb-2 text-sm font-medium">{t("menuPage.allergens")}</legend>
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                   {ALLERGEN_CODES.map((code) => {
-                    const icon = ALLERGEN_ICONS[code];
+                    const icon = <AllergenIcon code={code} className="h-4 w-4 shrink-0" />;
                     const on = itemForm.allergens.includes(code);
                     return (
                       <label

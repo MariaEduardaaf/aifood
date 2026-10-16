@@ -133,10 +133,12 @@ function CategoryTabs({
         })}
       </div>
       {edges.end && (
-        <ChevronRight
+        <div
           aria-hidden
-          className="pointer-events-none absolute right-1.5 top-3.5 h-4 w-4 text-muted-foreground"
-        />
+          className="pointer-events-none absolute bottom-3 right-0 top-0 flex w-10 items-center justify-end bg-gradient-to-l from-background via-background/90 to-transparent pr-1.5"
+        >
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        </div>
       )}
     </div>
   );
