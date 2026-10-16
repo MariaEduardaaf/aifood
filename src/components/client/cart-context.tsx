@@ -41,7 +41,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const existingIndex = prev.findIndex((item) => item.menuItem.id === menuItem.id);
 
       if (existingIndex >= 0) {
-        // Item ja existe, atualizar quantidade
+        // Item already exists, update quantity
         const updated = [...prev];
         updated[existingIndex] = {
           ...updated[existingIndex],
@@ -50,7 +50,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         return updated;
       }
 
-      // Novo item
+      // New item
       return [...prev, { menuItem, quantity, notes }];
     });
   }, []);

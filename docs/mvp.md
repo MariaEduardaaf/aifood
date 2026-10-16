@@ -1,109 +1,109 @@
-# aiFood — Plano de Desenvolvimento
+# aiFood: Development Plan
 
-**Repositório:** https://github.com/MariaEduardaaf/aifood  
-**Última atualização:** 2026-01-20
-
----
-
-## Progresso Geral
-
-| Fase | Status | Descrição |
-|------|--------|-----------|
-| MVP | ✅ 100% | Chamados + Garçom + Admin |
-| Fase 1.5: Google Reviews | ✅ 100% | Avaliação inteligente |
-| Fase 2: Cardápio Digital | ✅ 100% | Menu com fotos |
-| Fase 3: Pedidos | ✅ 100% | Cliente faz pedido |
-| Fase 4: Cozinha | ✅ 100% | Painel de preparo |
-| Deploy | ⏳ Pendente | Vercel + PostgreSQL |
+**Repository:** https://github.com/MariaEduardaaf/aifood  
+**Last updated:** 2026-01-20
 
 ---
 
-## Stack Tecnológica
+## Overall Progress
 
-| Aspecto | Tecnologia |
-|---------|------------|
+| Phase | Status | Description |
+|-------|--------|-------------|
+| MVP | ✅ 100% | Calls + Waiter + Admin |
+| Phase 1.5: Google Reviews | ✅ 100% | Smart rating flow |
+| Phase 2: Digital Menu | ✅ 100% | Menu with photos |
+| Phase 3: Orders | ✅ 100% | Customer places orders |
+| Phase 4: Kitchen | ✅ 100% | Preparation panel |
+| Deploy | ⏳ Pending | Vercel + PostgreSQL |
+
+---
+
+## Tech Stack
+
+| Aspect | Technology |
+|--------|------------|
 | Framework | Next.js 14 (App Router) |
-| Linguagem | TypeScript |
-| Banco de Dados | PostgreSQL + Prisma v5 |
-| Autenticação | NextAuth.js v5 (JWT + Credentials) |
+| Language | TypeScript |
+| Database | PostgreSQL + Prisma v5 |
+| Authentication | NextAuth.js v5 (JWT + Credentials) |
 | UI/Styling | Tailwind CSS v3 |
-| Ícones | Lucide React |
-| Internacionalização | next-intl (PT/ES/EN) |
-| Validação | Zod |
-| Tempo Real | Server-Sent Events (SSE) |
-| Upload Imagens | Cloudinary |
-| QR Codes | qrcode library |
+| Icons | Lucide React |
+| Internationalization | next-intl (PT/ES/EN) |
+| Validation | Zod |
+| Real time | Server-Sent Events (SSE) |
+| Image uploads | Cloudinary |
+| QR codes | qrcode library |
 
 ---
 
-## MVP Completo ✅
+## MVP Complete ✅
 
-### Funcionalidades Entregues
+### Delivered Features
 
-**Cliente (via QR Code)**
-- Chamar garçom / Pedir conta
-- Rate limit 30s
+**Customer (via QR code)**
+- Call waiter / Request the bill
+- 30s rate limit
 - i18n (PT/ES/EN)
-- Tema premium dark
-- Interface 100% responsiva
+- Premium dark theme
+- 100% responsive interface
 
-**Garçom**
-- Painel tempo real (SSE 2s)
-- Timer por chamado
-- Cores por urgência
-- Som de notificação
+**Waiter**
+- Real-time panel (SSE 2s)
+- Timer per call
+- Urgency colors
+- Notification sound
 
 **Admin**
-- CRUD Mesas + QR Code
-- CRUD Usuários + Gerar senha
-- Métricas (SLA, rankings, gráficos)
+- Tables CRUD + QR code
+- Users CRUD + password generation
+- Metrics (SLA, rankings, charts)
 
-### Credenciais de Teste
+### Test Credentials
 
-| Usuário | Email | Senha | Role |
-|---------|-------|-------|------|
+| User | Email | Password | Role |
+|------|-------|----------|------|
 | Admin | admin@aifood.com | admin123 | ADMIN |
-| Garçom | garcom@aifood.com | garcom123 | WAITER |
+| Waiter | waiter@aifood.com | waiter123 | WAITER |
 
-### Comandos
+### Commands
 
 ```bash
-npm run dev          # Desenvolvimento
-npm run build        # Build produção
-npm run db:push      # Sync banco
-npm run db:seed      # Popular dados
+npm run dev          # Development
+npm run build        # Production build
+npm run db:push      # Sync database
+npm run db:seed      # Seed data
 npm run db:studio    # Prisma Studio
 ```
 
 ---
 
-## Fase 1.5: Google Reviews Inteligente ✅
+## Phase 1.5: Smart Google Reviews ✅
 
-> **Status:** 100% Implementado
+> **Status:** 100% Implemented
 
-### Fluxo Implementado
-1. Cliente pede a conta
-2. Garçom resolve o chamado
-3. Sistema mostra modal de avaliação: "Como foi o atendimento?" (1-5 estrelas)
-4. **Nota 4-5:** Redireciona para Google Reviews do restaurante
-5. **Nota 1-3:** Feedback privado (salvo no banco, não vai pro Google)
+### Implemented Flow
+1. Customer asks for the bill
+2. Waiter resolves the call
+3. System shows a rating modal: "How was the service?" (1-5 stars)
+4. **Score 4-5:** Redirects to the restaurant's Google Reviews
+5. **Score 1-3:** Private feedback (saved in the database, does not go to Google)
 
-### Funcionalidades
-- [x] Model `Rating` no Prisma
-- [x] API POST `/api/avaliacao`
-- [x] API GET `/api/avaliacao?callId=xxx` (verificar se já avaliou)
-- [x] Modal de avaliação (`rating-modal.tsx`)
-- [x] Configuração do link Google Reviews por restaurante
-- [x] Página de configurações no admin (`/admin/configuracoes`)
-- [x] Métricas de avaliações no dashboard
+### Features
+- [x] `Rating` model in Prisma
+- [x] API POST `/api/review`
+- [x] API GET `/api/review?callId=xxx` (check whether already rated)
+- [x] Rating modal (`rating-modal.tsx`)
+- [x] Google Reviews link configuration per restaurant
+- [x] Settings page in the admin (`/admin/settings`)
+- [x] Rating metrics on the dashboard
 
-### Schema Implementado
+### Implemented Schema
 ```prisma
 model Rating {
   id          String   @id @default(cuid())
   call_id     String   @unique
   stars       Int      // 1-5
-  feedback    String?  // comentário se nota baixa
+  feedback    String?  // comment if low score
   redirected  Boolean  @default(false)
   created_at  DateTime @default(now())
   
@@ -120,30 +120,30 @@ model Settings {
 
 ---
 
-## Fase 2: Cardápio Digital ✅
+## Phase 2: Digital Menu ✅
 
-> **Status:** 100% Implementado
+> **Status:** 100% Implemented
 
-### Funcionalidades
-- [x] Categorias (Entradas, Pratos, Bebidas, Sobremesas)
-- [x] Itens com foto, nome, descrição, preço
-- [x] Tradução trilíngue (PT/ES/EN)
-- [x] Admin: CRUD completo de categorias
-- [x] Admin: CRUD completo de itens
-- [x] Upload de imagens (Cloudinary)
-- [x] Ordenação de categorias
-- [x] Ativar/desativar categorias e itens
-- [x] Filtro por categoria na visualização
+### Features
+- [x] Categories (Starters, Mains, Drinks, Desserts)
+- [x] Items with photo, name, description, price
+- [x] Trilingual translation (PT/ES/EN)
+- [x] Admin: full category CRUD
+- [x] Admin: full item CRUD
+- [x] Image upload (Cloudinary)
+- [x] Category ordering
+- [x] Enable/disable categories and items
+- [x] Category filter in the menu view
 
-### APIs Implementadas
-- `GET /api/cardapio` - Menu público com categorias e itens
-- `GET/POST /api/categorias` - CRUD categorias
-- `GET/PATCH/DELETE /api/categorias/[id]` - Operações por ID
-- `GET/POST /api/itens` - CRUD itens
-- `GET/PATCH/DELETE /api/itens/[id]` - Operações por ID
-- `POST /api/upload` - Upload de imagens (Cloudinary)
+### Implemented APIs
+- `GET /api/menu` - Public menu with categories and items
+- `GET/POST /api/categories` - Category CRUD
+- `GET/PATCH/DELETE /api/categories/[id]` - Operations by ID
+- `GET/POST /api/items` - Item CRUD
+- `GET/PATCH/DELETE /api/items/[id]` - Operations by ID
+- `POST /api/upload` - Image upload (Cloudinary)
 
-### Schema Implementado
+### Implemented Schema
 ```prisma
 model Category {
   id        String   @id @default(cuid())
@@ -176,47 +176,47 @@ model MenuItem {
 
 ---
 
-## Fase 3: Pedidos pelo App ✅
+## Phase 3: Ordering from the App ✅
 
-> **Status:** 100% Implementado
+> **Status:** 100% Implemented
 
-### Funcionalidades
-- [x] Cliente adiciona itens ao carrinho
-- [x] Carrinho com Context API (`cart-context.tsx`)
-- [x] Modal do carrinho com resumo (`cart-modal.tsx`)
-- [x] Observações por item e por pedido
-- [x] Enviar pedido (rate limit 10s)
-- [x] Garçom recebe pedido em tempo real (SSE)
-- [x] Tabs no painel do garçom (Chamados | Pedidos)
-- [x] Status do pedido (PENDING → CONFIRMED → DELIVERED)
-- [x] Cliente acompanha status em tempo real
-- [x] Histórico de pedidos por mesa
-- [x] Cancelar pedido
+### Features
+- [x] Customer adds items to the cart
+- [x] Cart with Context API (`cart-context.tsx`)
+- [x] Cart modal with summary (`cart-modal.tsx`)
+- [x] Notes per item and per order
+- [x] Submit order (10s rate limit)
+- [x] Waiter receives the order in real time (SSE)
+- [x] Tabs in the waiter panel (Calls | Orders)
+- [x] Order status (PENDING → CONFIRMED → DELIVERED)
+- [x] Customer tracks status in real time
+- [x] Order history per table
+- [x] Cancel order
 
-### APIs Implementadas
-- `GET /api/pedidos?tableId=xxx` - Listar pedidos da mesa
-- `POST /api/pedidos` - Criar pedido (rate limit 10s)
-- `GET /api/pedidos/stream` - SSE tempo real
-- `PATCH /api/pedidos/[id]/confirmar` - Garçom confirma
-- `PATCH /api/pedidos/[id]/entregar` - Garçom entrega
-- `PATCH /api/pedidos/[id]/cancelar` - Cancelar pedido
+### Implemented APIs
+- `GET /api/orders?tableId=xxx` - List the table's orders
+- `POST /api/orders` - Create order (10s rate limit)
+- `GET /api/orders/stream` - Real-time SSE
+- `PATCH /api/orders/[id]/confirm` - Waiter confirms
+- `PATCH /api/orders/[id]/deliver` - Waiter delivers
+- `PATCH /api/orders/[id]/cancel` - Cancel order
 
-### Fluxo de Status
+### Status Flow
 ```
-PENDING (Cliente enviou)
+PENDING (Customer submitted)
     ↓
-CONFIRMED (Garçom confirmou)
+CONFIRMED (Waiter confirmed)
     ↓
-PREPARING (Cozinha preparando - Fase 4)
+PREPARING (Kitchen preparing - Phase 4)
     ↓
-READY (Pronto para entrega - Fase 4)
+READY (Ready for delivery - Phase 4)
     ↓
-DELIVERED (Entregue ao cliente)
+DELIVERED (Delivered to the customer)
 
-A qualquer momento: → CANCELLED
+At any time: → CANCELLED
 ```
 
-### Schema Implementado
+### Implemented Schema
 ```prisma
 enum OrderStatus {
   PENDING
@@ -259,72 +259,72 @@ model OrderItem {
 
 ---
 
-## Deploy (Pendente)
+## Deploy (Pending)
 
-### Requisitos
-1. PostgreSQL na nuvem (Neon/Supabase/Railway)
-2. Conta Cloudinary para imagens
-3. Conta Vercel para deploy
+### Requirements
+1. Cloud PostgreSQL (Neon/Supabase/Railway)
+2. Cloudinary account for images
+3. Vercel account for deployment
 
-### Variáveis de Ambiente
+### Environment Variables
 ```env
 DATABASE_URL="postgresql://..."
-AUTH_SECRET="gerar-com-openssl-rand-base64-32"
-NEXT_PUBLIC_APP_URL="https://seu-dominio.vercel.app"
-CLOUDINARY_CLOUD_NAME="seu-cloud-name"
-CLOUDINARY_API_KEY="sua-api-key"
-CLOUDINARY_API_SECRET="seu-api-secret"
+AUTH_SECRET="generate-with-openssl-rand-base64-32"
+NEXT_PUBLIC_APP_URL="https://your-domain.vercel.app"
+CLOUDINARY_CLOUD_NAME="your-cloud-name"
+CLOUDINARY_API_KEY="your-api-key"
+CLOUDINARY_API_SECRET="your-api-secret"
 ```
 
-### Passos para Deploy
-1. Criar banco PostgreSQL (recomendado: Neon)
-2. Conectar repositório ao Vercel
-3. Configurar variáveis de ambiente
-4. Deploy automático
-5. Rodar `npx prisma db push`
-6. Rodar `npm run db:seed` (opcional)
+### Deploy Steps
+1. Create the PostgreSQL database (recommended: Neon)
+2. Connect the repository to Vercel
+3. Configure environment variables
+4. Automatic deploy
+5. Run `npx prisma db push`
+6. Run `npm run db:seed` (optional)
 
 ---
 
-## Fase 4: Painel da Cozinha ✅
+## Phase 4: Kitchen Panel ✅
 
-> **Status:** 100% Implementado
+> **Status:** 100% Implemented
 
-### Objetivo
-Cozinha vê fila de preparo e atualiza status dos pedidos.
+### Goal
+The kitchen sees the preparation queue and updates order statuses.
 
-### Funcionalidades Implementadas
-- [x] Role `KITCHEN` adicionado ao enum
-- [x] Página `/cozinha` criada
-- [x] Componente `KitchenPanel` com layout Kanban
-- [x] Visualizar pedidos CONFIRMED, PREPARING, READY
-- [x] Botão "Iniciar preparo" → status PREPARING
-- [x] Botão "Pronto" → status READY → notifica garçom
-- [x] Organização por tempo de espera (mais antigo primeiro)
-- [x] Som para novo pedido
-- [x] Cores de urgência (verde → amarelo → vermelho)
-- [x] Traduções PT/ES/EN
+### Implemented Features
+- [x] `KITCHEN` role added to the enum
+- [x] `/kitchen` page created
+- [x] `KitchenPanel` component with Kanban layout
+- [x] View CONFIRMED, PREPARING and READY orders
+- [x] "Start preparing" button → status PREPARING
+- [x] "Ready" button → status READY → notifies the waiter
+- [x] Sorted by waiting time (oldest first)
+- [x] Sound for new orders
+- [x] Urgency colors (green → yellow → red)
+- [x] PT/ES/EN translations
 
-### Fluxo Completo (com Cozinha)
+### Complete Flow (with Kitchen)
 ```
-Cliente faz pedido (PENDING)
+Customer places an order (PENDING)
     ↓
-Garçom confirma (CONFIRMED)
+Waiter confirms (CONFIRMED)
     ↓
-Cozinha inicia preparo (PREPARING)
+Kitchen starts preparing (PREPARING)
     ↓
-Cozinha finaliza (READY)
+Kitchen finishes (READY)
     ↓
-Garçom entrega (DELIVERED)
+Waiter delivers (DELIVERED)
 ```
 
-### Modificações Necessárias
+### Required Changes
 
-Nenhuma. Implementacao concluida.
+None. Implementation complete.
 
 ---
 
-## Estrutura de Arquivos
+## File Structure
 
 ```
 src/
@@ -332,63 +332,65 @@ src/
 │   ├── (auth)/login/
 │   ├── (dashboard)/
 │   │   ├── admin/
-│   │   │   ├── cardapio/
-│   │   │   ├── configuracoes/
-│   │   │   ├── mesas/
-│   │   │   ├── metricas/
-│   │   │   └── usuarios/
-│   │   └── garcom/
-│   ├── (public)/mesa/[token]/
+│   │   │   ├── menu/
+│   │   │   ├── settings/
+│   │   │   ├── tables/
+│   │   │   ├── metrics/
+│   │   │   └── users/
+│   │   ├── kitchen/
+│   │   └── waiter/
+│   ├── (public)/table/[token]/
 │   └── api/
 │       ├── auth/
-│       ├── avaliacao/
-│       ├── cardapio/
-│       ├── categorias/
-│       ├── chamados/
-│       ├── itens/
-│       ├── mesas/
-│       ├── metricas/
-│       ├── pedidos/
+│       ├── calls/
+│       ├── categories/
+│       ├── items/
+│       ├── menu/
+│       ├── metrics/
+│       ├── orders/
+│       ├── review/
 │       ├── settings/
+│       ├── tables/
 │       ├── upload/
-│       └── usuarios/
+│       └── users/
 ├── components/
 │   ├── admin/
 │   ├── client/
+│   ├── kitchen/
 │   ├── waiter/
 │   └── ui/
 ├── lib/
 │   ├── auth/
 │   ├── db/
 │   └── i18n/
-├── messages/ (pt.json, es.json, en.json)
 └── middleware.ts
+messages/ (pt.json, es.json, en.json)
 ```
 
 ---
 
-## Métricas de Sucesso
+## Success Metrics
 
-| Fase | Métrica | Alvo |
-|------|---------|------|
-| MVP | Tempo médio de atendimento | < 3min |
-| Google Reviews | Aumento de reviews positivas | +20% |
-| Cardápio | Clientes que visualizam | 80% |
-| Pedidos | Pedidos via app | 50% |
-| Cozinha | Tempo de preparo rastreado | 100% |
+| Phase | Metric | Target |
+|-------|--------|--------|
+| MVP | Average service time | < 3min |
+| Google Reviews | Increase in positive reviews | +20% |
+| Menu | Customers who view it | 80% |
+| Orders | Orders placed via the app | 50% |
+| Kitchen | Preparation time tracked | 100% |
 
 ---
 
-## Próximos Passos
+## Next Steps
 
-### Prioridade 1: Deploy
-- Configurar banco de dados na nuvem
-- Deploy no Vercel
-- Testar em ambiente de produção
+### Priority 1: Deploy
+- Set up the cloud database
+- Deploy to Vercel
+- Test in a production environment
 
-### Prioridade 2: Melhorias
-- Redis para rate limiting em produção
-- WebSockets para melhor performance
+### Priority 2: Improvements
+- Redis for rate limiting in production
+- WebSockets for better performance
 - Push notifications
-- Relatórios avançados
-- Multi-restaurante
+- Advanced reports
+- Multi-restaurant

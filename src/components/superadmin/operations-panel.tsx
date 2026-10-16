@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations, useLocale } from "next-intl";
 import { Loader2, Clock, Bell, Receipt } from "lucide-react";
 import { Button, Card, CardContent, Badge } from "@/components/ui";
 import { formatTime, getUrgencyClass } from "@/lib/utils";
@@ -36,6 +37,8 @@ interface OperationsPanelProps {
 }
 
 export function OperationsPanel({ restaurantId }: OperationsPanelProps) {
+  const t = useTranslations("superadmin.operations");
+  const locale = useLocale();
   const [calls, setCalls] = useState<Call[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [activeTab, setActiveTab] = useState<"calls" | "orders">("calls");
@@ -49,8 +52,8 @@ export function OperationsPanel({ restaurantId }: OperationsPanelProps) {
     setLoading(true);
     try {
       const [callsRes, ordersRes] = await Promise.all([
-        fetch(`/api/chamados?status=OPEN&restaurantId=${restaurantId}`),
-        fetch(`/api/pedidos?restaurantId=${restaurantId}`),
+        fetch(`/api/calls?status=OPEN&restaurantId=${restaurantId}`),
+        fetch(`/api/orders?restaurantId=${restaurantId}`),
       ]);
 
       if (callsRes.ok) {
@@ -72,13 +75,13 @@ export function OperationsPanel({ restaurantId }: OperationsPanelProps) {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Operacao</h1>
+          <h1 className="text-2xl font-bold">{t("title")}</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Acompanhe chamados e pedidos ativos.
+            {t("subtitle")}
           </p>
         </div>
         <Button variant="outline" onClick={fetchData}>
-          Atualizar
+          {t("refresh")}
         </Button>
       </div>
 
@@ -88,14 +91,14 @@ export function OperationsPanel({ restaurantId }: OperationsPanelProps) {
           onClick={() => setActiveTab("calls")}
         >
           <Bell className="h-4 w-4 mr-2" />
-          Chamados ({calls.length})
+          {t("callsTab", { count: calls.length })}
         </Button>
         <Button
           variant={activeTab === "orders" ? "default" : "outline"}
           onClick={() => setActiveTab("orders")}
         >
           <Receipt className="h-4 w-4 mr-2" />
-          Pedidos ({orders.length})
+          {t("ordersTab", { count: orders.length })}
         </Button>
       </div>
 
@@ -107,7 +110,7 @@ export function OperationsPanel({ restaurantId }: OperationsPanelProps) {
         calls.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center text-muted-foreground">
-              Nenhum chamado ativo.
+              {t("noCalls")}
             </CardContent>
           </Card>
         ) : (
@@ -126,22 +129,22 @@ export function OperationsPanel({ restaurantId }: OperationsPanelProps) {
                           <h3 className="font-semibold">{call.table.label}</h3>
                           <Badge variant="outline">
                             {call.type === "CALL_WAITER"
-                              ? "Chamar garcom"
-                              : "Pedir conta"}
+                              ? t("callWaiter")
+                              : t("requestBill")}
                           </Badge>
                         </div>
                         <p className="text-sm text-muted-foreground">
-                          Aberto ha {formatTime(elapsedSeconds)}
+                          {t("openFor", { time: formatTime(elapsedSeconds) })}
                         </p>
                         {call.resolver && (
                           <p className="text-xs text-muted-foreground">
-                            Resolvido por: {call.resolver.name}
+                            {t("resolvedBy", { name: call.resolver.name })}
                           </p>
                         )}
                       </div>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Clock className="h-4 w-4" />
-                        {new Date(call.created_at).toLocaleTimeString("pt-BR", {
+                        {new Date(call.created_at).toLocaleTimeString(locale, {
                           hour: "2-digit",
                           minute: "2-digit",
                         })}
@@ -156,7 +159,7 @@ export function OperationsPanel({ restaurantId }: OperationsPanelProps) {
       ) : orders.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
-            Nenhum pedido ativo.
+            {t("noOrders")}
           </CardContent>
         </Card>
       ) : (
@@ -168,19 +171,20 @@ export function OperationsPanel({ restaurantId }: OperationsPanelProps) {
                   <div className="space-y-1">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="font-semibold">{order.table.label}</h3>
-                      <Badge variant="outline">{order.status}</Badge>
+                      <Badge variant="outline">{t(`status.${order.status}`)}</Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      Total:{" "}
-                      {order.total.toLocaleString("pt-BR", {
-                        style: "currency",
-                        currency: "BRL",
+                      {t("total", {
+                        value: order.total.toLocaleString(locale, {
+                          style: "currency",
+                          currency: "BRL",
+                        }),
                       })}
                     </p>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Clock className="h-4 w-4" />
-                    {new Date(order.created_at).toLocaleTimeString("pt-BR", {
+                    {new Date(order.created_at).toLocaleTimeString(locale, {
                       hour: "2-digit",
                       minute: "2-digit",
                     })}

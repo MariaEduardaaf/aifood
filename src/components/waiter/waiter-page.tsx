@@ -17,8 +17,9 @@ interface WaiterPageProps {
 
 type Tab = "calls" | "orders";
 
-export function WaiterPage({ userId, userName = "Garçom" }: WaiterPageProps) {
+export function WaiterPage({ userId, userName = "Waiter" }: WaiterPageProps) {
   const t = useTranslations("waiter");
+  const tAuth = useTranslations("auth");
   const [activeTab, setActiveTab] = useState<Tab>("calls");
   const [callsCount, setCallsCount] = useState(0);
   const [ordersCount, setOrdersCount] = useState(0);
@@ -28,14 +29,14 @@ export function WaiterPage({ userId, userName = "Garçom" }: WaiterPageProps) {
     const fetchCounts = async () => {
       try {
         // Fetch calls count
-        const callsRes = await fetch("/api/chamados");
+        const callsRes = await fetch("/api/calls");
         if (callsRes.ok) {
           const calls = await callsRes.json();
           setCallsCount(calls.filter((c: any) => c.status === "OPEN").length);
         }
 
         // Fetch orders count (pending orders)
-        const ordersRes = await fetch("/api/pedidos");
+        const ordersRes = await fetch("/api/orders");
         if (ordersRes.ok) {
           const orders = await ordersRes.json();
           setOrdersCount(
@@ -70,19 +71,19 @@ export function WaiterPage({ userId, userName = "Garçom" }: WaiterPageProps) {
               <Utensils className="h-6 w-6 text-primary" />
             </div>
             <div>
-              <h1 className="font-bold text-lg">Garçom</h1>
+              <h1 className="font-bold text-lg">{t("roleTitle")}</h1>
               <p className="text-sm text-muted-foreground">{userName}</p>
             </div>
           </div>
 
-          {/* Controles */}
+          {/* Controls */}
           <div className="flex items-center gap-1 p-1 rounded-xl bg-secondary/50 border border-border/50">
             <SoundToggleCompact />
             <ThemeToggleCompact />
             <button
               onClick={handleLogout}
               className="p-2 rounded-lg hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground"
-              title="Sair"
+              title={tAuth("logout")}
             >
               <LogOut className="h-4 w-4" />
             </button>

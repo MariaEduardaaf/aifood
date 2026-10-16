@@ -17,7 +17,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("dark");
   const [mounted, setMounted] = useState(false);
 
-  // Carregar tema salvo ao montar
+  // Load saved theme on mount
   useEffect(() => {
     setMounted(true);
     const saved = localStorage.getItem("visionary-theme") as Theme | null;
@@ -26,7 +26,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Aplicar tema quando mudar
+  // Apply theme when it changes
   useEffect(() => {
     if (!mounted) return;
 
@@ -47,7 +47,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem("visionary-theme", theme);
   }, [theme, mounted]);
 
-  // Listener para mudancas no sistema
+  // Listener for system theme changes
   useEffect(() => {
     if (!mounted || theme !== "system") return;
 
@@ -67,7 +67,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setThemeState(newTheme);
   };
 
-  // Evitar flash de tema errado no SSR
+  // Avoid flash of the wrong theme on SSR
   if (!mounted) {
     return (
       <ThemeContext.Provider

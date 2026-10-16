@@ -8,9 +8,9 @@ export default async function AdminPage() {
     !session ||
     (session.user.role !== "ADMIN" && session.user.role !== "MANAGER")
   ) {
-    redirect("/garcom");
+    redirect("/waiter");
   }
 
-  // Redireciona para a página de mesas
-  redirect("/admin/mesas");
+  // Redirect to the tables page
+  redirect("/admin/tables");
 }

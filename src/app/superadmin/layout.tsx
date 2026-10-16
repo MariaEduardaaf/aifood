@@ -14,7 +14,7 @@ export default async function SuperAdminLayout({
   }
 
   if (session.user.role !== "SUPER_ADMIN") {
-    redirect("/garcom");
+    redirect("/waiter");
   }
 
   return (

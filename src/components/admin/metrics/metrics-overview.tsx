@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import {
   ShoppingCart,
   DollarSign,
@@ -13,30 +13,30 @@ import {
   Star,
 } from "lucide-react";
 
-interface MetricasResumo {
-  pedidos: {
+interface MetricsSummary {
+  orders: {
     total: number;
-    confirmados: number;
-    cancelados: number;
-    ticketMedio: number;
-    receitaTotal: number;
+    confirmed: number;
+    cancelled: number;
+    averageTicket: number;
+    totalRevenue: number;
   };
-  tempos: {
-    mediaConfirmacao: number;
-    mediaPreparo: number;
-    mediaTotal: number;
-    slaPreparo: number;
+  times: {
+    avgConfirmation: number;
+    avgPreparation: number;
+    avgTotal: number;
+    preparationSla: number;
   };
-  chamados: {
+  calls: {
     total: number;
-    garcom: number;
-    conta: number;
-    tempoMedioAtendimento: number;
+    waiter: number;
+    bill: number;
+    avgServiceTime: number;
   };
-  satisfacao: {
-    notaMedia: number;
-    totalAvaliacoes: number;
-    taxaAvaliacao: number;
+  satisfaction: {
+    averageRating: number;
+    totalReviews: number;
+    reviewRate: number;
   };
 }
 
@@ -94,8 +94,8 @@ function KPICard({ title, value, subtitle, icon, trend, color }: KPICardProps) {
   );
 }
 
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("pt-BR", {
+function formatCurrency(value: number, locale: string): string {
+  return new Intl.NumberFormat(locale, {
     style: "currency",
     currency: "BRL",
   }).format(value);
@@ -108,16 +108,17 @@ function formatMinutes(seconds: number): string {
 }
 
 interface MetricsOverviewProps {
-  periodo?: string;
+  period?: string;
   restaurantId?: string;
 }
 
 export function MetricsOverview({
-  periodo = "hoje",
+  period = "today",
   restaurantId,
 }: MetricsOverviewProps) {
   const t = useTranslations("admin.metrics");
-  const [data, setData] = useState<MetricasResumo | null>(null);
+  const locale = useLocale();
+  const [data, setData] = useState<MetricsSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -125,25 +126,25 @@ export function MetricsOverview({
     async function fetchData() {
       try {
         setLoading(true);
-        const params = new URLSearchParams({ periodo });
+        const params = new URLSearchParams({ period });
         if (restaurantId) {
           params.set("restaurantId", restaurantId);
         }
         const response = await fetch(
-          `/api/admin/metricas/resumo?${params.toString()}`,
+          `/api/admin/metrics/summary?${params.toString()}`,
         );
-        if (!response.ok) throw new Error("Erro ao carregar métricas");
+        if (!response.ok) throw new Error("Failed to load metrics");
         const result = await response.json();
         setData(result);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Erro desconhecido");
+      } catch {
+        setError(t("loadError"));
       } finally {
         setLoading(false);
       }
     }
 
     fetchData();
-  }, [periodo, restaurantId]);
+  }, [period, restaurantId, t]);
 
   if (loading) {
     return (
@@ -178,7 +179,7 @@ export function MetricsOverview({
 
   return (
     <div className="space-y-6">
-      {/* Pedidos */}
+      {/* Orders */}
       <div>
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
           {t("orders")}
@@ -186,35 +187,35 @@ export function MetricsOverview({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <KPICard
             title={t("totalOrders")}
-            value={data.pedidos.total}
+            value={data.orders.total}
             icon={<ShoppingCart className="w-6 h-6" />}
             color="blue"
           />
           <KPICard
             title={t("confirmedOrders")}
-            value={data.pedidos.confirmados}
-            subtitle={`${data.pedidos.total > 0 ? Math.round((data.pedidos.confirmados / data.pedidos.total) * 100) : 0}% ${t("ofTotal")}`}
+            value={data.orders.confirmed}
+            subtitle={`${data.orders.total > 0 ? Math.round((data.orders.confirmed / data.orders.total) * 100) : 0}% ${t("ofTotal")}`}
             icon={<CheckCircle className="w-6 h-6" />}
             color="green"
           />
           <KPICard
             title={t("canceledOrders")}
-            value={data.pedidos.cancelados}
-            subtitle={`${data.pedidos.total > 0 ? Math.round((data.pedidos.cancelados / data.pedidos.total) * 100) : 0}% ${t("ofTotal")}`}
+            value={data.orders.cancelled}
+            subtitle={`${data.orders.total > 0 ? Math.round((data.orders.cancelled / data.orders.total) * 100) : 0}% ${t("ofTotal")}`}
             icon={<XCircle className="w-6 h-6" />}
             color="red"
           />
           <KPICard
             title={t("averageTicket")}
-            value={formatCurrency(data.pedidos.ticketMedio)}
-            subtitle={`${t("totalRevenue")}: ${formatCurrency(data.pedidos.receitaTotal)}`}
+            value={formatCurrency(data.orders.averageTicket, locale)}
+            subtitle={`${t("totalRevenue")}: ${formatCurrency(data.orders.totalRevenue, locale)}`}
             icon={<DollarSign className="w-6 h-6" />}
             color="green"
           />
         </div>
       </div>
 
-      {/* Tempos */}
+      {/* Times */}
       <div>
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
           {t("times")}
@@ -222,25 +223,25 @@ export function MetricsOverview({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <KPICard
             title={t("avgConfirmation")}
-            value={formatMinutes(data.tempos.mediaConfirmacao)}
+            value={formatMinutes(data.times.avgConfirmation)}
             icon={<Clock className="w-6 h-6" />}
             color="blue"
           />
           <KPICard
             title={t("avgPreparation")}
-            value={formatMinutes(data.tempos.mediaPreparo)}
+            value={formatMinutes(data.times.avgPreparation)}
             icon={<Clock className="w-6 h-6" />}
             color="yellow"
           />
           <KPICard
             title={t("avgTotal")}
-            value={formatMinutes(data.tempos.mediaTotal)}
+            value={formatMinutes(data.times.avgTotal)}
             icon={<Clock className="w-6 h-6" />}
             color="purple"
           />
           <KPICard
             title={t("preparationSLA")}
-            value={`${data.tempos.slaPreparo}%`}
+            value={`${data.times.preparationSla}%`}
             subtitle={t("under30min")}
             icon={<TrendingUp className="w-6 h-6" />}
             color="green"
@@ -248,7 +249,7 @@ export function MetricsOverview({
         </div>
       </div>
 
-      {/* Chamados e Satisfação */}
+      {/* Calls and satisfaction */}
       <div>
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
           {t("callsAndSatisfaction")}
@@ -256,27 +257,27 @@ export function MetricsOverview({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <KPICard
             title={t("totalCalls")}
-            value={data.chamados.total}
-            subtitle={`${t("waiter")}: ${data.chamados.garcom} | ${t("bill")}: ${data.chamados.conta}`}
+            value={data.calls.total}
+            subtitle={`${t("waiter")}: ${data.calls.waiter} | ${t("bill")}: ${data.calls.bill}`}
             icon={<Bell className="w-6 h-6" />}
             color="yellow"
           />
           <KPICard
             title={t("avgServiceTime")}
-            value={formatMinutes(data.chamados.tempoMedioAtendimento)}
+            value={formatMinutes(data.calls.avgServiceTime)}
             icon={<Clock className="w-6 h-6" />}
             color="blue"
           />
           <KPICard
             title={t("avgRating")}
-            value={data.satisfacao.notaMedia.toFixed(1)}
-            subtitle={`${data.satisfacao.totalAvaliacoes} ${t("reviews")}`}
+            value={data.satisfaction.averageRating.toFixed(1)}
+            subtitle={`${data.satisfaction.totalReviews} ${t("reviews")}`}
             icon={<Star className="w-6 h-6" />}
             color="yellow"
           />
           <KPICard
             title={t("reviewRate")}
-            value={`${data.satisfacao.taxaAvaliacao}%`}
+            value={`${data.satisfaction.reviewRate}%`}
             icon={<TrendingUp className="w-6 h-6" />}
             color="purple"
           />

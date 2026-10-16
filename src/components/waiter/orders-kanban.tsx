@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import {
   ShoppingBag,
   Loader2,
@@ -13,7 +13,7 @@ import {
   AlertCircle,
   ChefHat,
 } from "lucide-react";
-import { cn, formatTime } from "@/lib/utils";
+import { cn, formatTime, localizedName } from "@/lib/utils";
 import { useSound } from "@/components/providers/sound-provider";
 
 interface OrderItem {
@@ -68,6 +68,7 @@ function OrderCard({
   type,
 }: OrderCardProps) {
   const t = useTranslations("waiter");
+  const locale = useLocale();
   const [expanded, setExpanded] = useState(false);
 
   const getUrgencyColor = (secs: number) => {
@@ -104,7 +105,7 @@ function OrderCard({
           <div>
             <h3 className="font-bold text-lg">{order.table.label}</h3>
             <p className="text-sm text-muted-foreground">
-              {order.items.length} {order.items.length === 1 ? "item" : "itens"} • R$ {Number(order.total).toFixed(2)}
+              {t("itemCount", { count: order.items.length })} • R$ {Number(order.total).toFixed(2)}
             </p>
           </div>
           <div className="text-right">
@@ -130,7 +131,7 @@ function OrderCard({
                 {item.menuItem.image_url ? (
                   <img
                     src={item.menuItem.image_url}
-                    alt={item.menuItem.name_pt}
+                    alt={localizedName(item.menuItem, locale)}
                     className="w-full h-full object-cover"
                   />
                 ) : (
@@ -142,7 +143,7 @@ function OrderCard({
               <div className="flex-1">
                 <p className="font-medium text-sm">
                   <span className="text-primary font-bold">{item.quantity}x</span>{" "}
-                  {item.menuItem.name_pt}
+                  {localizedName(item.menuItem, locale)}
                 </p>
                 {item.notes && (
                   <p className="text-xs text-yellow-500">{item.notes}</p>
@@ -154,7 +155,7 @@ function OrderCard({
           {order.notes && (
             <div className="pt-2 mt-2 border-t border-border/30">
               <p className="text-sm text-yellow-500">
-                <span className="font-medium">Obs:</span> {order.notes}
+                <span className="font-medium">{t("notes")}:</span> {order.notes}
               </p>
             </div>
           )}
@@ -241,7 +242,7 @@ export function OrdersKanban() {
 
   // Fetch orders with SSE
   useEffect(() => {
-    const eventSource = new EventSource("/api/pedidos/stream");
+    const eventSource = new EventSource("/api/orders/stream");
 
     eventSource.onmessage = (event) => {
       try {
@@ -299,7 +300,7 @@ export function OrdersKanban() {
   const handleConfirm = async (orderId: string) => {
     setActionLoading(orderId);
     try {
-      const res = await fetch(`/api/pedidos/${orderId}/confirmar`, {
+      const res = await fetch(`/api/orders/${orderId}/confirm`, {
         method: "PATCH",
       });
       if (res.ok) {
@@ -317,7 +318,7 @@ export function OrdersKanban() {
 
     setActionLoading(orderId);
     try {
-      const res = await fetch(`/api/pedidos/${orderId}/cancelar`, {
+      const res = await fetch(`/api/orders/${orderId}/cancel`, {
         method: "PATCH",
       });
       if (res.ok) {
@@ -333,7 +334,7 @@ export function OrdersKanban() {
   const handleDeliver = async (orderId: string) => {
     setActionLoading(orderId);
     try {
-      const res = await fetch(`/api/pedidos/${orderId}/entregar`, {
+      const res = await fetch(`/api/orders/${orderId}/deliver`, {
         method: "PATCH",
       });
       if (res.ok) {
@@ -415,7 +416,7 @@ export function OrdersKanban() {
           <div className="space-y-3 min-h-[200px]">
             {pendingOrders.length === 0 ? (
               <div className="card-premium rounded-xl p-6 text-center text-muted-foreground text-sm">
-                Nenhum pedido pendente
+                {t("noPendingOrders")}
               </div>
             ) : (
               pendingOrders.map((order) => (
@@ -443,7 +444,7 @@ export function OrdersKanban() {
           <div className="space-y-3 min-h-[200px]">
             {confirmedOrders.length === 0 ? (
               <div className="card-premium rounded-xl p-6 text-center text-muted-foreground text-sm">
-                Nenhum pedido na cozinha
+                {t("noKitchenOrders")}
               </div>
             ) : (
               confirmedOrders.map((order) => (
@@ -469,7 +470,7 @@ export function OrdersKanban() {
           <div className="space-y-3 min-h-[200px]">
             {readyOrders.length === 0 ? (
               <div className="card-premium rounded-xl p-6 text-center text-muted-foreground text-sm">
-                Nenhum pedido pronto
+                {t("noReadyOrders")}
               </div>
             ) : (
               readyOrders.map((order) => (

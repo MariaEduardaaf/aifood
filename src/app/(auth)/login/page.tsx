@@ -12,7 +12,7 @@ export default function LoginPage() {
   const tErrors = useTranslations("errors");
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/garcom";
+  const callbackUrl = searchParams.get("callbackUrl") || "/waiter";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -73,7 +73,7 @@ export default function LoginPage() {
           </div>
           <h1 className="text-3xl font-bold text-gold">aiFood</h1>
           <p className="text-muted-foreground mt-2">
-            Plataforma de Atendimento
+            {t("platformTagline")}
           </p>
         </div>
 
@@ -81,10 +81,10 @@ export default function LoginPage() {
         <div className="card-premium rounded-2xl p-8">
           <div className="text-center mb-8">
             <h2 className="text-xl font-semibold text-foreground">
-              Bem-vindo de volta
+              {t("welcomeBack")}
             </h2>
             <p className="text-muted-foreground text-sm mt-1">
-              Entre com suas credenciais
+              {t("enterCredentials")}
             </p>
           </div>
 
@@ -104,7 +104,7 @@ export default function LoginPage() {
                 <input
                   id="email"
                   type="email"
-                  placeholder="email@exemplo.com"
+                  placeholder={t("emailPlaceholder")}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -139,6 +139,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? t("hidePassword") : t("showPassword")}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                 >
                   {showPassword ? (
@@ -166,7 +167,7 @@ export default function LoginPage() {
               {loading ? (
                 <>
                   <Loader2 className="h-5 w-5 animate-spin" />
-                  <span>Entrando...</span>
+                  <span>{t("signingIn")}</span>
                 </>
               ) : (
                 <>
@@ -182,7 +183,7 @@ export default function LoginPage() {
 
           {/* Demo credentials */}
           <div className="text-center text-sm text-muted-foreground">
-            <p className="mb-2">Credenciais de demonstração:</p>
+            <p className="mb-2">{t("demoCredentials")}</p>
             <div className="space-y-1 text-xs">
               <p>
                 <span className="text-foreground">Super Admin:</span>{" "}
@@ -193,12 +194,12 @@ export default function LoginPage() {
                 / admin123
               </p>
               <p>
-                <span className="text-foreground">Garçom:</span>{" "}
-                garcom@aifood.com / garcom123
+                <span className="text-foreground">{t("roleWaiter")}:</span>{" "}
+                waiter@aifood.com / waiter123
               </p>
               <p>
-                <span className="text-foreground">Cozinha:</span>{" "}
-                cozinha@aifood.com / cozinha123
+                <span className="text-foreground">{t("roleKitchen")}:</span>{" "}
+                kitchen@aifood.com / kitchen123
               </p>
             </div>
           </div>

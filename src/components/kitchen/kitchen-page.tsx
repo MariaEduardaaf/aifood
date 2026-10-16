@@ -20,6 +20,7 @@ type ViewMode = "kanban" | "list";
 
 export function KitchenPage({ userId, userName }: KitchenPageProps) {
   const t = useTranslations("kitchen");
+  const tAuth = useTranslations("auth");
   const [viewMode, setViewMode] = useState<ViewMode>("kanban");
 
   const handleLogout = async () => {
@@ -78,7 +79,7 @@ export function KitchenPage({ userId, userName }: KitchenPageProps) {
                       ? "bg-white text-primary shadow-sm"
                       : "text-white/70 hover:text-white hover:bg-white/10",
                   )}
-                  title="Lista"
+                  title={t("listView")}
                 >
                   <List className="h-4 w-4" />
                 </button>
@@ -101,7 +102,7 @@ export function KitchenPage({ userId, userName }: KitchenPageProps) {
               <button
                 onClick={handleLogout}
                 className="p-2 rounded-xl text-white/70 hover:text-white hover:bg-white/10 transition-colors"
-                title="Sair"
+                title={tAuth("logout")}
               >
                 <LogOut className="h-5 w-5" />
               </button>

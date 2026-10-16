@@ -60,7 +60,7 @@ export function CartModal({ tableId, onClose, onOrderSuccess }: CartModalProps) 
     setError(null);
 
     try {
-      const res = await fetch("/api/pedidos", {
+      const res = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -77,7 +77,7 @@ export function CartModal({ tableId, onClose, onOrderSuccess }: CartModalProps) 
       const data = await res.json();
 
       if (res.status === 429) {
-        setError(data.message || t("rateLimitError"));
+        setError(t("rateLimitError"));
         return;
       }
 
@@ -86,11 +86,11 @@ export function CartModal({ tableId, onClose, onOrderSuccess }: CartModalProps) 
         return;
       }
 
-      // Sucesso
+      // Success
       setSuccess(true);
       clearCart();
 
-      // Fechar apos 2 segundos
+      // Close after 2 seconds
       setTimeout(() => {
         onOrderSuccess();
       }, 2000);

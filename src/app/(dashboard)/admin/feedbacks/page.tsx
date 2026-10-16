@@ -9,7 +9,7 @@ export default async function AdminFeedbacksPage() {
     !session ||
     (session.user.role !== "ADMIN" && session.user.role !== "MANAGER")
   ) {
-    redirect("/garcom");
+    redirect("/waiter");
   }
 
   return <FeedbacksPage />;

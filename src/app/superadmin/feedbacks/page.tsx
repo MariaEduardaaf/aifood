@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { FeedbacksPage } from "@/components/admin/feedbacks-page";
 import { RestaurantRequired } from "@/components/superadmin/restaurant-required";
 
@@ -7,14 +8,13 @@ interface FeedbacksSuperAdminPageProps {
   };
 }
 
-export default function FeedbacksSuperAdminPage({
-  searchParams,
-}: FeedbacksSuperAdminPageProps) {
+export default async function FeedbacksSuperAdminPage({ searchParams }: FeedbacksSuperAdminPageProps) {
+  const t = await getTranslations("superadmin.restaurantRequired");
   const restaurantId = searchParams.restaurantId;
 
   if (!restaurantId) {
     return (
-      <RestaurantRequired description="Selecione um restaurante para ver os feedbacks." />
+      <RestaurantRequired description={t("feedbacksDescription")} />
     );
   }
 

@@ -1,223 +1,223 @@
-# 🧠 BRAIN — Plataforma de Atendimento Inteligente para Restaurantes
+# 🧠 BRAIN: Intelligent Service Platform for Restaurants
 
-> **Última atualização:** 2026-01-08
+> **Last updated:** 2026-01-08
 
-## Status de Implementação
+## Implementation Status
 
-| Fase | Status | Observação |
-|------|--------|------------|
-| MVP (Chamados) | ✅ Completo | Funcionando 100% |
-| Fase 1.5 (Google Reviews) | ✅ Completo | Avaliação inteligente funcionando |
-| Fase 2 (Cardápio Digital) | ✅ Completo | Menu trilíngue com fotos |
-| Fase 3 (Pedidos) | ✅ Completo | Carrinho e acompanhamento |
-| Fase 4 (Cozinha) | ✅ Completo | Painel Kanban funcionando |
-| Deploy Produção | ⏳ Pendente | Aguardando configuração |
-
----
-
-## 1. Visão Geral
-
-Esta aplicação é uma **plataforma de operação e atendimento para restaurantes**, criada para resolver um problema muito comum (especialmente na Europa):
-
-> ❌ Atendimento lento
-> ❌ Garçons sobrecarregados
-> ❌ Clientes frustrados
-> ❌ Reviews ruins no Google
-> ❌ Falta de métricas reais de atendimento
-
-A solução começa **simples**, validando o problema com um **Web MVP**, e evolui para um **ecossistema completo**, com múltiplos perfis (cliente, garçom, cozinha e admin), operação em tempo real, métricas e reputação online.
+| Phase | Status | Notes |
+|-------|--------|-------|
+| MVP (Calls) | ✅ Complete | Working 100% |
+| Phase 1.5 (Google Reviews) | ✅ Complete | Smart rating flow working |
+| Phase 2 (Digital Menu) | ✅ Complete | Trilingual menu with photos |
+| Phase 3 (Orders) | ✅ Complete | Cart and order tracking |
+| Phase 4 (Kitchen) | ✅ Complete | Kanban panel working |
+| Production Deploy | ⏳ Pending | Awaiting configuration |
 
 ---
 
-## 2. Princípios do Produto
+## 1. Overview
 
-Esses princípios **não devem ser quebrados**, nem no MVP nem no futuro:
+This application is a **restaurant operations and service platform**, built to solve a very common problem (especially in Europe):
 
-1. **Zero fricção para o cliente**
+> ❌ Slow service
+> ❌ Overloaded waiters
+> ❌ Frustrated customers
+> ❌ Bad Google reviews
+> ❌ No real service metrics
 
-   * Cliente nunca cria conta
-   * Tudo começa pelo QR Code
-
-2. **Simplicidade extrema para o staff**
-
-   * Garçom vê só o que precisa
-   * Poucos cliques, sem distração
-
-3. **Tempo real é obrigatório**
-
-   * Chamado atrasado = produto falhou
-
-4. **Dados antes de features**
-
-   * Cada ação gera métrica
-   * Métricas vendem o produto
-
-5. **Evolução por fases**
-
-   * MVP resolve 1 dor
-   * Pós-MVP cria diferenciação
+The solution starts **simple**, validating the problem with a **Web MVP**, and evolves into a **complete ecosystem** with multiple profiles (customer, waiter, kitchen and admin), real-time operation, metrics and online reputation.
 
 ---
 
-## 3. Problema que o produto resolve
+## 2. Product Principles
 
-### Para o cliente
+These principles **must not be broken**, neither in the MVP nor in the future:
 
-* Espera longa para ser atendido
-* Dificuldade para pedir a conta
-* Barreiras de idioma
-* Sensação de abandono
+1. **Zero friction for the customer**
 
-### Para o restaurante
+   * The customer never creates an account
+   * Everything starts with the QR code
 
-* Garçons não veem todos os clientes
-* Falta de organização
-* Nenhuma métrica de atendimento
-* Reviews negativas no Google sem controle
+2. **Extreme simplicity for staff**
 
----
+   * Waiters see only what they need
+   * Few clicks, no distractions
 
-## 4. Visão do Sistema (macro)
+3. **Real time is mandatory**
 
-A aplicação é **um único sistema**, com **um backend central**, mas com **interfaces diferentes dependendo do login (role)**.
+   * A delayed call means the product failed
 
-### Roles do sistema
+4. **Data before features**
 
-* **CLIENT (público)** → sem login
-* **WAITER** → login email/senha
-* **KITCHEN** → login email/senha
-* **ADMIN / MANAGER** → login email/senha
-* **SUPER_ADMIN** (futuro)
+   * Every action generates a metric
+   * Metrics sell the product
+
+5. **Evolution by phases**
+
+   * The MVP solves 1 pain point
+   * Post-MVP builds differentiation
 
 ---
 
-## 5. Fase 1 — MVP Web (escopo fechado)
+## 3. Problem the product solves
 
-### Objetivo do MVP
+### For the customer
 
-Validar que:
+* Long wait to be served
+* Difficulty asking for the bill
+* Language barriers
+* A feeling of being ignored
 
-* QR Code é usado
-* Garçom responde mais rápido
-* Restaurante vê valor real
-* Produto é simples o suficiente para adoção
+### For the restaurant
 
-### Escopo do MVP
-
-👉 **Apenas 1 restaurante**
-👉 **Apenas Web**
-👉 **Sem pedidos**
-👉 **Sem cardápio**
-👉 **Sem pagamento**
+* Waiters cannot see all customers
+* Lack of organization
+* No service metrics
+* Negative Google reviews with no control
 
 ---
 
-## 6. Funcionalidades do MVP
+## 4. System Vision (macro)
 
-### 6.1 Cliente (SEM login)
+The application is **a single system**, with **one central backend**, but with **different interfaces depending on the login (role)**.
 
-**Acesso**
+### System roles
 
-* Via QR Code fixado na mesa
-
-**Página da Mesa**
-
-* Identificação da mesa (ex: "Mesa 13")
-* Botões:
-
-  * ✅ Chamar garçom
-  * ✅ Pedir a conta
-
-**Idiomas suportados (MVP)**
-
-* Português
-* Espanhol
-* Inglês
-
-**Comportamento**
-
-* Ao clicar:
-
-  * Cria um "chamado"
-  * Mostra confirmação
-  * Entra em estado "aguardando"
-
-**Regras**
-
-* Sem cadastro
-* Sem cookies obrigatórios
-* QR define tudo (mesa + restaurante)
+* **CLIENT (public)** → no login
+* **WAITER** → email/password login
+* **KITCHEN** → email/password login
+* **ADMIN / MANAGER** → email/password login
+* **SUPER_ADMIN** (future)
 
 ---
 
-### 6.2 Garçom (login email + senha)
+## 5. Phase 1: Web MVP (closed scope)
 
-**Tela principal: Chamados**
+### MVP goal
 
-* Lista de chamados abertos
-* Ordenado por tempo (mais antigo primeiro)
-* Cada item mostra:
+Validate that:
 
-  * Mesa
-  * Tipo (garçom / conta)
-  * Tempo em aberto
+* The QR code gets used
+* Waiters respond faster
+* The restaurant sees real value
+* The product is simple enough to be adopted
 
-**Ações**
+### MVP scope
 
-* Marcar chamado como resolvido
-
-**UX obrigatória**
-
-* Interface limpa
-* Pensada para celular
-* Sons/alertas visuais
+👉 **Only 1 restaurant**
+👉 **Web only**
+👉 **No orders**
+👉 **No menu**
+👉 **No payment**
 
 ---
 
-### 6.3 Admin / Gerente (mínimo)
+## 6. MVP Features
 
-**Funções**
+### 6.1 Customer (NO login)
 
-* Criar mesas
-* Gerar QR Code por mesa
-* Criar usuários (garçons)
-* Ver métricas simples
+**Access**
 
-**Métricas**
+* Via a QR code fixed to the table
 
-* Total de chamados
-* Tempo médio de resposta
-* Chamados por horário
+**Table page**
+
+* Table identification (e.g. "Table 13")
+* Buttons:
+
+  * ✅ Call waiter
+  * ✅ Request the bill
+
+**Supported languages (MVP)**
+
+* Portuguese
+* Spanish
+* English
+
+**Behavior**
+
+* On click:
+
+  * Creates a "call"
+  * Shows a confirmation
+  * Enters a "waiting" state
+
+**Rules**
+
+* No sign-up
+* No mandatory cookies
+* The QR defines everything (table + restaurant)
 
 ---
 
-## 7. O que NÃO entrava no MVP (já implementado pós-MVP)
+### 6.2 Waiter (email + password login)
 
-* ✅ ~~Cardápio~~ → **Implementado na Fase 2**
-* ✅ ~~Pedido pelo app~~ → **Implementado na Fase 3**
-* ✅ ~~Cozinha~~ → **Implementado na Fase 4**
-* ❌ IA → Futuro
-* ❌ Ranking → Futuro
-* ✅ ~~Google Reviews automático~~ → **Implementado na Fase 1.5**
-* ❌ Multi-restaurante → Futuro
-* ❌ Tradução para outros idiomas (além de PT/ES/EN) → Futuro
+**Main screen: Calls**
 
-Essas features foram implementadas **após validação do MVP**.
+* List of open calls
+* Sorted by time (oldest first)
+* Each item shows:
+
+  * Table
+  * Type (waiter / bill)
+  * Time open
+
+**Actions**
+
+* Mark a call as resolved
+
+**Required UX**
+
+* Clean interface
+* Designed for mobile
+* Sounds/visual alerts
 
 ---
 
-## 8. Entidade central do sistema: CHAMADO
+### 6.3 Admin / Manager (minimal)
 
-Tudo no MVP gira em torno do **chamado**.
+**Functions**
 
-### Estrutura lógica do chamado
+* Create tables
+* Generate a QR code per table
+* Create users (waiters)
+* View simple metrics
 
-* Mesa
-* Tipo
+**Metrics**
+
+* Total calls
+* Average response time
+* Calls by time of day
+
+---
+
+## 7. What was NOT in the MVP (already implemented post-MVP)
+
+* ✅ ~~Menu~~ → **Implemented in Phase 2**
+* ✅ ~~Ordering from the app~~ → **Implemented in Phase 3**
+* ✅ ~~Kitchen~~ → **Implemented in Phase 4**
+* ❌ AI → Future
+* ❌ Ranking → Future
+* ✅ ~~Automatic Google Reviews~~ → **Implemented in Phase 1.5**
+* ❌ Multi-restaurant → Future
+* ❌ Translation into other languages (beyond PT/ES/EN) → Future
+
+These features were implemented **after the MVP was validated**.
+
+---
+
+## 8. Central entity of the system: CALL
+
+Everything in the MVP revolves around the **call**.
+
+### Logical structure of a call
+
+* Table
+* Type
 * Status
-* Tempo
+* Time
 
-### Tipos
+### Types
 
 * `CALL_WAITER`
 * `REQUEST_BILL`
@@ -227,54 +227,54 @@ Tudo no MVP gira em torno do **chamado**.
 * `OPEN`
 * `RESOLVED`
 
-Cada chamado **gera dados**:
+Each call **generates data**:
 
-* quanto demorou
-* quem resolveu
-* em qual horário
-
----
-
-## 9. Fluxos principais
-
-### Fluxo: Chamar garçom
-
-1. Cliente escaneia QR
-2. Clica "Chamar garçom"
-3. Backend cria chamado
-4. Garçom recebe em tempo real
-5. Garçom atende
-6. Marca como resolvido
-7. Sistema registra tempo
-
-### Fluxo: Pedir conta
-
-Mesmo fluxo, tipo diferente.
+* how long it took
+* who resolved it
+* at what time
 
 ---
 
-## 10. Tempo real (essencial)
+## 9. Main flows
 
-* Backend emite eventos
-* Painel do garçom mantém conexão ativa
-* Atualizações sem refresh
+### Flow: Call waiter
 
-Sem tempo real → **produto perde valor**
+1. Customer scans the QR
+2. Taps "Call waiter"
+3. Backend creates a call
+4. Waiter receives it in real time
+5. Waiter attends
+6. Marks it as resolved
+7. System records the time
+
+### Flow: Request the bill
+
+Same flow, different type.
 
 ---
 
-## 11. Segurança e limites
+## 10. Real time (essential)
+
+* Backend emits events
+* The waiter panel keeps an active connection
+* Updates without refresh
+
+Without real time → **the product loses value**
+
+---
+
+## 11. Security and limits
 
 ### MVP
 
-* Rate limit por mesa (ex: 1 chamado a cada 30s)
-* QR token longo e imprevisível
-* Login protegido por hash de senha
-* Separação clara de permissões
+* Rate limit per table (e.g. 1 call every 30s)
+* Long, unpredictable QR token
+* Login protected by password hashing
+* Clear separation of permissions
 
 ---
 
-## 12. Estrutura de dados (conceitual)
+## 12. Data structure (conceptual)
 
 ### tables
 
@@ -300,121 +300,121 @@ Sem tempo real → **produto perde valor**
 
 ---
 
-## 13. Pós-MVP — Evolução do Produto
+## 13. Post-MVP: Product Evolution
 
-Após validar o MVP, o produto evolui para uma **plataforma completa**.
+After validating the MVP, the product evolves into a **complete platform**.
 
-### Novas áreas
+### New areas
 
-#### Cliente
+#### Customer
 
-* Cardápio digital
-* Pedido no app
-* Tradução automática
-* IA de sugestão de pratos
-* Avaliação pós-visita
+* Digital menu
+* Ordering in the app
+* Automatic translation
+* AI dish suggestions
+* Post-visit rating
 
-#### Garçom
+#### Waiter
 
-* Comandas
-* Status de pedidos
-* Comunicação com cozinha
+* Tabs
+* Order status
+* Communication with the kitchen
 
-#### Cozinha
+#### Kitchen
 
-* Fila de preparo
+* Preparation queue
 * Status
-* Notificação para garçom
+* Notification to the waiter
 
 #### Admin
 
-* Métricas avançadas
+* Advanced metrics
 * Ranking
-* Configuração Google Reviews
-* Performance por funcionário
+* Google Reviews configuration
+* Performance per employee
 
 ---
 
-## 14. Google Reviews (fase 1.5 / pós-MVP)
+## 14. Google Reviews (phase 1.5 / post-MVP)
 
-Lógica:
+Logic:
 
-* Cliente pede conta
-* Sistema pergunta: "Como foi o atendimento?"
+* Customer asks for the bill
+* System asks: "How was the service?"
 
-  * Nota alta → redireciona para Google Reviews
-  * Nota baixa → feedback privado
+  * High score → redirects to Google Reviews
+  * Low score → private feedback
 
-Objetivo:
+Goal:
 
-* Melhorar reputação
-* Reduzir reviews negativas públicas
-
----
-
-## 15. Ranking e reputação
-
-Ranking baseado em:
-
-* Tempo médio de atendimento
-* SLA (ex: % atendido < 3 min)
-* Feedback positivo
-* (opcional) Google rating
+* Improve reputation
+* Reduce negative public reviews
 
 ---
 
-## 16. Monetização (futuro)
+## 15. Ranking and reputation
 
-* Assinatura mensal por restaurante
-* Planos baseados em:
+Ranking based on:
 
-  * número de mesas
-  * número de funcionários
-  * métricas avançadas
-  * IA / ranking
-
----
-
-## 17. Estratégia de validação
-
-1. Restaurantes pequenos
-2. Uso gratuito
-3. QR simples em papel
-4. 1–2 semanas de teste
-5. Coletar dados
-6. Ajustar UX
-7. Transformar em plano pago
+* Average service time
+* SLA (e.g. % attended in < 3 min)
+* Positive feedback
+* (optional) Google rating
 
 ---
 
-## 18. Riscos e como mitigar
+## 16. Monetization (future)
 
-| Risco                | Solução                |
-| -------------------- | ---------------------- |
-| Garçom ignora painel | Alertas + simplicidade |
-| Cliente spamma QR    | Rate limit             |
-| Internet ruim        | Reconnect automático   |
-| Dono não vê valor    | Mostrar métricas       |
+* Monthly subscription per restaurant
+* Plans based on:
 
----
-
-## 19. Definição clara do MVP
-
-> **Se isso não funcionar, nada mais importa.**
-
-* Cliente chama
-* Garçom vê
-* Garçom responde
-* Tempo é medido
+  * number of tables
+  * number of employees
+  * advanced metrics
+  * AI / ranking
 
 ---
 
-## 20. Filosofia final
+## 17. Validation strategy
 
-Este produto **não é um app bonito**.
-É uma **ferramenta operacional**, feita para:
+1. Small restaurants
+2. Free usage
+3. Simple paper QR codes
+4. 1-2 weeks of testing
+5. Collect data
+6. Adjust UX
+7. Turn it into a paid plan
 
-* reduzir espera
-* melhorar experiência
-* gerar dados reais
-* aumentar reputação
+---
+
+## 18. Risks and how to mitigate them
+
+| Risk                    | Solution                |
+| ----------------------- | ----------------------- |
+| Waiter ignores the panel | Alerts + simplicity    |
+| Customer spams the QR   | Rate limit              |
+| Bad internet            | Automatic reconnect     |
+| Owner sees no value     | Show metrics            |
+
+---
+
+## 19. Clear definition of the MVP
+
+> **If this does not work, nothing else matters.**
+
+* Customer calls
+* Waiter sees
+* Waiter responds
+* Time is measured
+
+---
+
+## 20. Final philosophy
+
+This product **is not a pretty app**.
+It is an **operational tool**, built to:
+
+* reduce waiting
+* improve the experience
+* generate real data
+* increase reputation

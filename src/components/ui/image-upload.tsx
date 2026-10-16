@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback } from 'react'
 import { Upload, X, Loader2, Image as ImageIcon } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 interface ImageUploadProps {
   value?: string
@@ -16,6 +17,7 @@ export function ImageUpload({
   onRemove,
   disabled = false,
 }: ImageUploadProps) {
+  const t = useTranslations('imageUpload')
   const [isUploading, setIsUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -37,18 +39,18 @@ export function ImageUpload({
 
         if (!response.ok) {
           const data = await response.json()
-          throw new Error(data.error || 'Erro ao fazer upload')
+          throw new Error(data.error || t('uploadFailed'))
         }
 
         const data = await response.json()
         onChange(data.url)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Erro ao fazer upload')
+        setError(err instanceof Error ? err.message : t('uploadFailed'))
       } finally {
         setIsUploading(false)
       }
     },
-    [onChange]
+    [onChange, t]
   )
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -76,7 +78,7 @@ export function ImageUpload({
     if (file && file.type.startsWith('image/')) {
       handleUpload(file)
     } else {
-      setError('Por favor, selecione uma imagem válida')
+      setError(t('invalidImage'))
     }
   }
 
@@ -96,7 +98,7 @@ export function ImageUpload({
       <div className="relative">
         <img
           src={value}
-          alt="Preview"
+          alt={t("preview")}
           className="w-full h-48 object-cover rounded-lg border border-gray-200"
           onError={(e) => {
             e.currentTarget.src = '/placeholder-image.png'
@@ -106,6 +108,7 @@ export function ImageUpload({
           type="button"
           onClick={handleRemove}
           disabled={disabled}
+          aria-label={t('remove')}
           className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 disabled:opacity-50"
         >
           <X className="w-4 h-4" />
@@ -141,7 +144,7 @@ export function ImageUpload({
         {isUploading ? (
           <>
             <Loader2 className="w-10 h-10 text-orange-500 animate-spin mb-2" />
-            <p className="text-sm text-gray-600">Fazendo upload...</p>
+            <p className="text-sm text-gray-600">{t('uploading')}</p>
           </>
         ) : (
           <>
@@ -149,13 +152,13 @@ export function ImageUpload({
               <Upload className="w-6 h-6 text-orange-600" />
             </div>
             <p className="text-sm font-medium text-gray-700 mb-1">
-              Clique para fazer upload
+              {t('clickToUpload')}
             </p>
             <p className="text-xs text-gray-500">
-              ou arraste e solte uma imagem aqui
+              {t('dragAndDrop')}
             </p>
             <p className="text-xs text-gray-400 mt-2">
-              JPEG, PNG, WebP ou GIF (máx. 5MB)
+              {t('allowedFormats')}
             </p>
           </>
         )}

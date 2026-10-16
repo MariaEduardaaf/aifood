@@ -62,7 +62,7 @@ export function TablesManager({ restaurantId }: TablesManagerProps) {
   const fetchTables = async () => {
     try {
       const query = restaurantId ? `?restaurantId=${restaurantId}` : "";
-      const res = await fetch(`/api/mesas${query}`);
+      const res = await fetch(`/api/tables${query}`);
       if (res.ok) {
         const data = await res.json();
         setTables(data);
@@ -98,7 +98,7 @@ export function TablesManager({ restaurantId }: TablesManagerProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formLabel.trim()) {
-      setError("Nome da mesa é obrigatório");
+      setError(t("tablesPage.nameRequired"));
       return;
     }
 
@@ -106,7 +106,7 @@ export function TablesManager({ restaurantId }: TablesManagerProps) {
     setError("");
 
     try {
-      const url = editingTable ? `/api/mesas/${editingTable.id}` : "/api/mesas";
+      const url = editingTable ? `/api/tables/${editingTable.id}` : "/api/tables";
       const method = editingTable ? "PATCH" : "POST";
 
       const payload = editingTable
@@ -127,10 +127,10 @@ export function TablesManager({ restaurantId }: TablesManagerProps) {
         closeModal();
       } else {
         const data = await res.json();
-        setError(data.error || "Erro ao salvar");
+        setError(data.error || t("tablesPage.saveError"));
       }
     } catch (err) {
-      setError("Erro ao salvar mesa");
+      setError(t("tablesPage.saveTableError"));
     } finally {
       setSaving(false);
     }
@@ -140,7 +140,7 @@ export function TablesManager({ restaurantId }: TablesManagerProps) {
     if (!confirm(t("confirmDelete"))) return;
 
     try {
-      const res = await fetch(`/api/mesas/${table.id}`, { method: "DELETE" });
+      const res = await fetch(`/api/tables/${table.id}`, { method: "DELETE" });
       if (res.ok) {
         await fetchTables();
       }
@@ -151,7 +151,7 @@ export function TablesManager({ restaurantId }: TablesManagerProps) {
 
   const showQRCode = async (table: Table) => {
     try {
-      const res = await fetch(`/api/mesas/${table.id}/qrcode`);
+      const res = await fetch(`/api/tables/${table.id}/qrcode`);
       if (res.ok) {
         const data = await res.json();
         setQrData(data);
@@ -205,13 +205,13 @@ export function TablesManager({ restaurantId }: TablesManagerProps) {
                     <div className="min-w-0">
                       <h3 className="font-semibold truncate">{table.label}</h3>
                       <p className="text-sm text-muted-foreground">
-                        Token: {table.qr_token.substring(0, 8)}...
+                        {t("tablesPage.token", { token: table.qr_token.substring(0, 8) })}
                       </p>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                       {table._count && table._count.calls > 0 && (
                         <Badge variant="warning">
-                          {table._count.calls} chamado(s)
+                          {t("tablesPage.calls", { count: table._count.calls })}
                         </Badge>
                       )}
                       <Badge variant={table.active ? "success" : "secondary"}>
@@ -253,7 +253,7 @@ export function TablesManager({ restaurantId }: TablesManagerProps) {
         </div>
       )}
 
-      {/* Modal Criar/Editar */}
+      {/* Create/Edit modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <Card className="w-full max-w-md mx-4">
@@ -301,7 +301,7 @@ export function TablesManager({ restaurantId }: TablesManagerProps) {
         </div>
       )}
 
-      {/* Modal QR Code */}
+      {/* QR code modal */}
       {showQRModal && qrData && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <Card className="w-full max-w-sm mx-4">
@@ -319,7 +319,7 @@ export function TablesManager({ restaurantId }: TablesManagerProps) {
               <div className="flex flex-col items-center space-y-4">
                 <img
                   src={qrData.qrCode}
-                  alt={`QR Code - ${qrData.label}`}
+                  alt={t("tablesPage.qrAlt", { label: qrData.label })}
                   className="w-48 h-48 sm:w-64 sm:h-64 border rounded-lg"
                 />
                 <p className="text-sm text-muted-foreground text-center break-all">

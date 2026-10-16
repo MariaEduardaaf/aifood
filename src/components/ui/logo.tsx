@@ -43,7 +43,7 @@ export function Logo({
   );
 }
 
-// Versão para header com fundo escuro (admin/cozinha)
+// Variant for headers with a dark background (admin/kitchen)
 export function LogoWhite({
   size = "md",
   showText = true,

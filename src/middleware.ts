@@ -11,29 +11,29 @@ export default async function middleware(req: NextRequest) {
   const userRole = token?.role;
 
   // Public routes - no auth required
-  const publicRoutes = ["/", "/login", "/mesa"];
+  const publicRoutes = ["/", "/login", "/table"];
   const isPublicRoute = publicRoutes.some(
-    (route) => pathname === route || pathname.startsWith("/mesa/"),
+    (route) => pathname === route || pathname.startsWith("/table/"),
   );
 
   // API routes that are public
   const publicApiPrefixes = ["/api/auth"];
   const publicApiExact = [
-    "/api/chamados",
-    "/api/cardapio",
-    "/api/pedidos",
-    "/api/avaliacao",
+    "/api/calls",
+    "/api/menu",
+    "/api/orders",
+    "/api/review",
   ];
   const isPublicApiRoute =
     publicApiPrefixes.some((route) => pathname.startsWith(route)) ||
     publicApiExact.includes(pathname);
 
-  // Special public routes for mesas (token lookup and status)
-  const isPublicMesaRoute =
-    pathname.startsWith("/api/mesas/token/") ||
-    /^\/api\/mesas\/[^/]+\/status$/.test(pathname);
+  // Special public routes for tables (token lookup and status)
+  const isPublicTableRoute =
+    pathname.startsWith("/api/tables/token/") ||
+    /^\/api\/tables\/[^/]+\/status$/.test(pathname);
 
-  if (isPublicRoute || isPublicApiRoute || isPublicMesaRoute) {
+  if (isPublicRoute || isPublicApiRoute || isPublicTableRoute) {
     return NextResponse.next();
   }
 
@@ -47,7 +47,7 @@ export default async function middleware(req: NextRequest) {
   // Super admin routes - only for SUPER_ADMIN
   if (pathname.startsWith("/superadmin")) {
     if (userRole !== "SUPER_ADMIN") {
-      return NextResponse.redirect(new URL("/garcom", req.nextUrl.origin));
+      return NextResponse.redirect(new URL("/waiter", req.nextUrl.origin));
     }
   }
 
@@ -57,12 +57,12 @@ export default async function middleware(req: NextRequest) {
       return NextResponse.redirect(new URL("/superadmin", req.nextUrl.origin));
     }
     if (userRole !== "ADMIN" && userRole !== "MANAGER") {
-      return NextResponse.redirect(new URL("/garcom", req.nextUrl.origin));
+      return NextResponse.redirect(new URL("/waiter", req.nextUrl.origin));
     }
   }
 
   // Kitchen routes - only for KITCHEN
-  if (pathname.startsWith("/cozinha")) {
+  if (pathname.startsWith("/kitchen")) {
     if (userRole !== "KITCHEN") {
       // Redirect to appropriate dashboard based on role
       if (userRole === "SUPER_ADMIN") {
@@ -73,14 +73,14 @@ export default async function middleware(req: NextRequest) {
       if (userRole === "ADMIN" || userRole === "MANAGER") {
         return NextResponse.redirect(new URL("/admin", req.nextUrl.origin));
       }
-      return NextResponse.redirect(new URL("/garcom", req.nextUrl.origin));
+      return NextResponse.redirect(new URL("/waiter", req.nextUrl.origin));
     }
   }
 
   // Waiter routes - only for WAITER (redirect others to their dashboards)
-  if (pathname.startsWith("/garcom")) {
+  if (pathname.startsWith("/waiter")) {
     if (userRole === "KITCHEN") {
-      return NextResponse.redirect(new URL("/cozinha", req.nextUrl.origin));
+      return NextResponse.redirect(new URL("/kitchen", req.nextUrl.origin));
     }
     if (userRole === "SUPER_ADMIN") {
       return NextResponse.redirect(new URL("/superadmin", req.nextUrl.origin));

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import {
   BarChart,
   Bar,
@@ -14,21 +14,22 @@ import {
 } from "recharts";
 
 interface HourData {
-  hora: number;
-  quantidade: number;
-  receita: number;
+  hour: number;
+  quantity: number;
+  revenue: number;
 }
 
 interface OrdersByHourChartProps {
-  periodo?: string;
+  period?: string;
   restaurantId?: string;
 }
 
 export function OrdersByHourChart({
-  periodo = "hoje",
+  period = "today",
   restaurantId,
 }: OrdersByHourChartProps) {
   const t = useTranslations("admin.metrics");
+  const locale = useLocale();
   const [data, setData] = useState<HourData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -37,25 +38,25 @@ export function OrdersByHourChart({
     async function fetchData() {
       try {
         setLoading(true);
-        const params = new URLSearchParams({ periodo });
+        const params = new URLSearchParams({ period });
         if (restaurantId) {
           params.set("restaurantId", restaurantId);
         }
         const response = await fetch(
-          `/api/admin/metricas/pedidos/hora?${params.toString()}`,
+          `/api/admin/metrics/orders/hourly?${params.toString()}`,
         );
-        if (!response.ok) throw new Error("Erro ao carregar dados");
+        if (!response.ok) throw new Error("Failed to load data");
         const result = await response.json();
-        setData(result);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Erro desconhecido");
+        setData(result.data);
+      } catch {
+        setError(t("loadError"));
       } finally {
         setLoading(false);
       }
     }
 
     fetchData();
-  }, [periodo, restaurantId]);
+  }, [period, restaurantId, t]);
 
   if (loading) {
     return (
@@ -75,14 +76,15 @@ export function OrdersByHourChart({
   }
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
+    return new Intl.NumberFormat(locale, {
       style: "currency",
       currency: "BRL",
       minimumFractionDigits: 0,
     }).format(value);
   };
 
-  const formatHour = (hora: number) => `${hora.toString().padStart(2, "0")}h`;
+  const formatHour = (hour: number) =>
+    t("hourLabel", { hour: hour.toString().padStart(2, "0") });
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
@@ -100,7 +102,7 @@ export function OrdersByHourChart({
               className="stroke-gray-200 dark:stroke-gray-700"
             />
             <XAxis
-              dataKey="hora"
+              dataKey="hour"
               tickFormatter={formatHour}
               className="text-gray-600 dark:text-gray-400"
               tick={{ fill: "currentColor" }}
@@ -124,30 +126,30 @@ export function OrdersByHourChart({
                 borderRadius: "8px",
               }}
               formatter={(value, name) => {
-                if (name === "receita")
+                if (name === "revenue")
                   return [formatCurrency(value as number), t("revenue")];
                 return [value as number, t("orders")];
               }}
-              labelFormatter={(hora) => formatHour(hora as number)}
+              labelFormatter={(hour) => formatHour(hour as number)}
             />
             <Legend
               formatter={(value) =>
-                value === "quantidade" ? t("orders") : t("revenue")
+                value === "quantity" ? t("orders") : t("revenue")
               }
             />
             <Bar
               yAxisId="left"
-              dataKey="quantidade"
+              dataKey="quantity"
               fill="#3b82f6"
               radius={[4, 4, 0, 0]}
-              name="quantidade"
+              name="quantity"
             />
             <Bar
               yAxisId="right"
-              dataKey="receita"
+              dataKey="revenue"
               fill="#10b981"
               radius={[4, 4, 0, 0]}
-              name="receita"
+              name="revenue"
             />
           </BarChart>
         </ResponsiveContainer>

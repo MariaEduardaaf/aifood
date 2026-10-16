@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 @layer base {
-    /* Tema Claro */
+    /* Light theme */
     :root,
     .light {
         --background: 40 46% 95%;
@@ -32,7 +32,7 @@
         --radius: 0.75rem;
     }
 
-    /* Tema Escuro */
+    /* Dark theme */
     .dark {
         --background: 36 14% 7%;
         --foreground: 37 44% 93%;
@@ -108,7 +108,7 @@
             inset 0 1px 0 0 rgba(255, 255, 255, 0.9);
     }
 
-    /* Botão Primary - Laranja/Âmbar */
+    /* Primary button - Orange/Amber */
     .btn-gold {
         @apply relative overflow-hidden font-semibold py-4 px-8 rounded-xl text-lg;
         background: linear-gradient(
@@ -155,7 +155,7 @@
         left: 100%;
     }
 
-    /* Botão Secundário */
+    /* Secondary button */
     .btn-secondary-premium {
         @apply relative font-semibold py-4 px-8 rounded-xl text-lg;
         transition: all 0.3s ease;
@@ -197,7 +197,7 @@
             inset 0 1px 0 rgba(255, 255, 255, 0.9);
     }
 
-    /* Texto Primary Gradiente - Laranja/Âmbar */
+    /* Primary gradient text - Orange/Amber */
     .text-gold {
         background: linear-gradient(
             135deg,
@@ -210,7 +210,7 @@
         background-clip: text;
     }
 
-    /* Badge Premium - Âmbar */
+    /* Premium badge - Amber */
     .badge-premium {
         @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold;
         background: linear-gradient(135deg, hsl(42 86% 63%), hsl(28 88% 59%));
@@ -231,7 +231,7 @@
         box-shadow: 0 0 0 3px hsl(var(--primary) / 0.15);
     }
 
-    /* Divisor com gradiente - Âmbar */
+    /* Gradient divider - Amber */
     .divider-gold {
         height: 1px;
         background: linear-gradient(
@@ -242,12 +242,12 @@
         );
     }
 
-    /* Glow effect - Laranja */
+    /* Glow effect - Orange */
     .glow-gold {
         box-shadow: 0 0 30px rgba(242, 143, 59, 0.22);
     }
 
-    /* Status cards - usando verde para waiting (success) */
+    /* Status cards - using green for waiting (success) */
     .status-waiting {
         @apply border-2;
         border-color: hsl(146 50% 36%);
@@ -292,7 +292,7 @@
 }
 
 @layer utilities {
-    /* Urgency colors - Verde para success */
+    /* Urgency colors - Green for success */
     .urgency-green {
         border: 1px solid hsl(146 50% 36%);
     }
@@ -315,7 +315,7 @@
         color: hsl(146 50% 30%);
     }
 
-    /* Urgency Yellow - Âmbar */
+    /* Urgency Yellow - Amber */
     .urgency-yellow {
         border: 1px solid hsl(42 86% 63%);
     }
@@ -360,7 +360,7 @@
         color: hsl(0 64% 45%);
     }
 
-    /* Animated background - tons quentes */
+    /* Animated background - warm tones */
     .bg-animated {
         background-size: 400% 400%;
         animation: gradient 15s ease infinite;
@@ -398,7 +398,7 @@
         }
     }
 
-    /* Shimmer loading effect - tons quentes */
+    /* Shimmer loading effect - warm tones */
     .shimmer {
         background-size: 200% 100%;
         animation: shimmer 1.5s infinite;
@@ -431,7 +431,7 @@
         }
     }
 
-    /* Pulse primary - Laranja */
+    /* Pulse primary - Orange */
     .pulse-gold {
         animation: pulse-primary 2s infinite;
     }

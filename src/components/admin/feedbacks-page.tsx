@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations, useLocale } from "next-intl";
 import { Star, Loader2, MessageSquare, Clock, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -36,6 +37,8 @@ interface FeedbacksPageProps {
 }
 
 export function FeedbacksPage({ restaurantId }: FeedbacksPageProps) {
+  const t = useTranslations("admin.feedbacks");
+  const locale = useLocale();
   const [ratings, setRatings] = useState<Rating[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -74,7 +77,7 @@ export function FeedbacksPage({ restaurantId }: FeedbacksPageProps) {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString("pt-BR", {
+    return date.toLocaleDateString(locale, {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
@@ -111,9 +114,9 @@ export function FeedbacksPage({ restaurantId }: FeedbacksPageProps) {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold">Feedbacks</h1>
+        <h1 className="text-2xl font-bold">{t("title")}</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Avaliações dos clientes sobre o atendimento
+          {t("subtitle")}
         </p>
       </div>
 
@@ -121,11 +124,11 @@ export function FeedbacksPage({ restaurantId }: FeedbacksPageProps) {
       {stats && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div className="bg-card border border-border/50 rounded-xl p-4">
-            <p className="text-sm text-muted-foreground">Total</p>
+            <p className="text-sm text-muted-foreground">{t("total")}</p>
             <p className="text-2xl font-bold mt-1">{stats.total}</p>
           </div>
           <div className="bg-card border border-border/50 rounded-xl p-4">
-            <p className="text-sm text-muted-foreground">Média</p>
+            <p className="text-sm text-muted-foreground">{t("average")}</p>
             <div className="flex items-center gap-2 mt-1">
               <span className="text-2xl font-bold">
                 {stats.average.toFixed(1)}
@@ -134,13 +137,13 @@ export function FeedbacksPage({ restaurantId }: FeedbacksPageProps) {
             </div>
           </div>
           <div className="bg-card border border-border/50 rounded-xl p-4">
-            <p className="text-sm text-muted-foreground">Positivas (4-5)</p>
+            <p className="text-sm text-muted-foreground">{t("positive")}</p>
             <p className="text-2xl font-bold text-green-500 mt-1">
               {(stats.distribution[4] || 0) + (stats.distribution[5] || 0)}
             </p>
           </div>
           <div className="bg-card border border-border/50 rounded-xl p-4">
-            <p className="text-sm text-muted-foreground">Negativas (1-3)</p>
+            <p className="text-sm text-muted-foreground">{t("negative")}</p>
             <p className="text-2xl font-bold text-red-500 mt-1">
               {(stats.distribution[1] || 0) +
                 (stats.distribution[2] || 0) +
@@ -153,7 +156,7 @@ export function FeedbacksPage({ restaurantId }: FeedbacksPageProps) {
       {/* Filter */}
       <div className="flex items-center gap-2 flex-wrap">
         <Star className="h-4 w-4 text-muted-foreground" />
-        <span className="text-sm text-muted-foreground">Filtrar:</span>
+        <span className="text-sm text-muted-foreground">{t("filter")}</span>
         <button
           onClick={() => setFilter(null)}
           className={cn(
@@ -163,7 +166,7 @@ export function FeedbacksPage({ restaurantId }: FeedbacksPageProps) {
               : "bg-secondary text-muted-foreground hover:text-foreground",
           )}
         >
-          Todos
+          {t("all")}
         </button>
         {[5, 4, 3, 2, 1].map((star) => (
           <button
@@ -197,7 +200,7 @@ export function FeedbacksPage({ restaurantId }: FeedbacksPageProps) {
       ) : ratings.length === 0 ? (
         <div className="text-center py-12">
           <MessageSquare className="h-12 w-12 mx-auto text-muted-foreground/30 mb-4" />
-          <p className="text-muted-foreground">Nenhum feedback encontrado</p>
+          <p className="text-muted-foreground">{t("empty")}</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -240,7 +243,7 @@ export function FeedbacksPage({ restaurantId }: FeedbacksPageProps) {
 
                 {rating.redirected_google && (
                   <span className="text-xs bg-green-500/10 text-green-500 px-2 py-1 rounded-full whitespace-nowrap">
-                    Enviado ao Google
+                    {t("sentToGoogle")}
                   </span>
                 )}
               </div>

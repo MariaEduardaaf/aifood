@@ -1,16 +1,18 @@
 "use client";
 
 import { Sun, Moon, Monitor } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useTheme } from "@/components/providers/theme-provider";
 import { cn } from "@/lib/utils";
 
 export function ThemeToggle() {
+  const t = useTranslations("settings.theme");
   const { theme, setTheme } = useTheme();
 
   const options = [
-    { value: "light" as const, icon: Sun, label: "Claro" },
-    { value: "dark" as const, icon: Moon, label: "Escuro" },
-    { value: "system" as const, icon: Monitor, label: "Sistema" },
+    { value: "light" as const, icon: Sun, label: t("light") },
+    { value: "dark" as const, icon: Moon, label: t("dark") },
+    { value: "system" as const, icon: Monitor, label: t("system") },
   ];
 
   return (
@@ -35,6 +37,7 @@ export function ThemeToggle() {
 }
 
 export function ThemeToggleCompact({ className }: { className?: string }) {
+  const t = useTranslations("settings.theme");
   const { resolvedTheme, setTheme } = useTheme();
 
   const toggleTheme = () => {
@@ -49,7 +52,7 @@ export function ThemeToggleCompact({ className }: { className?: string }) {
         className ||
           "bg-secondary/50 border border-border/50 text-muted-foreground hover:text-foreground hover:bg-secondary",
       )}
-      title={resolvedTheme === "dark" ? "Modo Claro" : "Modo Escuro"}
+      title={resolvedTheme === "dark" ? t("lightMode") : t("darkMode")}
     >
       {resolvedTheme === "dark" ? (
         <Sun className="h-5 w-5" />

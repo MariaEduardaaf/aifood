@@ -25,7 +25,7 @@ export function RatingModal({ callId, onClose, onSuccess }: RatingModalProps) {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/avaliacao", {
+      const res = await fetch("/api/review", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
