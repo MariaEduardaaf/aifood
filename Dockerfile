@@ -33,7 +33,8 @@ RUN DATABASE_URL="postgresql://build:build@localhost:5432/build" npm run build
 FROM base AS runner
 ENV NODE_ENV=production \
     PORT=3000 \
-    HOSTNAME=0.0.0.0
+    HOSTNAME=0.0.0.0 \
+    UPLOAD_DIR=/app/uploads
 COPY --from=build --chown=node:node /app/public ./public
 COPY --from=build --chown=node:node /app/.next/standalone ./
 COPY --from=build --chown=node:node /app/.next/static ./.next/static
@@ -45,6 +46,10 @@ COPY --from=build --chown=node:node /app/node_modules/@prisma ./node_modules/@pr
 COPY --from=build --chown=node:node /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=build --chown=node:node /app/node_modules/bcryptjs ./node_modules/bcryptjs
 COPY --from=build --chown=node:node /app/scripts/create-admin.ts ./scripts/create-admin.ts
+# Menu photos (local storage when Cloudinary is not configured). Mount a
+# persistent volume here, or photos are lost on every redeploy.
+RUN mkdir -p /app/uploads && chown node:node /app/uploads
+VOLUME /app/uploads
 USER node
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \

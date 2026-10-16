@@ -321,6 +321,63 @@ test("menu import skips bad rows and upserts by default-locale name", async () =
   if (smoke) await api(`/api/categories/${smoke.id}`, { jar: admin, method: "DELETE" });
 });
 
+test("photo upload: stored, served from /api/uploads, accepted as image_url", async () => {
+  const png = Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+    "base64",
+  );
+  const upload = (jar: Jar, type: string) => {
+    const form = new FormData();
+    form.append("file", new Blob([png], { type }), "dot.png");
+    return fetch(`${BASE}/api/upload`, { method: "POST", headers: { Cookie: jar }, body: form });
+  };
+
+  assert.equal((await upload(waiter, "image/png")).status, 403);
+  assert.equal((await upload(admin, "image/jpeg")).status, 400, "bytes must match the declared type");
+
+  const res = await upload(admin, "image/png");
+  const body = (await res.json()) as { url: string };
+  assert.equal(res.status, 200, JSON.stringify(body));
+  assert.match(body.url, /^\/api\/uploads\/[a-f0-9]{32}\.png$/);
+
+  const served = await fetch(`${BASE}${body.url}`);
+  assert.equal(served.status, 200);
+  assert.equal(served.headers.get("content-type"), "image/png");
+  assert.match(served.headers.get("cache-control") ?? "", /immutable/);
+  assert.deepEqual(Buffer.from(await served.arrayBuffer()), png);
+
+  for (const bad of ["..%2F..%2Fetc%2Fpasswd", "..%2F..%2Fpackage.json", `${"0".repeat(32)}.png`]) {
+    const status = (await fetch(`${BASE}/api/uploads/${bad}`)).status;
+    assert.ok(status === 404 || status === 400, `${bad}: ${status}`);
+  }
+
+  const [settings, categories] = await Promise.all([
+    api("/api/settings", { jar: admin }),
+    api("/api/categories", { jar: admin }),
+  ]);
+  const item = await api("/api/items", {
+    jar: admin,
+    body: {
+      category_id: categories.json[0].id,
+      names: { [settings.json.default_locale]: `Smoke photo ${Date.now()}` },
+      price: 1,
+      image_url: body.url,
+    },
+  });
+  assert.equal(item.status, 201, JSON.stringify(item.json));
+  try {
+    assert.equal(item.json.image_url, body.url);
+    const relative = await api(`/api/items/${item.json.id}`, {
+      jar: admin,
+      method: "PUT",
+      body: { image_url: "/etc/passwd" },
+    });
+    assert.equal(relative.status, 400, "only /api/uploads/ paths are accepted besides https");
+  } finally {
+    await api(`/api/items/${item.json.id}`, { jar: admin, method: "DELETE" });
+  }
+});
+
 test("only SUPER_ADMIN may pass restaurantId (403 for everyone else)", async () => {
   const session = await api("/api/auth/session", { jar: admin });
   const restaurantId = session.json.user.restaurant_id;

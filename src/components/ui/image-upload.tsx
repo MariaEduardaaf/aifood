@@ -18,7 +18,6 @@ export function ImageUpload({
   disabled = false,
 }: ImageUploadProps) {
   const t = useTranslations('imageUpload')
-  const tErrors = useTranslations('errors')
   const [isUploading, setIsUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -38,10 +37,6 @@ export function ImageUpload({
           body: formData,
         })
 
-        if (response.status === 503) {
-          throw new Error(tErrors('uploadsNotConfigured'))
-        }
-
         if (!response.ok) {
           const data = await response.json()
           throw new Error(data.error || t('uploadFailed'))
@@ -55,7 +50,7 @@ export function ImageUpload({
         setIsUploading(false)
       }
     },
-    [onChange, t, tErrors]
+    [onChange, t]
   )
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {

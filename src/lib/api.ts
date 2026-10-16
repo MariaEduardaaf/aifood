@@ -4,6 +4,7 @@ import { z, type ZodError } from "zod";
 import { SUPPORTED_LOCALES } from "@/lib/i18n/locales";
 import { ALLERGEN_CODES } from "@/lib/allergens";
 import { prisma } from "@/lib/db";
+import { isUploadedImageUrl } from "@/lib/uploads";
 
 // Standard 400 for zod failures: `error` is always a renderable string.
 export function validationError(error: ZodError) {
@@ -45,11 +46,14 @@ export async function restaurantNotFound(restaurantId: string) {
     : NextResponse.json({ error: "Restaurant not found" }, { status: 404 });
 }
 
-// Menu photos must be https so they never load as mixed content
+// Menu photos must be https so they never load as mixed content, or a photo
+// stored by /api/upload on local disk (same-origin relative path)
 export const imageUrlSchema = z
   .string()
-  .url()
-  .regex(/^https:\/\//i, "Must be an https URL");
+  .refine(
+    (v) => isUploadedImageUrl(v) || (z.url().safeParse(v).success && /^https:\/\//i.test(v)),
+    "Must be an https URL or an uploaded photo",
+  );
 
 // { "<locale>": "text" } map limited to supported locales; empty strings are
 // dropped so sending "" clears a translation

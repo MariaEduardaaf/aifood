@@ -1,5 +1,6 @@
 import { SUPPORTED_LOCALES } from "./i18n/locales";
 import { isAllergenCode } from "./allergens";
+import { isUploadedImageUrl } from "./uploads";
 
 // Minimal RFC 4180 parser: quoted fields, "" escapes, CR/LF, newlines inside
 // quotes. The delimiter is "," unless the header line has more ";" (Spanish
@@ -144,8 +145,8 @@ export function parseMenuCsv(text: string, defaultLocale: string): MenuCsvResult
                 ? `invalid price "${cell("price")}"`
                 : badAllergen
                   ? `unknown allergen "${badAllergen}"`
-                  : image && !/^https:\/\/\S+$/i.test(image)
-                    ? "image_url must be an https URL"
+                  : image && !/^https:\/\/\S+$/i.test(image) && !isUploadedImageUrl(image)
+                    ? "image_url must be an https URL or an /api/uploads/ path"
                     : null;
 
     if (error) {

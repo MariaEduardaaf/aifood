@@ -23,7 +23,8 @@ the old process exits right away instead of waiting for those connections.
 | `AUTH_URL` | recommended | Public URL of the app, e.g. `https://pedidos.cafesol.es`. Auth.js uses it for login redirects; without it, and without a proxy that sets `x-forwarded-host`, redirects can point at the container's bind address (`0.0.0.0:3000`). |
 | `AUTH_TRUST_HOST` | no | The app already sets `trustHost: true` (it always sits behind a proxy). Setting `true` is harmless. |
 | `NEXT_PUBLIC_APP_URL` | recommended | Public URL, e.g. `https://pedidos.cafesol.es`. Used in QR codes. Baked in at **build** time (build arg). Without it the QR URL is derived from the request host. |
-| `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | for photos | Menu photo uploads. Everything else works without them. |
+| `UPLOAD_DIR` | no | Folder for menu photos stored on local disk. Default `<cwd>/uploads`; the Docker image sets `/app/uploads`. See [Photos](#photos). |
+| `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | no | Set all three to store menu photos on Cloudinary instead of local disk. |
 | `NEXT_PUBLIC_SHOW_DEMO_LOGINS` | no | Build arg. Keep `false` in production. |
 
 `TZ` is not needed: the server runs in UTC and each restaurant's timezone lives
@@ -31,6 +32,30 @@ in its settings (`Settings.timezone`).
 
 Health check path: `GET /api/health` (200 `{"status":"ok","db":"up"}`, 503 when
 the database is unreachable).
+
+## Photos
+
+Menu photos are stored on local disk by default, so a cafe needs no external
+account. `POST /api/upload` writes them to `UPLOAD_DIR` (`/app/uploads` in the
+Docker image) and `GET /api/uploads/<name>` serves them.
+
+The container filesystem is thrown away on every redeploy, so **mount a
+persistent volume at `/app/uploads`**, otherwise uploaded photos vanish:
+
+- **Railway**: app service → right-click → *Attach Volume* (or *New* →
+  *Volume*), mount path `/app/uploads`.
+- **Fly.io**: `fly volumes create aifood_uploads --region mad --size 1`, then in
+  `fly.toml`:
+  ```toml
+  [mounts]
+    source = "aifood_uploads"
+    destination = "/app/uploads"
+  ```
+
+A volume ties the app to one instance, which it already is (see the realtime
+note below). For several instances, or to skip the volume, use Cloudinary:
+set `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY` and `CLOUDINARY_API_SECRET`
+and new uploads go there (photos uploaded before keep their local URLs).
 
 ## Railway
 
@@ -42,12 +67,13 @@ the database is unreachable).
    - `AUTH_SECRET` = output of `openssl rand -base64 32`
    - `NEXT_PUBLIC_APP_URL` = `https://<your-domain>` (Railway passes service
      variables to Docker builds as build args, so this reaches the build)
-   - `CLOUDINARY_*` if you use photo uploads
-4. *Settings* → *Deploy* → **Healthcheck Path** = `/api/health`.
+   - `CLOUDINARY_*` only if you store photos on Cloudinary
+4. **Volume** for photos at `/app/uploads` (see [Photos](#photos)).
+5. *Settings* → *Deploy* → **Healthcheck Path** = `/api/health`.
    Keep **one replica** (realtime uses an in-process event bus).
-5. Deploy. The logs show `prisma migrate deploy` applying migrations, then
+6. Deploy. The logs show `prisma migrate deploy` applying migrations, then
    `Ready`. Migrations run on every start and are a no-op when up to date.
-6. **First admin.** Open a shell in the running container with the Railway
+7. **First admin.** Open a shell in the running container with the Railway
    CLI and run the script the image ships (Node strips the types). The
    password goes in `ADMIN_PASSWORD`, read without echo, so it stays out of
    shell history and the process list:
@@ -66,7 +92,7 @@ the database is unreachable).
    only when you mean to add the admin to that existing restaurant.
    `--password` still works but prints a warning.
    Add `--role SUPER_ADMIN` for the studio's own super admin account.
-7. **Custom domain**: *Settings* → *Networking* → *Custom Domain* → add
+8. **Custom domain**: *Settings* → *Networking* → *Custom Domain* → add
    `pedidos.cafesol.es` and create the CNAME Railway shows at your DNS provider.
    Update `NEXT_PUBLIC_APP_URL` and redeploy so QR codes use the new domain.
 
@@ -85,13 +111,22 @@ the database is unreachable).
    (Or use any managed Postgres and `fly secrets set DATABASE_URL=...`.)
 3. **Secrets**:
    ```bash
-   fly secrets set AUTH_SECRET="$(openssl rand -base64 32)" \
-     CLOUDINARY_CLOUD_NAME=... CLOUDINARY_API_KEY=... CLOUDINARY_API_SECRET=...
+   fly secrets set AUTH_SECRET="$(openssl rand -base64 32)"
+   ```
+   Add `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY` and
+   `CLOUDINARY_API_SECRET` only to store photos on Cloudinary. For the default
+   local storage create the photo volume:
+   ```bash
+   fly volumes create aifood_uploads --region mad --size 1
    ```
 4. In `fly.toml` make sure of:
    ```toml
    [build.args]
      NEXT_PUBLIC_APP_URL = "https://pedidos.cafesol.es"
+
+   [mounts]
+     source = "aifood_uploads"
+     destination = "/app/uploads"
 
    [http_service]
      internal_port = 3000

@@ -35,7 +35,7 @@ export default async function middleware(req: NextRequest) {
   // API routes that are public. Guest endpoints identify the table by its
   // qr_token; staff-only methods on the same paths check the session in the
   // route handler.
-  const publicApiPrefixes = ["/api/auth/"];
+  const publicApiPrefixes = ["/api/auth/", "/api/uploads/"];
   const publicApiExact = [
     "/api/calls",
     "/api/menu",

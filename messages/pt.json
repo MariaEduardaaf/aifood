@@ -506,7 +506,6 @@
     "invalidFields": "Confira: {fields}",
     "conflict": "Isso já existe. Use outro valor.",
     "tooLarge": "O arquivo é grande demais.",
-    "uploadsNotConfigured": "Os envios de imagem não estão configurados neste servidor",
     "fields": {
       "password": "Senha",
       "email": "E-mail",

@@ -33,7 +33,7 @@ UI translation files exist for `en`, `es` and `pt`. `de`, `nl` and `fr` are acce
 - next-intl for UI translations
 - Zod for validation
 - Server-Sent Events fed by an in-process event bus (single instance)
-- Cloudinary for menu photos, `qrcode` for table QR codes
+- Menu photos on local disk (`UPLOAD_DIR`, default `./uploads`) or Cloudinary when its keys are set, `qrcode` for table QR codes
 - `node --test` with tsx for tests
 
 ## Local setup
@@ -49,7 +49,7 @@ npm run db:seed                  # demo restaurant, users, tables, menu
 npm run dev                      # http://localhost:3000
 ```
 
-Minimum `.env` values: `DATABASE_URL`, `AUTH_SECRET` (`openssl rand -base64 32`), `NEXT_PUBLIC_APP_URL` (`http://localhost:3000`). Cloudinary keys are only needed for photo uploads. Every variable is documented in `.env.example`.
+Minimum `.env` values: `DATABASE_URL`, `AUTH_SECRET` (`openssl rand -base64 32`), `NEXT_PUBLIC_APP_URL` (`http://localhost:3000`). Photo uploads work without any extra account: files go to `./uploads` (set the `CLOUDINARY_*` keys to use Cloudinary instead). Every variable is documented in `.env.example`.
 
 Other scripts: `npm run build`, `npm run start`, `npm run lint`, `npm run db:studio`, `npm run db:generate`.
 

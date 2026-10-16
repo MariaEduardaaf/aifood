@@ -27,7 +27,6 @@ export function apiErrorMessage(status: number, data: unknown, t: T): string {
   if (status === 409) return t("errors.conflict");
   if (status === 403) return t("errors.forbidden");
   if (status === 413) return t("errors.tooLarge");
-  if (status === 503) return t("errors.uploadsNotConfigured");
   return t("errors.generic");
 }
 
