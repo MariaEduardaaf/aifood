@@ -41,6 +41,9 @@ COPY --from=build --chown=node:node /app/prisma ./prisma
 # Prisma CLI + engines for `migrate deploy` (standalone only traces the client)
 COPY --from=build --chown=node:node /app/node_modules/prisma ./node_modules/prisma
 COPY --from=build --chown=node:node /app/node_modules/@prisma ./node_modules/@prisma
+# Needed by scripts/create-admin.ts, which runs outside the traced Next bundle
+COPY --from=build --chown=node:node /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=build --chown=node:node /app/node_modules/bcryptjs ./node_modules/bcryptjs
 COPY --from=build --chown=node:node /app/scripts/create-admin.ts ./scripts/create-admin.ts
 USER node
 EXPOSE 3000

@@ -20,6 +20,7 @@ the old process exits right away instead of waiting for those connections.
 |---|---|---|
 | `DATABASE_URL` | yes | Postgres connection string. |
 | `AUTH_SECRET` | yes | `openssl rand -base64 32`. Changing it logs everyone out. |
+| `AUTH_URL` | recommended | Public URL of the app, e.g. `https://pedidos.cafesol.es`. Auth.js uses it for login redirects; without it, and without a proxy that sets `x-forwarded-host`, redirects can point at the container's bind address (`0.0.0.0:3000`). |
 | `AUTH_TRUST_HOST` | no | The app already sets `trustHost: true` (it always sits behind a proxy). Setting `true` is harmless. |
 | `NEXT_PUBLIC_APP_URL` | recommended | Public URL, e.g. `https://pedidos.cafesol.es`. Used in QR codes. Baked in at **build** time (build arg). Without it the QR URL is derived from the request host. |
 | `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | for photos | Menu photo uploads. Everything else works without them. |
