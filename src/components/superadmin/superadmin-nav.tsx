@@ -160,7 +160,7 @@ export function SuperAdminNav({ user }: SuperAdminNavProps) {
       <div className="container mx-auto px-3 sm:px-4">
         <div className="flex items-center justify-between h-14 sm:h-16">
           <div className="flex items-center gap-4 sm:gap-6">
-            <Link href="/superadmin" aria-label="aiFood" className="flex items-center gap-2 group">
+            <Link href="/superadmin" aria-label="aiFood" className="flex shrink-0 items-center gap-2 group whitespace-nowrap">
               <Image
                 src="/logo-light.svg"
                 alt="aiFood Logo"

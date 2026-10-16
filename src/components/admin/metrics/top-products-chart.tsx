@@ -48,6 +48,7 @@ export function TopProductsChart({
   restaurantId,
 }: TopProductsChartProps) {
   const t = useTranslations("admin.metrics");
+  const tCommon = useTranslations("common");
   const locale = useLocale();
   const [data, setData] = useState<ProductData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -109,6 +110,11 @@ export function TopProductsChart({
       <h3 className="text-lg font-semibold text-foreground mb-4">
         {t("topProducts")}
       </h3>
+      {data.length === 0 ? (
+        <div className="flex h-80 items-center justify-center text-sm text-muted-foreground">
+          {tCommon("noResults")}
+        </div>
+      ) : (
       <div className="h-80">
         <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 400, height: 320 }}>
           <BarChart
@@ -159,6 +165,7 @@ export function TopProductsChart({
           </BarChart>
         </ResponsiveContainer>
       </div>
+      )}
 
       {/* Detail list */}
       <div className="mt-6 space-y-2">

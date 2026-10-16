@@ -125,9 +125,9 @@ export function DashboardNav({ user }: DashboardNavProps) {
     <header className="sticky top-0 z-50 border-b border-nav bg-nav text-nav-foreground shadow-lg">
       <div className="container mx-auto px-3 sm:px-4">
         <div className="flex items-center justify-between h-14 sm:h-16">
-          <div className="flex items-center gap-4 sm:gap-8">
+          <div className="flex items-center gap-4 sm:gap-6">
             {/* Logo */}
-            <Link href="/waiter" aria-label="aiFood" className="flex items-center gap-2 group">
+            <Link href="/waiter" aria-label="aiFood" className="flex shrink-0 items-center gap-2 group whitespace-nowrap">
               <Image
                 src="/logo-light.svg"
                 alt="aiFood Logo"
@@ -159,7 +159,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
                       key={item.href}
                       href={item.href}
                       className={cn(
-                        "flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 relative",
+                        "flex items-center gap-1.5 px-2.5 py-2 rounded-xl text-sm font-medium transition-all duration-200 relative whitespace-nowrap",
                         isActive
                           ? "bg-white/20 text-nav-foreground"
                           : "text-nav-muted-foreground hover:bg-white/10 hover:text-nav-foreground",
@@ -179,7 +179,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
           </div>
 
           {/* User Menu */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <SoundToggleCompact className="text-nav-muted-foreground hover:text-nav-foreground hover:bg-white/10" />
             <ThemeToggleCompact className="text-nav-muted-foreground hover:text-nav-foreground hover:bg-white/10" />
             <div className="flex items-center gap-2 sm:gap-3 px-2 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-white/10">
@@ -188,7 +188,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
                   {user.name.charAt(0).toUpperCase()}
                 </span>
               </div>
-              <div className="hidden sm:block">
+              <div className="hidden sm:max-lg:block 2xl:block">
                 <p className="text-sm font-medium text-nav-foreground truncate max-w-[120px]">
                   {user.name}
                 </p>
